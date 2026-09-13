@@ -10,6 +10,14 @@
 
 ---
 
+## [1.9.0](https://github.com/redtidev1918/deviantdrop/compare/v1.8.0...v1.9.0) (2026-09-13)
+
+
+### Features
+
+* **render:** source 链接嵌入 caption 末尾（parse_mode=HTML），不再补发第二条消息；网页持久 400 时回退已配置的 OAuth 官方 API ([90aa533](https://github.com/redtidev1918/deviantdrop/commit/90aa53335b31ac1dec8bd4e92cb261ed52f29a9b))
+* **render:** 客户端按钮文案改为「📲 DeviantArt 客户端」（仍指向 DAViewer 下载页） ([ab1f267](https://github.com/redtidev1918/deviantdrop/commit/ab1f267e2ee7056386ef12882f6926ba7869f5d4))
+
 ## [1.8.0](https://github.com/redtidev1918/deviantdrop/compare/v1.7.0...v1.8.0) (2026-09-13)
 
 
