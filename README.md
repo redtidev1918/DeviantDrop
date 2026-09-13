@@ -72,6 +72,18 @@ DeviantArt 有两层**互相独立**的能力，不要把它们混成一件事�
 
 超大图集（>10 张）或 Telegram 发送失败时，可借助 [TelePress](https://github.com/redtidev1918/telepress) 生成 Telegraph 页面。未配置 URL 时不启用；配置后默认仅失败兜底（`TELEPRESS_MODE=fallback`），大图集需选择 `large-gallery`，失败绝不影响原生 Telegram 发送。同机部署建议 `TELEPRESS_URL=http://127.0.0.1:<port>` 并在两端配置同一个 `TELEPRESS_API_KEY`。
 
+### 依赖
+
+- **运行时**：Node.js ≥ 22（或兼容 Cloudflare Workers 的环境）。生产依赖只有两个——`undici`（HTTP 与国内出口代理）和 `sharp`（>10MB 图片压缩，懒加载）。详见 [package.json](package.json)。
+- **开发**：`wrangler` 仅用于本地 `dev`/dry-run 校验，不进入 Docker 镜像。
+- **可选外部服务**：[TelePress](https://github.com/redtidev1918/telepress)（Telegraph 图集兜底）、[DAViewer](https://github.com/redtidev1918/daviewer) 客户端（浏览 DeviantArt 的桌面客户端，见下）。
+
+### 相关项目与致谢
+
+- [DAViewer 客户端（兄弟项目）](https://github.com/redtidev1918/daviewer)：浏览 DeviantArt 的桌面客户端；bot 单图/视频回复里的「📲 Daviewer 客户端」按钮指向其[下载页](https://redtidev1918.github.io/daviewer/#/download)，`/about` 亦有提及。
+- [TelePress](https://github.com/redtidev1918/telepress)：可选 Telegraph 图集发布。
+- 实现来源（反代/兼容细节）：[deviantart-downloader](https://github.com/redtidev1918/deviantart-downloader)（CSRF、作品 ID、cookie 复用、媒体 URL）、[DAKit](https://github.com/redtidev1918/dakit)（`_puppy`/`dadeviation`/`init` 流程与 URL 兼容）、[TelePost](https://github.com/redtidev1918/TelePost)（Telegram 媒体类型映射）。完整清单见 [docs/README.md](docs/README.md#实现来源)。
+
 完整的解析机制、双通道细节、限流策略、部署与排错，请看**文档站点**：
 
 https://redtidev1918.github.io/deviantdrop/

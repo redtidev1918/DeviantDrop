@@ -103,11 +103,13 @@ Therefore: **NSFW ≠ requires cookies.**
 ### Reply layout
 
 - Consistent layout: `🎨 title / 👤 author / 🖼 N media`, plus exactly one reliable source entry.
-- The source entry is **singular and never duplicated**: for single images/videos it is the
-  "🔗 Open on DeviantArt" inline button below the image (reliable across direct URL pass-through,
-  `file_id` replay, and multipart upload); for albums (`sendMediaGroup` silently drops buttons)
-  a clickable "🔗 Open on DeviantArt" text line is **sent as a follow-up** with link preview
-  disabled.
+- The source entry is **singular and never duplicated**: every artwork reply is followed by a
+  small blue `source` hyperlink back to the original artwork page (JSON `text_link`, reliable
+  across every send path, link preview disabled). Single images/videos additionally carry a
+  "📲 Daviewer 客户端" inline button pointing to the
+  [DAViewer client download page](https://redtidev1918.github.io/daviewer/#/download)
+  (reliable across direct URL pass-through, `file_id` replay, and multipart upload); albums
+  (`sendMediaGroup` silently drops buttons) only get the `source` text line.
 - Technical status notes (`⚠️ compressed / original temporarily unavailable / sent as a file`,
   etc.) are shown only in **private chats** by default, for operations troubleshooting; groups
   and channels hide them automatically (noise for viewers, who can just tap the source entry).
@@ -121,6 +123,30 @@ disabled when no URL is configured; once configured it defaults to failure fallb
 (`TELEPRESS_MODE=fallback`), while large galleries require `large-gallery`. A failure never
 affects native Telegram sending. For same-host deployments prefer
 `TELEPRESS_URL=http://127.0.0.1:<port>` with the same `TELEPRESS_API_KEY` on both sides.
+
+### Dependencies
+
+- **Runtime**: Node.js ≥ 22 (or a Cloudflare Workers-compatible environment). Only two
+  production dependencies: `undici` (HTTP and China-egress proxy) and `sharp` (>10MB image
+  compression, lazy-loaded). See [package.json](package.json).
+- **Development**: `wrangler` is only used for local `dev`/dry-run validation and is never
+  installed into the Docker image.
+- **Optional external services**: [TelePress](https://github.com/redtidev1918/telepress)
+  (Telegraph gallery fallback) and the [DAViewer](https://github.com/redtidev1918/daviewer)
+  client (desktop DeviantArt browser, see below).
+
+### Related projects & credits
+
+- [DAViewer client (sister project)](https://github.com/redtidev1918/daviewer): a desktop
+  DeviantArt browser. The "📲 Daviewer 客户端" button on single-image/video replies points to
+  its [download page](https://redtidev1918.github.io/daviewer/#/download), and `/about`
+  mentions it too.
+- [TelePress](https://github.com/redtidev1918/telepress): optional Telegraph gallery publishing.
+- Implementation sources: [deviantart-downloader](https://github.com/redtidev1918/deviantart-downloader)
+  (CSRF, deviation IDs, cookie reuse, media URLs), [DAKit](https://github.com/redtidev1918/dakit)
+  (`_puppy`/`dadeviation`/`init` flows and URL compatibility), and
+  [TelePost](https://github.com/redtidev1918/TelePost) (Telegram media type mapping). Full list
+  in [docs/README.md](docs/README.md#implementation-sources).
 
 The full parsing mechanics, dual-channel details, rate limiting, deployment and
 troubleshooting live on the **documentation site**:

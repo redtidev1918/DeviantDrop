@@ -119,6 +119,7 @@ npm run check                               # 本地 12 项测试 + 语法检查
 
 - [deviantart-downloader](https://github.com/redtidev1918/deviantart-downloader)：CSRF、作品 ID、cookie 复用、媒体 URL 和失败语义。
 - [DAKit](https://github.com/redtidev1918/dakit)：`_puppy/dadeviation/init` 流程、`fav.me`/作品页 URL 兼容。
+- [DAViewer](https://github.com/redtidev1918/daviewer)（兄弟项目）：浏览 DeviantArt 的桌面客户端；bot 单图/视频回复的「📲 Daviewer 客户端」按钮指向其[下载页](https://redtidev1918.github.io/daviewer/#/download)。
 - [TelePost](https://github.com/redtidev1918/TelePost)：Telegram photo/video/animation 类型映射。
 
 发布编排（ReleaseGraph 接入现状与下一代协议切换清单）见 [发布编排说明](RELEASEGRAPH.md)。
