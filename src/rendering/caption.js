@@ -5,7 +5,7 @@
 // multipart 上传端点对自定义 caption_entities 的 offset/length 有 bug：按 code point 收、
 // 却按 UTF-16/字节存，含 emoji 时高亮错位，实测 2026-09；HTML 锚点没有偏移概念，emoji
 // 也不影响）。title/author/URL 全部做 HTML 转义，防 Telegram 422。
-//   - 「📲 Daviewer 客户端」按钮：单图/单视频图片下方的 inline 键盘按钮
+//   - 「📲 DeviantArt 客户端」按钮：单图/单视频图片下方的 inline 键盘按钮
 //     （JSON 传 URL、file_id 重放、multipart 上传/文档降级都可靠生效），指向 DAViewer
 //     客户端下载页——用客户端浏览 DeviantArt 更顺手。
 //   - 相册（多图）：Telegram 的 sendMediaGroup（无论 JSON 还是 multipart、无论顶层
@@ -15,7 +15,7 @@
 const CAPTION_LIMIT = 1024;
 
 // 客户端按钮 / 来源锚点的标签与地址。
-export const CLIENT_BUTTON_TEXT = "📲 Daviewer 客户端";
+export const CLIENT_BUTTON_TEXT = "📲 DeviantArt 客户端";
 export const CLIENT_DOWNLOAD_URL = "https://redtidev1918.github.io/daviewer/#/download";
 export const SOURCE_LINK_TEXT = "source";
 

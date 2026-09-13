@@ -106,7 +106,7 @@ Therefore: **NSFW ≠ requires cookies.**
 - The source entry is **singular and never duplicated**: a small blue `source` link lives at
   the **bottom of the media caption** (a `<a>` anchor with `parse_mode=HTML`, parsed
   server-side and reliable across every send path including multipart), pointing back to the
-  original artwork page. Single images/videos additionally carry a "📲 Daviewer 客户端" inline
+  original artwork page. Single images/videos additionally carry a "📲 DeviantArt 客户端" inline
   button pointing to the [DAViewer client download page](https://redtidev1918.github.io/daviewer/#/download)
   (reliable across direct URL pass-through, `file_id` replay, and multipart upload); albums
   (`sendMediaGroup` silently drops buttons) only get the `source` anchor on the first item's
@@ -139,7 +139,7 @@ affects native Telegram sending. For same-host deployments prefer
 ### Related projects & credits
 
 - [DAViewer client (sister project)](https://github.com/redtidev1918/daviewer): a desktop
-  DeviantArt browser. The "📲 Daviewer 客户端" button on single-image/video replies points to
+  DeviantArt browser. The "📲 DeviantArt 客户端" button on single-image/video replies points to
   its [download page](https://redtidev1918.github.io/daviewer/#/download), and `/about`
   mentions it too.
 - [TelePress](https://github.com/redtidev1918/telepress): optional Telegraph gallery publishing.
