@@ -5,6 +5,7 @@ import worker, {
   extractDeviantArtUrls,
   parseDeviantArtTarget,
 } from "../src/index.js";
+import { CLIENT_BUTTON_TEXT, CLIENT_DOWNLOAD_URL, SOURCE_LINK_TEXT } from "../src/rendering/caption.js";
 
 test("parses plain, hidden, schemeless and multiple DeviantArt links", () => {
   const hiddenText = "先看 www.deviantart.com/bob/art/second-2，再点这里。";
@@ -134,7 +135,8 @@ test("resolves two links with one DeviantArt session and serves the signed proxy
   assert.match(mediaCalls[0].body.caption, /👤 artist/);
   assert.doesNotMatch(mediaCalls[0].body.caption, /https?:\/\//);
   const btn = mediaCalls[0].body.reply_markup?.inline_keyboard?.[0]?.[0];
-  assert.ok(btn && /deviantart\.com\/artist\/art\/work-123456/.test(btn.url), "单视频应有指向作品页的 inline 按钮");
+  assert.equal(btn?.url, CLIENT_DOWNLOAD_URL, "单视频按钮应指向 DAViewer 客户端下载页");
+  assert.equal(btn?.text, CLIENT_BUTTON_TEXT);
   const proxied = await worker.fetch(new Request(mediaCalls[0].body.video, {
     headers: { Range: "bytes=0-4" },
   }), env);
@@ -279,7 +281,8 @@ test("answers /about, parses media captions, and ignores link-less or own-forwar
   // 单图来源走 inline 按钮，caption 无裸 URL / entity。
   assert.doesNotMatch(captionMedia[0].body.caption || "", /https?:\/\//);
   const cBtn = captionMedia[0].body.reply_markup?.inline_keyboard?.[0]?.[0];
-  assert.ok(cBtn && /deviantart\.com\/artist\/art\/work-123/.test(cBtn.url), "单图应有指向作品页的 inline 按钮");
+  assert.equal(cBtn?.url, CLIENT_DOWNLOAD_URL, "单图按钮应指向 DAViewer 客户端下载页");
+  assert.equal(cBtn?.text, CLIENT_BUTTON_TEXT);
 
   // 无 caption 的图片：静默忽略。
   const plain = await send({
@@ -494,7 +497,8 @@ test("resolves artwork via official API and archive.org UUID mapping", async (t)
   assert.match(mediaCalls[0].url, /sendPhoto$/);
   // 官方 API fallback 也用统一渲染：单图来源走 inline 按钮，caption 无裸 URL。
   const oBtn = mediaCalls[0].body.reply_markup?.inline_keyboard?.[0]?.[0];
-  assert.ok(oBtn && /deviantart\.com\/loish\/art\/underwater-913624585/.test(oBtn.url), "官方 fallback 应有指向作品页的 inline 按钮");
+  assert.equal(oBtn?.url, CLIENT_DOWNLOAD_URL, "官方 fallback 按钮应指向 DAViewer 客户端下载页");
+  assert.equal(oBtn?.text, CLIENT_BUTTON_TEXT);
   assert.doesNotMatch(mediaCalls[0].body.caption, /https?:\/\//, "caption 不应包含裸 URL");
 });
 

@@ -25,8 +25,9 @@ function daAdapter(env) {
 }
 
 const REPO = "https://github.com/redtidev1918/deviantdrop";
+const DAVIEWER = "https://github.com/redtidev1918/daviewer";
 const HELP_TEXT = `发送 DeviantArt 单作品链接或 fav.me 短链，我会回复其中的图片、视频或 GIF。单条消息最多处理 ${MAX_LINKS} 个链接；图片/视频的 caption 里带链接也可以。\n\n/start 开始 · /help 用法 · /about 项目与源码`;
-const ABOUT_TEXT = `DeviantDrop：把 DeviantArt 作品「丢」进 Telegram 的 Bot。\n\n发送 DeviantArt 作品页或 fav.me 短链，即可收到图片、视频或 GIF；每条回复的媒体都会附带原作品页链接。\n\n开源项目（MIT）：${REPO}\n源码、部署与使用说明都在仓库里，欢迎 star、提 issue。`;
+const ABOUT_TEXT = `DeviantDrop：把 DeviantArt 作品「丢」进 Telegram 的 Bot。\n\n发送 DeviantArt 作品页或 fav.me 短链，即可收到图片、视频或 GIF；每条回复的媒体下方都会补发一行小号「source」链接回到原作品页，单图/视频还有「📲 Daviewer 客户端」按钮带你下载成品客户端。\n\n开源项目（MIT）：${REPO}\nDAViewer 客户端（兄弟项目）：${DAVIEWER}\n源码、部署与使用说明都在仓库里，欢迎 star、提 issue。`;
 const HINT_TEXT = `没有找到可下载的 DeviantArt 链接。\n\n发送 DeviantArt 作品页或 fav.me 短链，即可收到图片、视频或 GIF。\n/help 查看用法，/about 查看项目与源码。`;
 
 // 入口结果词汇表：handleMessage 返回的原因里，哪些算「候选被拒」（有意不处理），
@@ -59,8 +60,8 @@ function shortUrl(value) {
   const s = String(value || "");
   try { const u = new URL(s); return `${u.host}${u.pathname}`.slice(0, 90); } catch { return s.slice(0, 90); }
 }
-// 相册（多图）的来源入口：补发一条 JSON 文本，来源用 text_link（JSON 路径 UTF-16 可靠，
-// 绕开 multipart caption_entities 的 offset bug）。单图用 inline 按钮、不走这里。
+// 所有作品（单图/视频也要）补发来源入口：一行小号蓝色 "source" 文本超链接（JSON 路径
+// UTF-16 可靠，绕开 multipart caption_entities 的 offset bug）。单图/视频另有客户端按钮。
 async function sendSourceLine(message, env, sourceUrl) {
   if (!sourceUrl) return;
   const { text, entities } = sourceLineText(sourceUrl);
@@ -579,7 +580,7 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
   if (Array.isArray(cached?.files) && cached.files.length && cached.files.every((file) => file?.file_id)) {
     dlog("delivery", `replay file ids id=${target.id} files=${cached.files.length}`);
     await sendFileIdPlan(cached.files, message, env, { ...cached.cap, sourceUrl: url.href, status: cached.cap?.status || {} });
-    if (cached.files.length > 1) await sendPlanSourceLine(message, env, url.href);
+    await sendPlanSourceLine(message, env, url.href);
     return;
   }
 
@@ -635,7 +636,7 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
   let results;
   try {
     results = await sendArtworkPlan(items, message, env, { upload: !origin, onStatus, cap });
-    if (items.length > 1) await sendPlanSourceLine(message, env, url.href);
+    await sendPlanSourceLine(message, env, url.href);
   } catch (error) {
     const publisherMedia = toPublisherMedia(artwork);
     const published = await publishArtwork(env, target.id, publisherMedia, url.href, true);

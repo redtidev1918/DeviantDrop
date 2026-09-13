@@ -5,6 +5,9 @@ import {
   openButtonMarkup,
   sourceLineText,
   buildCapFromMedia,
+  CLIENT_BUTTON_TEXT,
+  CLIENT_DOWNLOAD_URL,
+  SOURCE_LINK_TEXT,
 } from "../src/rendering/caption.js";
 
 test("媒体 caption 只含标题/作者/数量/状态，不含任何链接或来源行", () => {
@@ -30,23 +33,26 @@ test("caption 排版：标题/作者/数量分行，warning 独立成行不粘�
   assert.match(text, /⚠️ 部分图片超过 10MB，已压缩发送；原图暂不可用，已使用高清展示图/);
 });
 
-test("openButtonMarkup：单媒体 inline 按钮，无来源时为 undefined", () => {
+test("openButtonMarkup：单媒体 inline 按钮指向 DAViewer 客户端下载页，无来源时为 undefined", () => {
   const markup = openButtonMarkup("https://www.deviantart.com/x");
   assert.ok(markup?.inline_keyboard?.[0]?.[0]);
-  assert.equal(markup.inline_keyboard[0][0].url, "https://www.deviantart.com/x");
-  assert.match(markup.inline_keyboard[0][0].text, /在 DeviantArt 打开/);
+  assert.equal(markup.inline_keyboard[0][0].url, CLIENT_DOWNLOAD_URL);
+  assert.equal(markup.inline_keyboard[0][0].text, CLIENT_BUTTON_TEXT);
   assert.equal(openButtonMarkup(null), undefined);
   assert.equal(openButtonMarkup(""), undefined);
 });
 
-test("sourceLineText：相册补发文本带 text_link，offset 按 UTF-16 切中 DeviantArt", () => {
+test("sourceLineText：全部回复补发的小号蓝色 source 文本带 text_link 指向原作品页", () => {
   const { text, entities } = sourceLineText("https://www.deviantart.com/x");
-  assert.ok(text.includes("DeviantArt"));
+  assert.equal(text, "source");
+  assert.ok(text.includes(SOURCE_LINK_TEXT));
   assert.equal(entities.length, 1);
   assert.equal(entities[0].type, "text_link");
   assert.equal(entities[0].url, "https://www.deviantart.com/x");
-  // 🔗 是单个代理对 emoji；UTF-16 slice 仍应精确切中 "DeviantArt"
-  assert.equal(text.slice(entities[0].offset, entities[0].offset + entities[0].length), "DeviantArt");
+  // 文本极小且无 emoji，整个字符串就是链接本体
+  assert.equal(entities[0].offset, 0);
+  assert.equal(entities[0].length, SOURCE_LINK_TEXT.length);
+  assert.equal(text.slice(entities[0].offset, entities[0].offset + entities[0].length), "source");
   assert.deepEqual(sourceLineText(""), { text: "", entities: [] });
 });
 
