@@ -1,5 +1,4 @@
 const DEVIANTART = "https://www.deviantart.com/";
-import { sourceLineText } from "./rendering/caption.js";
 import { publishArtwork } from "./publishing/gallery.js";
 import { fetchPublicMedia } from "./preview/server.js";
 import { getOfficialToken, clearOAuthAccessToken } from "./auth/token.js";
@@ -8,7 +7,7 @@ import { DeviantArtAdapter, parseDeviantArtTarget, parseDeviantArtTarget as pars
 import { normalizeArtwork, titleWithAuthor } from "./deviantart/media-normalizer.js";
 import { probeWebSession } from "./deviantart/web-session.js";
 import { WEB_SESSION_STATUS } from "./auth/cookie-store.js";
-import { sendArtworkPlan, sendFileIdPlan, sendSourceLine as sendPlanSourceLine, filesFromResults } from "./telegram/sender.js";
+import { sendArtworkPlan, sendFileIdPlan, filesFromResults } from "./telegram/sender.js";
 import { telegram } from "./telegram/api.js";
 import { healthPayload, event, bump, setComponent } from "./runtime/status.js";
 import { DA_HEADERS } from "./deviantart/http.js";
@@ -59,22 +58,6 @@ function dlog(tag, ...args) {
 function shortUrl(value) {
   const s = String(value || "");
   try { const u = new URL(s); return `${u.host}${u.pathname}`.slice(0, 90); } catch { return s.slice(0, 90); }
-}
-// 所有作品（单图/视频也要）补发来源入口：一行小号蓝色 "source" 文本超链接（JSON 路径
-// UTF-16 可靠，绕开 multipart caption_entities 的 offset bug）。单图/视频另有客户端按钮。
-async function sendSourceLine(message, env, sourceUrl) {
-  if (!sourceUrl) return;
-  const { text, entities } = sourceLineText(sourceUrl);
-  if (!text) return;
-  await telegram(env, "sendMessage", {
-    chat_id: message.chat.id,
-    text,
-    entities,
-    // text_link 在部分客户端会展开成链接预览，占地方；来源只是个入口，显式关闭预览。
-    link_preview_options: { is_disabled: true },
-    reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true },
-    ...(message.message_thread_id ? { message_thread_id: message.message_thread_id } : {}),
-  });
 }
 
 async function sendPublishedLink(message, env, id, sourceUrl, publishedUrl) {
@@ -580,7 +563,6 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
   if (Array.isArray(cached?.files) && cached.files.length && cached.files.every((file) => file?.file_id)) {
     dlog("delivery", `replay file ids id=${target.id} files=${cached.files.length}`);
     await sendFileIdPlan(cached.files, message, env, { ...cached.cap, sourceUrl: url.href, status: cached.cap?.status || {} });
-    await sendPlanSourceLine(message, env, url.href);
     return;
   }
 
@@ -590,7 +572,7 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
     artwork = await daAdapter(env).getArtwork(url.href, env, sessionMemo);
   } catch (error) {
     const canFallback = env.CLIENT_ID && env.CLIENT_SECRET
-      && (error instanceof NetworkError || /连接失败|超时|无法连接/.test(error.message));
+      && (error instanceof NetworkError || /连接失败|超时|无法连接|HTTP 400/.test(error.message));
     event("da_fetch_failed", {
       work_id: target.id,
       stage: "web_session",
@@ -636,7 +618,6 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
   let results;
   try {
     results = await sendArtworkPlan(items, message, env, { upload: !origin, onStatus, cap });
-    await sendPlanSourceLine(message, env, url.href);
   } catch (error) {
     const publisherMedia = toPublisherMedia(artwork);
     const published = await publishArtwork(env, target.id, publisherMedia, url.href, true);

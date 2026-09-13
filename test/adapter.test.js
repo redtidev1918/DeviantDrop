@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DeviantArtAdapter } from '../src/deviantart/adapter.js';
+import { NetworkError } from '../src/auth/errors.js';
 import { WEB_SESSION_STATUS } from '../src/auth/cookie-store.js';
 
 // OAuth 可用（有 refresh token）但网页扩展会话已失效：
@@ -200,4 +201,35 @@ test('HTTP 400 重试必须重建匿名会话 csrf，不能再复用缓存的旧
   assert.equal(homeCalls, 1, '只有重试时才会重新抓首页取新 csrf');
   // 新会话已回写缓存，不再是旧值
   assert.equal(mem.get('session:anonymous').csrf, 'csrf-fresh');
+});
+
+test('重建会话后网页接口仍 400：抛 NetworkError，供上层回退官方 API', async (t) => {
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+  const mem = new Map();
+  const cache = {
+    cacheGet: async (ns, k) => (ns === 'da' ? (mem.get(k) ?? null) : null),
+    cacheSet: async (ns, k, v) => { if (ns === 'da') { if (v === null) mem.delete(k); else mem.set(k, v); } },
+  };
+  await cache.cacheSet('da', 'session:anonymous', { csrf: 'csrf-stale' }, 90);
+
+  // 首页永远返回新 csrf，但 init 无论如何都 400：模拟 DA 对网页接口硬性拒绝。
+  globalThis.fetch = async (input, init = {}) => {
+    const url = String(input);
+    if (url === 'https://www.deviantart.com/') return new Response("window.__CSRF_TOKEN__ = 'csrf-fresh'");
+    if (url.includes('/_puppy/dadeviation/init')) return new Response('nope', { status: 400 });
+    throw new Error(`unexpected ${url}`);
+  };
+  const env = {
+    WEBHOOK_SECRET: 'secret',
+    DA_COOKIES: null,
+    cookieStore: { getCookies: () => null, getState: () => ({ hasCookie: false, state: WEB_SESSION_STATUS.MISSING }) },
+  };
+
+  await assert.rejects(
+    new DeviantArtAdapter({ cacheGet: cache.cacheGet, cacheSet: cache.cacheSet })
+      .getArtwork('https://www.deviantart.com/artist/art/work-1', env, {}),
+    (error) => error instanceof NetworkError && /HTTP 400/.test(error.message),
+    '持久 400 应以 NetworkError 上抛以触发官方 API 回退',
+  );
 });

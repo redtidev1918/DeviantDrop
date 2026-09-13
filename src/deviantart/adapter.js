@@ -1,4 +1,5 @@
 import { WEB_SESSION_STATUS } from '../auth/cookie-store.js';
+import { NetworkError } from '../auth/errors.js';
 import { DA_HEADERS, DEVIANTART_ORIGIN, fetchDeviantArtJson } from './http.js';
 import { getWebSession, currentWebStatus, rawCookie } from './web-session.js';
 import { normalizeArtwork, isBlurredUrl, isMatureLoggedOut, kindOfUrl, mimeForKind, titleWithAuthor } from './media-normalizer.js';
@@ -80,6 +81,12 @@ export class DeviantArtAdapter {
           // sessionKey 时匿名键 'session:anonymous' 还在缓存里），二次请求依旧 400。
           await this.cacheSet('da', sessionKey || 'session:anonymous', null, 1);
           continue;
+        }
+        // 重建会话后网页接口仍硬性 400：这是「网页通道不可用」，不是分支逻辑错。
+        // 抛 NetworkError 让上层（index.js canFallback）在配置了 OAuth 时回退官方
+        // API，行为对齐 PixivFlow 的「凭据已持久化就不用怕，换可靠通道取数」。
+        if (/HTTP 400/.test(text)) {
+          throw new NetworkError('DeviantArt 网页接口拒绝请求（HTTP 400），回退官方 API');
         }
         throw error;
       }

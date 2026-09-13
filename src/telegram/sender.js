@@ -1,4 +1,4 @@
-import { renderArtworkCaption, openButtonMarkup, sourceLineText } from '../rendering/caption.js';
+import { renderArtworkCaption, openButtonMarkup } from '../rendering/caption.js';
 import { planDelivery } from './delivery-planner.js';
 import { telegram, telegramForm } from './api.js';
 import {
@@ -20,26 +20,14 @@ function reply(message) {
   };
 }
 
-export async function sendSourceLine(message, env, sourceUrl) {
-  if (!sourceUrl) return;
-  const { text, entities } = sourceLineText(sourceUrl);
-  await telegram(env, 'sendMessage', {
-    chat_id: message.chat.id,
-    text,
-    entities,
-    link_preview_options: { is_disabled: true },
-    ...reply(message),
-  });
-}
-
 export async function sendArtworkPlan(media, message, env, { upload = false, onStatus = null, cap = null } = {}) {
   const units = planDelivery(media);
   const showNotes = notesEnabled(env, message);
   const caption = renderArtworkCaption(
     { title: cap?.title, author: cap?.author, mediaCount: cap?.mediaCount },
     cap?.status || {},
-    { showNotes },
-  ).text.slice(0, 1024);
+    { showNotes, sourceUrl: cap?.sourceUrl },
+  ).text;
   const results = [];
 
   for (const unit of units) {
@@ -58,7 +46,7 @@ async function urlUnit(unit, message, env, caption, primary, cap) {
       media: unit.items.map((item, index) => ({
         type: item.kind,
         media: item.url,
-        ...(index === 0 && caption ? { caption } : {}),
+        ...(index === 0 && caption ? { caption, parse_mode: 'HTML' } : {}),
       })),
       ...reply(message),
     });
@@ -71,7 +59,7 @@ async function urlUnit(unit, message, env, caption, primary, cap) {
     const result = await telegram(env, fields[0], {
       chat_id: message.chat.id,
       [fields[1]]: item.url,
-      ...(caption ? { caption } : {}),
+      ...(caption ? { caption, parse_mode: 'HTML' } : {}),
       ...(markup ? { reply_markup: markup } : {}),
       ...reply(message),
     });
@@ -81,7 +69,7 @@ async function urlUnit(unit, message, env, caption, primary, cap) {
       const result = await telegram(env, MEDIA_FIELDS.document[0], {
         chat_id: message.chat.id,
         [MEDIA_FIELDS.document[1]]: item.url,
-        ...(caption ? { caption } : {}),
+        ...(caption ? { caption, parse_mode: 'HTML' } : {}),
         ...(markup ? { reply_markup: markup } : {}),
         ...reply(message),
       });
@@ -151,7 +139,7 @@ async function uploadAlbumBatches(entries, message, env, caption, primary, cap, 
         form.set('media', JSON.stringify(batch.entries.map((entry, i) => ({
           type: entry.item.kind,
           media: `attach://file${i}`,
-          ...(i === 0 && batchCaption ? { caption: batchCaption } : {}),
+          ...(i === 0 && batchCaption ? { caption: batchCaption, parse_mode: 'HTML' } : {}),
         }))));
         batch.entries.forEach((entry, i) => form.set(`file${i}`, new Blob([entry.bytes], { type: MIME_BY_EXTENSION[entry.extension] || 'application/octet-stream' }), `file${i}.${entry.extension}`));
         return form;
@@ -170,7 +158,10 @@ async function uploadSingle(entry, message, env, caption, primary, cap, onStatus
   const markup = primary ? openButtonMarkup(cap?.sourceUrl) : undefined;
   const makeForm = (methodField = field, fileName = field) => {
     const form = baseForm(message);
-    if (caption) form.set('caption', caption);
+    if (caption) {
+      form.set('caption', caption);
+      form.set('parse_mode', 'HTML');
+    }
     if (markup) form.set('reply_markup', JSON.stringify(markup));
     form.set(methodField, new Blob([entry.bytes], { type: MIME_BY_EXTENSION[entry.extension] || 'application/octet-stream' }), `${fileName}.${entry.extension}`);
     return form;
@@ -200,13 +191,13 @@ function guessExt(extension, kind) {
 
 export async function sendFileIdPlan(files, message, env, cap) {
   const units = planDelivery(files.map((file) => ({ kind: file.kind, file_id: file.file_id })));
-  const caption = renderArtworkCaption(cap, cap.status || {}, { showNotes: notesEnabled(env, message) }).text.slice(0, 1024);
+  const caption = renderArtworkCaption(cap, cap.status || {}, { showNotes: notesEnabled(env, message), sourceUrl: cap.sourceUrl }).text;
   for (const unit of units) {
     const unitCaption = unit.primary ? caption : '';
     if (unit.type === 'album') {
       await telegram(env, 'sendMediaGroup', {
         chat_id: message.chat.id,
-        media: unit.items.map((item, i) => ({ type: item.kind, media: item.file_id || item.url, ...(i === 0 && unitCaption ? { caption: unitCaption } : {}) })),
+        media: unit.items.map((item, i) => ({ type: item.kind, media: item.file_id || item.url, ...(i === 0 && unitCaption ? { caption: unitCaption, parse_mode: 'HTML' } : {}) })),
         ...reply(message),
       });
     } else {
@@ -218,7 +209,7 @@ export async function sendFileIdPlan(files, message, env, cap) {
       await telegram(env, method, {
         chat_id: message.chat.id,
         [field]: value,
-        ...(unitCaption ? { caption: unitCaption } : {}),
+        ...(unitCaption ? { caption: unitCaption, parse_mode: 'HTML' } : {}),
         ...(markup ? { reply_markup: markup } : {}),
         ...reply(message),
       });

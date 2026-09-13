@@ -103,13 +103,14 @@ Therefore: **NSFW ≠ requires cookies.**
 ### Reply layout
 
 - Consistent layout: `🎨 title / 👤 author / 🖼 N media`, plus exactly one reliable source entry.
-- The source entry is **singular and never duplicated**: every artwork reply is followed by a
-  small blue `source` hyperlink back to the original artwork page (JSON `text_link`, reliable
-  across every send path, link preview disabled). Single images/videos additionally carry a
-  "📲 Daviewer 客户端" inline button pointing to the
-  [DAViewer client download page](https://redtidev1918.github.io/daviewer/#/download)
+- The source entry is **singular and never duplicated**: a small blue `source` link lives at
+  the **bottom of the media caption** (a `<a>` anchor with `parse_mode=HTML`, parsed
+  server-side and reliable across every send path including multipart), pointing back to the
+  original artwork page. Single images/videos additionally carry a "📲 Daviewer 客户端" inline
+  button pointing to the [DAViewer client download page](https://redtidev1918.github.io/daviewer/#/download)
   (reliable across direct URL pass-through, `file_id` replay, and multipart upload); albums
-  (`sendMediaGroup` silently drops buttons) only get the `source` text line.
+  (`sendMediaGroup` silently drops buttons) only get the `source` anchor on the first item's
+  caption — no follow-up text message.
 - Technical status notes (`⚠️ compressed / original temporarily unavailable / sent as a file`,
   etc.) are shown only in **private chats** by default, for operations troubleshooting; groups
   and channels hide them automatically (noise for viewers, who can just tap the source entry).

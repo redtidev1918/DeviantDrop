@@ -3,22 +3,20 @@ import assert from "node:assert/strict";
 import {
   renderArtworkCaption,
   openButtonMarkup,
-  sourceLineText,
   buildCapFromMedia,
   CLIENT_BUTTON_TEXT,
   CLIENT_DOWNLOAD_URL,
   SOURCE_LINK_TEXT,
 } from "../src/rendering/caption.js";
 
-test("媒体 caption 只含标题/作者/数量/状态，不含任何链接或来源行", () => {
+test("媒体 caption 只含标题/作者/数量/状态，不含来源锚点", () => {
   const { text } = renderArtworkCaption(
     { title: "Heavy Mama Hunt", author: "Mrjoel" },
     {},
   );
   assert.match(text, /🎨 Heavy Mama Hunt/);
   assert.match(text, /👤 Mrjoel/);
-  assert.doesNotMatch(text, /https?:\/\//, "caption 文本里不应出现裸 URL");
-  assert.doesNotMatch(text, /DeviantArt 打开|来源/, "caption 不应含来源行（来源改由按钮/补发文本承载）");
+  assert.doesNotMatch(text, /<a href|<https?:\/\//, "未传 sourceUrl 时 caption 不应出现链接");
 });
 
 test("caption 排版：标题/作者/数量分行，warning 独立成行不粘连", () => {
@@ -33,6 +31,32 @@ test("caption 排版：标题/作者/数量分行，warning 独立成行不粘�
   assert.match(text, /⚠️ 部分图片超过 10MB，已压缩发送；原图暂不可用，已使用高清展示图/);
 });
 
+test("sourceUrl 存在时 caption 末尾追加 <a>source</a> 锚点，并做 HTML 转义", () => {
+  const { text } = renderArtworkCaption(
+    { title: 'Heavy "Mama" & Hunt', author: "A&B<C>" },
+    {},
+    { sourceUrl: "https://www.deviantart.com/x?a=1&b=2" },
+  );
+  // 标题/作者转义，防 Telegram 422
+  assert.match(text, /Heavy &quot;Mama&quot; &amp; Hunt/);
+  assert.match(text, /A&amp;B&lt;C&gt;/);
+  // 末尾锚点：URL 转义，"source" 二字即蓝色超链接，且锚点独立成行
+  assert.match(text, /<a href="https:\/\/www\.deviantart\.com\/x\?a=1&amp;b=2">source<\/a>$/);
+  assert.match(text, /\n<a href="https:\/\/www\.deviantart\.com\/x\?a=1&amp;b=2">source<\/a>$/);
+  assert.ok(text.length <= 1024);
+});
+
+test("超长标题截断且保留完整 source 锚点", () => {
+  const { text } = renderArtworkCaption(
+    { title: "😀".repeat(1000) },
+    {},
+    { sourceUrl: "https://www.deviantart.com/x" },
+  );
+  assert.ok(text.length <= 1024);
+  assert.ok(text.endsWith('</a>'), "1024 上限优先保证锚点不被截断");
+  assert.ok(text.includes('>source</a>'));
+});
+
 test("openButtonMarkup：单媒体 inline 按钮指向 DAViewer 客户端下载页，无来源时为 undefined", () => {
   const markup = openButtonMarkup("https://www.deviantart.com/x");
   assert.ok(markup?.inline_keyboard?.[0]?.[0]);
@@ -40,20 +64,6 @@ test("openButtonMarkup：单媒体 inline 按钮指向 DAViewer 客户端下载�
   assert.equal(markup.inline_keyboard[0][0].text, CLIENT_BUTTON_TEXT);
   assert.equal(openButtonMarkup(null), undefined);
   assert.equal(openButtonMarkup(""), undefined);
-});
-
-test("sourceLineText：全部回复补发的小号蓝色 source 文本带 text_link 指向原作品页", () => {
-  const { text, entities } = sourceLineText("https://www.deviantart.com/x");
-  assert.equal(text, "source");
-  assert.ok(text.includes(SOURCE_LINK_TEXT));
-  assert.equal(entities.length, 1);
-  assert.equal(entities[0].type, "text_link");
-  assert.equal(entities[0].url, "https://www.deviantart.com/x");
-  // 文本极小且无 emoji，整个字符串就是链接本体
-  assert.equal(entities[0].offset, 0);
-  assert.equal(entities[0].length, SOURCE_LINK_TEXT.length);
-  assert.equal(text.slice(entities[0].offset, entities[0].offset + entities[0].length), "source");
-  assert.deepEqual(sourceLineText(""), { text: "", entities: [] });
 });
 
 test("buildCapFromMedia：拆分 '标题 — 作者'，计算 mediaCount", () => {
@@ -84,4 +94,8 @@ test("技术性 ⚠️ 提示：showNotes=true 显示，false 省略", () => {
   // 标题/作者仍保留
   assert.match(withoutNotes, /🎨 T/);
   assert.match(withoutNotes, /👤 A/);
+});
+
+test("SOURCE_LINK_TEXT 保持小写 source，供锚点/文档引用", () => {
+  assert.equal(SOURCE_LINK_TEXT, "source");
 });
