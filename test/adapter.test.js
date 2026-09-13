@@ -146,3 +146,58 @@ test('没有 OAuth 时成熟作品仍可发送：网页结果按响应标注是�
   assert.equal(artwork.accessStatus, 'mature-preview');
   assert.equal(stub.officialCalls.length, 0);
 });
+
+test('HTTP 400 重试必须重建匿名会话 csrf，不能再复用缓存的旧值', async (t) => {
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+
+  // 匿名会话缓存里预置一个旧 csrf（模拟上一次运行留下的脏会话）。
+  const mem = new Map();
+  const cache = {
+    cacheGet: async (ns, k) => (ns === 'da' ? (mem.get(k) ?? null) : null),
+    cacheSet: async (ns, k, v) => { if (ns === 'da') { if (v === null) mem.delete(k); else mem.set(k, v); } },
+  };
+  await cache.cacheSet('da', 'session:anonymous', { csrf: 'csrf-stale' }, 90);
+
+  let homeCalls = 0;
+  let puppyCalls = 0;
+  const csrfSeen = [];
+  globalThis.fetch = async (input, init = {}) => {
+    const url = String(input);
+    if (url === 'https://www.deviantart.com/') {
+      homeCalls += 1;
+      return new Response("window.__CSRF_TOKEN__ = 'csrf-fresh'");
+    }
+    if (url.includes('/_puppy/dadeviation/init')) {
+      puppyCalls += 1;
+      const csrf = new URL(url).searchParams.get('csrf_token');
+      csrfSeen.push(csrf);
+      if (csrf !== 'csrf-fresh') return new Response('stale csrf', { status: 400 });
+      return Response.json({
+        deviation: {
+          deviationId: '1',
+          title: 'Retry OK',
+          author: { username: 'artist' },
+          media: { baseUri: 'https://cdn.test/ok.jpg' },
+        },
+      });
+    }
+    throw new Error(`unexpected ${url}`);
+  };
+
+  const env = {
+    WEBHOOK_SECRET: 'secret',
+    DA_COOKIES: null,
+    cookieStore: { getCookies: () => null, getState: () => ({ hasCookie: false, state: WEB_SESSION_STATUS.MISSING }) },
+  };
+  const artwork = await new DeviantArtAdapter({ cacheGet: cache.cacheGet, cacheSet: cache.cacheSet })
+    .getArtwork('https://www.deviantart.com/artist/art/work-1', env, {});
+
+  // 第一次用缓存旧 csrf 被 400，重试必须重建新会话（csrf-fresh）后成功
+  assert.equal(artwork.title, 'Retry OK');
+  assert.equal(puppyCalls, 2);
+  assert.deepEqual(csrfSeen, ['csrf-stale', 'csrf-fresh']);
+  assert.equal(homeCalls, 1, '只有重试时才会重新抓首页取新 csrf');
+  // 新会话已回写缓存，不再是旧值
+  assert.equal(mem.get('session:anonymous').csrf, 'csrf-fresh');
+});

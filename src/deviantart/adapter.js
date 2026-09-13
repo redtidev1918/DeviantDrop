@@ -75,7 +75,10 @@ export class DeviantArtAdapter {
         const text = error instanceof Error ? error.message : String(error);
         if (attempt === 0 && /HTTP 400/.test(text)) {
           sessionMemo.session = null;
-          if (sessionKey) await this.cacheSet('da', sessionKey, null, 1);
+          // 400 大多意味着本次会话的 csrf/cookie 已失配：连【匿名】会话的缓存键
+          // 一起失效，否则 getWebSession 的重试会直接复用缓存里的旧 csrf（只清
+          // sessionKey 时匿名键 'session:anonymous' 还在缓存里），二次请求依旧 400。
+          await this.cacheSet('da', sessionKey || 'session:anonymous', null, 1);
           continue;
         }
         throw error;
