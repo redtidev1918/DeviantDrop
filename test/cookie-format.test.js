@@ -69,6 +69,23 @@ test('normalizeCookieHeader：空/纯空 JSON/无字符串值/坏 JSON 都抛出
   assert.throws(() => normalizeCookieHeader('[{}, {"name":"x"}]'), /格式无效/);
 });
 
+test('normalizeCookieHeader：剥离 BOM/零宽/书写方向等不可见前缀后再识别 JSON', () => {
+  const json = '{"auth":"a1","userinfo":"u3"}';
+  const variants = [
+    `\uFEFF${json}`,      // BOM
+    `\u200B${json}`,      // 零宽空格
+    `\u200E${json}`,      // 从左到右标记
+    `\u202A${json}`,      // LRE
+    `\uFE0F${json}`,      // 变体选择符
+    ` \u200B\uFEFF${json} `,
+  ];
+  for (const v of variants) {
+    assert.equal(normalizeCookieHeader(v), 'auth=a1; userinfo=u3', `prefix=${JSON.stringify(v.slice(0, 2))}`);
+  }
+  // 纯前缀后为空 → 报格式无效
+  assert.throws(() => normalizeCookieHeader('\uFEFF\u200B'), /格式无效/);
+});
+
 test('encodeCookieValue：只编码 cookie-octet 之外的字符', () => {
   assert.equal(encodeCookieValue('abc=def/+%123'), 'abc=def/+%123'); // 等号斜杠加号百分号保留
   assert.equal(encodeCookieValue('a b'), 'a%20b');

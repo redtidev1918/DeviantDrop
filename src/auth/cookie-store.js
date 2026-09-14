@@ -22,13 +22,16 @@ export function encodeCookieValue(value) {
 //   1) 浏览器 DevTools 复制的整行 Cookie 请求头（原样，允许 "cookie:" 前缀、换行折叠）；
 //   2) Cookie 插件导出的 JSON 对象 {"name": "value", …}（值可已是 %XX 编码，可多行）；
 //   3) Cookie 插件导出的 JSON 数组 [{"name","value","domain",…}, …]。
-// 非字符串值跳过、同名取最后一个；解析失败抛 "Cookie 格式无效/无法解析"。
+// 非字符串值跳过、同名取最后一个；解析失败抛带具体原因的错误。
+// 粘贴来源常带 BOM/零宽/左右书写标记等不可见前缀字符（复制时误带），先剥掉再识别格式。
+const INVISIBLE_LEAD = /^[\uFEFF\u200B\u200C\u200D\u200E\u200F\u2060\uFE0E\uFE0F\u202A-\u202E]+/;
+
 export function normalizeCookieHeader(input) {
-  let value = String(input ?? '').trim();
-  if (!value) throw new Error('Cookie 格式无效');
+  let value = String(input ?? '').trim().replace(INVISIBLE_LEAD, '').trim();
+  if (!value) throw new Error('Cookie 格式无效：内容为空');
   if (value[0] === '{' || value[0] === '[') {
     let parsed;
-    try { parsed = JSON.parse(value); } catch { throw new Error('Cookie JSON 无法解析'); }
+    try { parsed = JSON.parse(value); } catch { throw new Error('Cookie JSON 无法解析：请确认整段都是从插件复制、没有被截断'); }
     const pairs = [];
     if (Array.isArray(parsed)) {
       for (const item of parsed) {
@@ -47,10 +50,12 @@ export function normalizeCookieHeader(input) {
       seen.add(name);
       parts.push(`${name}=${encodeCookieValue(val)}`);
     }
-    if (!parts.length) throw new Error('Cookie 格式无效');
+    if (!parts.length) throw new Error('Cookie 格式无效：JSON 里没有可用的 name/value 字符串');
     return parts.join('; ');
   }
-  return value.replace(/^cookie:\s*/i, '').replace(/\s+/g, ' ').trim();
+  const header = value.replace(/^cookie:\s*/i, '').replace(/\s+/g, ' ').trim();
+  if (!header) throw new Error('Cookie 格式无效：内容为空');
+  return header;
 }
 
 export class CookieStore {
