@@ -40,9 +40,9 @@ test("sourceUrl 存在时 caption 末尾追加 <a>source</a> 锚点，并做 HTM
   // 标题/作者转义，防 Telegram 422
   assert.match(text, /Heavy &quot;Mama&quot; &amp; Hunt/);
   assert.match(text, /A&amp;B&lt;C&gt;/);
-  // 末尾锚点：URL 转义，"source" 二字即蓝色超链接，且锚点独立成行
+  // 末尾锚点：URL 转义，"source" 二字即蓝色超链接，空行 + 🔗 前缀隔开更醒目
   assert.match(text, /<a href="https:\/\/www\.deviantart\.com\/x\?a=1&amp;b=2">source<\/a>$/);
-  assert.match(text, /\n<a href="https:\/\/www\.deviantart\.com\/x\?a=1&amp;b=2">source<\/a>$/);
+  assert.match(text, /\n\n🔗 <a href="https:\/\/www\.deviantart\.com\/x\?a=1&amp;b=2">source<\/a>$/);
   assert.ok(text.length <= 1024);
 });
 

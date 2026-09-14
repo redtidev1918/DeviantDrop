@@ -48,9 +48,10 @@ export function renderArtworkCaption(meta = {}, status = {}, { showNotes = true,
   }
   const body = lines.join("\n");
   if (sourceUrl) {
-    const anchor = `<a href="${escapeHtml(sourceUrl)}">source</a>`;
-    const head = body.slice(0, Math.max(0, CAPTION_LIMIT - anchor.length - 1)).replace(/[\uD800-\uDBFF]$/, "");
-    return { text: `${head}\n${anchor}` };
+    // 空行隔开 + 🔗 前缀：Telegram HTML 不支持居中标签，用分隔与 emoji 让来源入口更醒目。
+    const footer = `\n\n🔗 <a href="${escapeHtml(sourceUrl)}">source</a>`;
+    const head = body.slice(0, Math.max(0, CAPTION_LIMIT - footer.length)).replace(/[\uD800-\uDBFF]$/, "");
+    return { text: `${head}${footer}` };
   }
   return { text: body.slice(0, CAPTION_LIMIT).replace(/[\uD800-\uDBFF]$/, "") };
 }

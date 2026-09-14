@@ -65,7 +65,7 @@ DeviantArt 有两层**互相独立**的能力，不要把它们混成一件事�
 ### 回复排版
 
 - 统一排版：`🎨 标题 / 👤 作者 / 🖼 N 个媒体`，外加一个可靠的来源入口（见下）。
-- 来源入口**每个作品只有一个、绝不重复**：小号蓝色 `source` 链接嵌在**媒体 caption 末尾**（`parse_mode=HTML` 的 `<a>` 锚点，服务端解析、各路径含 multipart 都可靠），指向原作品页。单图/视频的图片下方另有「📲 DeviantArt 客户端」内联按钮，指向 [DAViewer 客户端下载页](https://redtidev1918.github.io/daviewer/#/download)；相册（sendMediaGroup 会静默丢弃按钮）只有首图 caption 末尾的 `source` 锚点，不补客户端按钮、也不补发独立文本行。
+- 来源入口**每个作品只有一个、绝不重复**：小号蓝色 `source` 链接嵌在**媒体 caption 末尾（空行 + 🔗 前缀隔开）（`parse_mode=HTML` 的 `<a>` 锚点，服务端解析、各路径含 multipart 都可靠），指向原作品页。单图/视频的图片下方另有「📲 DeviantArt 客户端」内联按钮，指向 [DAViewer 客户端下载页](https://redtidev1918.github.io/daviewer/#/download)；相册（sendMediaGroup 会静默丢弃按钮）只有首图 caption 末尾的 `source` 锚点，不补客户端按钮、也不补发独立文本行。
 - 技术性状态提示（`⚠️ 已压缩 / 原图暂不可用 / 已作为文件发送` 等）默认只在**私聊**显示便于运营排查；群聊/频道里自动隐藏（对看图的人是噪音，想看原图点来源入口即可）。可用环境变量强制：`CAPTION_NOTES=auto`（默认，私聊显示/群聊隐藏）、`always`（总是显示）、`never`（总是隐藏）。
 
 ### TelePress（可选）
