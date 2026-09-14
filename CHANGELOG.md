@@ -10,6 +10,19 @@
 
 ---
 
+## [1.10.0](https://github.com/redtidev1918/deviantdrop/compare/v1.9.0...v1.10.0) (2026-09-14)
+
+
+### Features
+
+* **cookie:** /cookie 支持浏览器插件导出的 JSON（对象/数组）自动转 Cookie 头，按 RFC6265 编码 ([1fee2d0](https://github.com/redtidev1918/deviantdrop/commit/1fee2d0dbbed318c475eae9267a19a915a2fe5d1))
+* **render:** source 锚点空行隔开 + 🔗 前缀更醒目（Telegram HTML 不支持居中） ([eb4c853](https://github.com/redtidev1918/deviantdrop/commit/eb4c853a1e4689dba94df9a39d6eaf754e925a62))
+
+
+### Bug Fixes
+
+* **cookie:** 剥离 BOM/零宽/书写方向前缀再识别 JSON，报错带具体原因 ([5cfec90](https://github.com/redtidev1918/deviantdrop/commit/5cfec90841a5e5dbd00f6d333b828ed81990b9d3))
+
 ## [1.9.0](https://github.com/redtidev1918/deviantdrop/compare/v1.8.0...v1.9.0) (2026-09-13)
 
 
