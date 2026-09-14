@@ -1,6 +1,6 @@
 {
   "name": "deviantdrop",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Telegram bot on Cloudflare Workers / self-hosted: paste a DeviantArt link (artwork page or fav.me) and get the image, video or GIF back. Replies link the original source and the DAViewer client (sister project).",
   "type": "module",
   "license": "MIT",
