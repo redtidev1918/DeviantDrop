@@ -387,6 +387,7 @@ async function handleAdminCommand(command, message, env) {
         "2. 点任一 `www.deviantart.com` 请求 → Headers → Request Headers；\n" +
         "3. 复制整行 `Cookie:` 的值，然后发给我：\n\n" +
         "`/cookie auth=…; auth_secure=…; userinfo=…`\n\n" +
+        "浏览器插件导出的 Cookie JSON（对象或数组格式）也可以直接粘，我会自动转换。\n" +
         "保存后我会立即验证并回报结果。发完请删除你自己的那条消息。",
       );
       return;

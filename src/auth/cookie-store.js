@@ -8,6 +8,51 @@ export const WEB_SESSION_STATUS = Object.freeze({
   EXPIRED: 'expired',
 });
 
+// RFC6265 cookie-octet 之外的字符不能原样出现在 Cookie 请求头里，逐字节 percent-encode。
+const COOKIE_OCTET_ENCODE = /[^\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]/g;
+
+export function encodeCookieValue(value) {
+  return String(value).replace(COOKIE_OCTET_ENCODE, (c) => {
+    const hex = c.charCodeAt(0).toString(16).toUpperCase();
+    return `%${hex.length < 2 ? `0${hex}` : hex}`;
+  });
+}
+
+// 把用户粘贴的 Cookie 统一转成请求头形式 "name=value; …"，接受三种输入：
+//   1) 浏览器 DevTools 复制的整行 Cookie 请求头（原样，允许 "cookie:" 前缀、换行折叠）；
+//   2) Cookie 插件导出的 JSON 对象 {"name": "value", …}（值可已是 %XX 编码，可多行）；
+//   3) Cookie 插件导出的 JSON 数组 [{"name","value","domain",…}, …]。
+// 非字符串值跳过、同名取最后一个；解析失败抛 "Cookie 格式无效/无法解析"。
+export function normalizeCookieHeader(input) {
+  let value = String(input ?? '').trim();
+  if (!value) throw new Error('Cookie 格式无效');
+  if (value[0] === '{' || value[0] === '[') {
+    let parsed;
+    try { parsed = JSON.parse(value); } catch { throw new Error('Cookie JSON 无法解析'); }
+    const pairs = [];
+    if (Array.isArray(parsed)) {
+      for (const item of parsed) {
+        if (item && typeof item === 'object' && typeof item.name === 'string' && item.name.trim()
+            && typeof item.value === 'string') pairs.push([item.name.trim(), item.value]);
+      }
+    } else if (parsed && typeof parsed === 'object') {
+      for (const [name, v] of Object.entries(parsed)) {
+        if (typeof v === 'string' && name.trim()) pairs.push([name.trim(), v]);
+      }
+    }
+    const parts = [];
+    const seen = new Set();
+    for (const [name, val] of pairs) {
+      if (seen.has(name)) continue;
+      seen.add(name);
+      parts.push(`${name}=${encodeCookieValue(val)}`);
+    }
+    if (!parts.length) throw new Error('Cookie 格式无效');
+    return parts.join('; ');
+  }
+  return value.replace(/^cookie:\s*/i, '').replace(/\s+/g, ' ').trim();
+}
+
 export class CookieStore {
   constructor({ path = '/data/auth/deviantart-cookies.json', seedEnvCookie = null } = {}) {
     this.path = path;
@@ -73,9 +118,11 @@ export class CookieStore {
     this.stamp = null;
   }
   set(cookies) {
-    if (typeof cookies !== 'string' || !cookies.trim() || cookies.length > 16384 || /[\r\n\0]/.test(cookies)) throw new Error('Cookie 格式无效');
-    if (!cookies.split(';').filter(s => s.trim()).every(s => /^\s*[\w-]+=[^;]*$/.test(s))) throw new Error('Cookie 格式无效');
-    this.write(cookies.trim(), WEB_SESSION_STATUS.UNKNOWN);
+    // 统一先归一化：整行头 / JSON 对象 / JSON 数组都转成 "name=value; …"。
+    const normalized = normalizeCookieHeader(cookies);
+    if (normalized.length > 16384 || /[\r\n\0]/.test(normalized)) throw new Error('Cookie 格式无效');
+    if (!normalized.split(';').filter(s => s.trim()).every(s => /^\s*[\w-]+=[^;]*$/.test(s))) throw new Error('Cookie 格式无效');
+    this.write(normalized, WEB_SESSION_STATUS.UNKNOWN);
   }
   markStatus(state) {
     if (!Object.values(WEB_SESSION_STATUS).includes(state)) throw new Error(`Unknown web session state: ${state}`);
