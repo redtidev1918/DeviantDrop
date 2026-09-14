@@ -4,9 +4,9 @@
 
 本页由 GitHub Actions 在每次发版时**自动更新**，始终指向最新 Release。
 
-## 最新版本：`v1.9.0`（2026-09-13）
+## 最新版本：`v1.10.0`（2026-09-14）
 
-👉 [查看 Release 说明与校验和](https://github.com/redtidev1918/deviantdrop/releases/tag/v1.9.0)
+👉 [查看 Release 说明与校验和](https://github.com/redtidev1918/deviantdrop/releases/tag/v1.10.0)
 
 ## 获取与部署
 
@@ -25,4 +25,4 @@ docker compose up -d --build
 
 | 平台 | 文件 | 大小 | 下载 |
 |---|---|---|---|
-| 通用 | `RELEASE-METADATA.json` | 1 KB | [⬇️ 下载](https://github.com/redtidev1918/deviantdrop/releases/download/v1.9.0/RELEASE-METADATA.json) |
+| 通用 | `RELEASE-METADATA.json` | 1 KB | [⬇️ 下载](https://github.com/redtidev1918/deviantdrop/releases/download/v1.10.0/RELEASE-METADATA.json) |
