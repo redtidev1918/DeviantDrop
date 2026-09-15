@@ -20,10 +20,16 @@ cp .env.example .env    # fill in BOT_TOKEN / WEBHOOK_SECRET / official API cred
 docker compose up -d --build
 ```
 
+**What you need**: a `BOT_TOKEN` from [@BotFather](https://t.me/BotFather); a DeviantArt
+official app (register at deviantart.com/developers and put its `CLIENT_ID` / `CLIENT_SECRET`
+into `.env` for OAuth access); and an egress DeviantArt allows (see above). No Docker?
+`npm install --omit=dev` then `node src/main.js`.
+
 ## What it handles
 
-- Recognises work links inside messages and captions (`https` / `www` / legacy domains /
-  `fav.me`), processing up to 5 at once.
+- Recognises work-page links inside messages and captions (`https` / `www` / legacy domains),
+  processing up to 5 at once; `fav.me` short links and `/view/{id}` are not supported — the bot
+  asks you to send the full work-page URL instead.
 - **The website `_puppy` endpoints come first** (video / GIF / new works / `additionalMedia`
   all come from the same adapter); when the network is unreachable and OAuth is configured,
   the official API is the fallback.
@@ -127,7 +133,7 @@ affects native Telegram sending. For same-host deployments prefer
 
 ### Dependencies
 
-- **Runtime**: Node.js ≥ 22 (or a Cloudflare Workers-compatible environment). Only two
+- **Runtime**: Node.js ≥ 22. Only two
   production dependencies: `undici` (HTTP and China-egress proxy) and `sharp` (>10MB image
   compression, lazy-loaded). See [package.json](package.json).
 - **Development**: `wrangler` is only used for local `dev`/dry-run validation and is never

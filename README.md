@@ -16,9 +16,15 @@ cp .env.example .env    # 填 BOT_TOKEN / WEBHOOK_SECRET / 官方 API 凭据；�
 docker compose up -d --build
 ```
 
+**你需要准备**：一个来自 [@BotFather](https://t.me/BotFather) 的 `BOT_TOKEN`；一个
+DeviantArt 官方应用（在 deviantart.com/developers 申请，填入 `CLIENT_ID` / `CLIENT_SECRET`，
+用于 OAuth 访问）；以及一个 DeviantArt 放行的出口（见上）。不想用 Docker 时，
+`npm install --omit=dev` 后 `node src/main.js` 即可。
+
 ## 支持范围
 
-- 识别消息与 caption 里的作品链接（`https` / `www` / 旧式域名 / fav.me 等），最多同时处理 5 个。
+- 识别消息与 caption 里的作品页链接（`https` / `www` / 旧式域名），最多同时处理 5 个；
+  `fav.me` 短链与 `/view/{id}` 不支持，会提示改用完整作品页网址。
 - **网页 `_puppy` 接口优先**（视频 / GIF / 新作品 / additionalMedia 都从同一适配器取），网络不可达且配置 OAuth 时用官方 API 兜底。
 - 照片/视频连续片段用 `sendMediaGroup` 相册发送（超过 10 张自动分批）；GIF/animation 始终独立 `sendAnimation`，不会拆散或重复 caption；超大图先压缩，失败再以 document 发送；Telegram 拉不动 CDN 时自动下载后 multipart 上传。
 - `/start` `/help` `/about` 命令；每聊天限流、去重、429/500/503 退避重试。
@@ -74,7 +80,7 @@ DeviantArt 有两层**互相独立**的能力，不要把它们混成一件事�
 
 ### 依赖
 
-- **运行时**：Node.js ≥ 22（或兼容 Cloudflare Workers 的环境）。生产依赖只有两个——`undici`（HTTP 与国内出口代理）和 `sharp`（>10MB 图片压缩，懒加载）。详见 [package.json](package.json)。
+- **运行时**：Node.js ≥ 22。生产依赖只有两个——`undici`（HTTP 与国内出口代理）和 `sharp`（>10MB 图片压缩，懒加载）。详见 [package.json](package.json)。
 - **开发**：`wrangler` 仅用于本地 `dev`/dry-run 校验，不进入 Docker 镜像。
 - **可选外部服务**：[TelePress](https://github.com/redtidev1918/telepress)（Telegraph 图集兜底）、[DAViewer](https://github.com/redtidev1918/daviewer) 客户端（浏览 DeviantArt 的桌面客户端，见下）。
 
