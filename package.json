@@ -1,11 +1,11 @@
 {
   "name": "deviantdrop",
   "version": "1.10.0",
-  "description": "Telegram bot on Cloudflare Workers / self-hosted: paste a DeviantArt link (artwork page or fav.me) and get the image, video or GIF back. Replies link the original source and the DAViewer client (sister project).",
+  "description": "Telegram bot: paste a DeviantArt artwork link, get the original image, video or GIF back with a source link. Self-hosted via Docker or Node.",
   "type": "module",
   "license": "MIT",
   "author": "redtidev1918",
-  "homepage": "https://github.com/redtidev1918/deviantdrop",
+  "homepage": "https://redtidev1918.github.io/deviantdrop/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/redtidev1918/deviantdrop.git"
@@ -16,9 +16,13 @@
   "keywords": [
     "telegram",
     "telegram-bot",
-    "cloudflare-workers",
     "deviantart",
-    "download"
+    "deviantart-api",
+    "deviantart-downloader",
+    "downloader",
+    "self-hosted",
+    "docker",
+    "nodejs"
   ],
   "scripts": {
     "dev": "wrangler dev",
