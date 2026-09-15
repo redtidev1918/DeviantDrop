@@ -54,10 +54,7 @@
         "id": "deploy-docs",
         "type": "github-workflow",
         "required": true,
-        "workflow": "static.yml",
-        "inputs": {
-          "tag": "{{tag}}"
-        }
+        "workflow": "static.yml"
       }
     ]
   }
