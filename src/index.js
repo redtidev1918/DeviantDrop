@@ -25,9 +25,9 @@ function daAdapter(env) {
 
 const REPO = "https://github.com/redtidev1918/deviantdrop";
 const DAVIEWER = "https://github.com/redtidev1918/daviewer";
-const HELP_TEXT = `发送 DeviantArt 单作品链接或 fav.me 短链，我会回复其中的图片、视频或 GIF。单条消息最多处理 ${MAX_LINKS} 个链接；图片/视频的 caption 里带链接也可以。\n\n/start 开始 · /help 用法 · /about 项目与源码`;
-const ABOUT_TEXT = `DeviantDrop：把 DeviantArt 作品「丢」进 Telegram 的 Bot。\n\n发送 DeviantArt 作品页或 fav.me 短链，即可收到图片、视频或 GIF；每条回复的媒体 caption 末尾都带小号「source」链接回到原作品页，单图/视频还有「📲 DeviantArt 客户端」按钮带你下载成品客户端。\n\n开源项目（MIT）：${REPO}\nDAViewer 客户端（兄弟项目）：${DAVIEWER}\n源码、部署与使用说明都在仓库里，欢迎 star、提 issue。`;
-const HINT_TEXT = `没有找到可下载的 DeviantArt 链接。\n\n发送 DeviantArt 作品页或 fav.me 短链，即可收到图片、视频或 GIF。\n/help 查看用法，/about 查看项目与源码。`;
+const HELP_TEXT = `发送 DeviantArt 作品页链接，我会回复其中的图片、视频或 GIF（fav.me 短链不支持，请发完整作品页网址）。单条消息最多处理 ${MAX_LINKS} 个链接；图片/视频的 caption 里带链接也可以。\n\n/start 开始 · /help 用法 · /about 项目与源码`;
+const ABOUT_TEXT = `DeviantDrop：把 DeviantArt 作品「丢」进 Telegram 的 Bot。\n\n发送 DeviantArt 作品页链接，即可收到图片、视频或 GIF（fav.me 短链不支持）；每条回复的媒体 caption 末尾都带小号「source」链接回到原作品页，单图/视频还有「📲 DeviantArt 客户端」按钮带你下载成品客户端。\n\n开源项目（MIT）：${REPO}\nDAViewer 客户端（兄弟项目）：${DAVIEWER}\n源码、部署与使用说明都在仓库里，欢迎 star、提 issue。`;
+const HINT_TEXT = `没有找到可下载的 DeviantArt 链接。\n\n发送 DeviantArt 作品页链接（不支持 fav.me 短链），即可收到图片、视频或 GIF。\n/help 查看用法，/about 查看项目与源码。`;
 
 // 入口结果词汇表：handleMessage 返回的原因里，哪些算「候选被拒」（有意不处理），
 // 哪些算「已处理」。以前 /start 也会被记成 rejected，等于把「正常回复」误报成丢弃，
