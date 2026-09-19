@@ -560,11 +560,21 @@ async function takeLinkBudget(chatId, count) {
 //   2) 网页不可达时，若配置了官方 API 凭据则走「官方 API + archive.org 存档映射」兜底。
 async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onStatus = null) {
   const target = parseAdapterTarget(url);
-  const cached = await cacheGet("fid", `d3:${target.id}`);
-  if (Array.isArray(cached?.files) && cached.files.length && cached.files.every((file) => file?.file_id)) {
-    dlog("delivery", `replay file ids id=${target.id} files=${cached.files.length}`);
-    await sendFileIdPlan(cached.files, message, env, { ...cached.cap, sourceUrl: url.href, status: cached.cap?.status || {} });
-    return;
+  const botId = Number(String(env.BOT_TOKEN || "").split(":")[0]) || 0;
+  const workCacheKey = `d3:${botId}:${target.id}`;
+  const cached = await cacheGet("fid", workCacheKey);
+  if (Array.isArray(cached?.assets) && cached.assets.length) {
+    const files = [];
+    for (const asset of cached.assets) {
+      const entry = await cacheGet("fid", `a:${botId}:${asset.assetId}`);
+      if (!entry?.file_id) break;
+      files.push({ kind: entry.kind, file_id: entry.file_id });
+    }
+    if (files.length === cached.assets.length) {
+      dlog("delivery", `replay file ids id=${target.id} bot=${botId} files=${files.length}`);
+      await sendFileIdPlan(files, message, env, { ...cached.cap, sourceUrl: url.href, status: cached.cap?.status || {} });
+      return;
+    }
   }
 
   let artwork;
@@ -628,7 +638,16 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
   }
 
   const files = filesFromResults(results);
-  if (files.length) await cacheSet("fid", `d3:${target.id}`, { kind: files.length === 1 ? files[0].kind : "album", title: artwork.titleLabel, files, cap }, 30 * 24 * 3600);
+  if (files.length) {
+    const assets = artwork.media.map((m) => ({ assetId: m.assetId, kind: m.kind }));
+    for (let i = 0; i < Math.min(files.length, artwork.media.length); i += 1) {
+      const media = artwork.media[i];
+      const file = files[i];
+      if (!file?.file_id || !media?.assetId) continue;
+      await cacheSet("fid", `a:${botId}:${media.assetId}`, { kind: file.kind, file_id: file.file_id }, 30 * 24 * 3600);
+    }
+    await cacheSet("fid", workCacheKey, { title: artwork.titleLabel, cap, assets }, 30 * 24 * 3600);
+  }
   const published = await publishArtwork(env, target.id, toPublisherMedia(artwork), url.href);
   if (published) await sendPublishedLink(message, env, target.id, url.href, published).catch(() => {});
 }

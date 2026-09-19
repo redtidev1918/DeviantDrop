@@ -98,13 +98,20 @@ export function normalizeArtwork(deviation, { sourceUrl, expansionAuthorized = t
   const main = pickDescriptorMedia(primaryDescriptor);
   if (!main) throw new Error("DeviantArt 作品没有可用媒体");
 
-  const media = [{
+  const workId = deviation.extended?.deviationUuid
+    || String(deviation.deviationId || deviation.deviationid || deviation.id || "");
+  const media = [];
+  let index = 0;
+  media.push({
+    assetId: `deviantart:${workId}:p${index}`,
+    index,
     kind: main.kind,
     url: main.url,
     fallbackUrl: displayMediaUrl(primaryDescriptor),
     mimeType: mimeForKind(main.kind),
     originalAvailable: !isBlurredUrl(main.url),
-  }];
+  });
+  index += 1;
 
   let skippedMedia = 0;
   const rawExtras = deviation.extended?.additionalMedia;
@@ -122,12 +129,15 @@ export function normalizeArtwork(deviation, { sourceUrl, expansionAuthorized = t
           continue;
         }
         media.push({
+          assetId: `deviantart:${workId}:p${index}`,
+          index,
           kind: picked.kind,
           url: picked.url,
           fallbackUrl: displayMediaUrl(descriptor),
           mimeType: mimeForKind(picked.kind),
           originalAvailable: !isBlurredUrl(picked.url),
         });
+        index += 1;
       }
     }
   }

@@ -39,3 +39,24 @@ test('mature_loggedout marks the response unauthorized: only extra pages are ski
   // 主图由 OAuth 层负责；normalizer 只如实标注网页给的是打码文件。
   assert.equal(artwork.media[0].originalAvailable, false);
 });
+
+test('normalizeArtwork attaches stable asset identity to every media file', () => {
+  const artwork = normalizeArtwork({
+    deviationId: 'abc',
+    isMultiMedia: true,
+    media: { baseUri: 'https://cdn.test/main.jpg', token: 'm' },
+    extended: {
+      deviationUuid: 'u1',
+      additionalMedia: [
+        { media: { baseUri: 'https://cdn.test/p1.jpg', token: 'p1' } },
+        { media: { baseUri: 'https://cdn.test/p2.png', token: 'p2' } },
+      ],
+    },
+  }, { sourceUrl: 'https://www.deviantart.com/a/art/x-abc' });
+
+  assert.deepEqual(artwork.media.map((m) => [m.assetId, m.index]), [
+    ['deviantart:u1:p0', 0],
+    ['deviantart:u1:p1', 1],
+    ['deviantart:u1:p2', 2],
+  ]);
+});
