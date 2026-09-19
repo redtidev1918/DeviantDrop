@@ -83,13 +83,20 @@ access token 与网页 `_puppy` 会话（CSRF + Cookie 复用）只放内存，�
 
 `TELEPRESS_URL` 未设置时无额外依赖。设置后默认 `TELEPRESS_MODE=fallback`；`large-gallery` 为纯图片 >10 张生成可选图集，`always` 仅明确选择时使用，`off` 完全关闭。视频/GIF 不转 Telegraph。缓存同作品 URL 90 天，重复使用，不反复创建页面。额外 Telegraph 入口才发送按钮消息；配置了公网预览域名时该消息的 link_preview_options 指向本站。
 
-TelePress 发起失败不会影响原生 Telegram 成功结果；Telegram 失败且 TelePress 成功时提供图集入口。可选发布当前限制 50 张/合计 50 MiB，超出跳过可选发布，继续原链路。可选发布需要再下载图片；尚未改成跨服务流式中转。
+TelePress 发起失败不会影响原生 Telegram 成功结果；Telegram 失败且 TelePress 成功时提供图集入口。可选发布当前限制 50 张/合计 50 MiB，超出跳过可选发布，继续原链路。
 
-TelePress 端点是 `POST /publish/gallery`，重复 `files` multipart + title/link，返回 url。两端配置同一个 `TELEPRESS_API_KEY`（Bearer）。服务只绑定回环/内部网络，不能把未设 key 的发布接口直接暴露公网。没有服务 URL、图片托管配置和有效 Telegraph 凭据时，本轮不会代建在线图集。
+TelePress 端点是 `POST /publish/gallery`，默认只接受重复 `files` multipart + title/link，返回 url；两端配置同一个 `TELEPRESS_API_KEY`（Bearer）。服务只绑定回环/内部网络，不能把未设 key 的发布接口直接暴露公网。没有服务 URL、图片托管配置和有效 Telegraph 凭据时，本 Bot 不会代建在线图集。
+
+**可选远程 media manifest（默认关闭）**：TelePress 服务端设
+`TELEPRESS_ALLOW_REMOTE_GALLERY_MEDIA=1`，DeviantDrop 设
+`TELEPRESS_REMOTE_GALLERY_MEDIA=1` 后，`/publish/gallery` 才接受轻量 `media`
+JSON（`assetId/kind/sourceUrl`），由 TelePress 服务端代拉 https 图片；任一缺失都会
+自动回落二进制 multipart。适合「有内部/受信客户端、不想让 Bot 缓冲整本大图集」的
+场景，不建议直接暴露公网。详见 [docs/VPS-public-ip.md](VPS-public-ip.md)。
 
 ## 配置变化与模块
 
-新增/完善：`PUBLIC_BASE_URL`、`HTTP_HOST`、`ADMIN_IDS`、`AUTH_DIR`、`TELEPRESS_URL`、`TELEPRESS_API_KEY`、`TELEPRESS_MODE`。保留 `MODE=poll|webhook`、代理、Cookie/OAuth seed 和现有缓存目录配置。`SERVER` 必须显式设置，仓库不再带实际部署地址默认值。
+新增/完善：`PUBLIC_BASE_URL`、`HTTP_HOST`、`ADMIN_IDS`、`AUTH_DIR`、`TELEPRESS_URL`、`TELEPRESS_API_KEY`、`TELEPRESS_MODE`、`TELEPRESS_REMOTE_GALLERY_MEDIA`。保留 `MODE=poll|webhook`、代理、Cookie/OAuth seed 和现有缓存目录配置。`SERVER` 必须显式设置，仓库不再带实际部署地址默认值。
 
 ```text
 src/

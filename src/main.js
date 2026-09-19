@@ -116,6 +116,9 @@ const telepress = new TelePress({
   url: process.env.TELEPRESS_URL || "",
   apiKey: process.env.TELEPRESS_API_KEY || "",
   mode: process.env.TELEPRESS_MODE || "fallback",
+  // 远程 MediaReference 图集是可选能力，默认关闭；只有显式 TELEPRESS_REMOTE_GALLERY_MEDIA=1
+  // 才会先尝试 manifest，失败再回落二进制 multipart。
+  remoteMedia: ["1", "true", "yes", "on"].includes((process.env.TELEPRESS_REMOTE_GALLERY_MEDIA || "").trim().toLowerCase()),
   cacheGet, cacheSet,
 });
 

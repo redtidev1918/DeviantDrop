@@ -14,10 +14,11 @@
 const LARGE_GALLERY_THRESHOLD = 10;
 
 export class TelePress {
-  constructor({ url = "", apiKey = "", mode = "off", cacheGet, cacheSet, fetchImpl = null } = {}) {
+  constructor({ url = "", apiKey = "", mode = "off", remoteMedia = false, cacheGet, cacheSet, fetchImpl = null } = {}) {
     this.url = (url || "").replace(/\/$/, "");
     this.apiKey = apiKey || "";
     this.mode = (mode || "off").toLowerCase();
+    this.remoteMedia = !!remoteMedia;
     this.cacheGet = cacheGet || (async () => null);
     this.cacheSet = cacheSet || (async () => {});
     this.fetchImpl = fetchImpl || globalThis.fetch;
@@ -25,6 +26,13 @@ export class TelePress {
 
   enabled() {
     return this.mode !== "off" && !!this.url;
+  }
+
+  // 远程 MediaReference 图集路径是可选能力：默认关闭（保持「图片直接发给
+  // Telegram / 只走原生 multipart files」的默认链路）。只有两端都显式开启时，
+  // publishArtwork 才会先尝试给 TelePress 发轻量 manifest，让服务端自己拉图。
+  remoteMediaEnabled() {
+    return this.remoteMedia && this.enabled();
   }
 
   // 图片数量是否达到「大图集」主动建页门槛。
@@ -52,17 +60,23 @@ export class TelePress {
   }
 
   // 发布图集。files: [{ data: ArrayBuffer/Buffer/Uint8Array, filename, contentType }]
+  // media: [{ assetId, kind, sourceUrl, filename? }] —— 仅当 remoteMedia 开启时使用，
+  // 让 TelePress 服务端自己拉取远程 https 图片（对应 TELEPRESS_ALLOW_REMOTE_GALLERY_MEDIA）。
   // 返回 { url } 或 null（失败/未启用）。永不抛出（兜底语义）。
-  async publishGallery({ deviationId, title = "", files = [], link = "", tags = "" } = {}) {
+  async publishGallery({ deviationId, title = "", files = [], link = "", tags = "", media = [] } = {}) {
     if (!this.enabled()) return null;
     try {
       const cached = await this.getCachedUrl(deviationId);
       if (cached) return { url: cached, cached: true };
       const form = new FormData();
-      files.forEach((f, i) => {
-        const blob = new Blob([f.data], { type: f.contentType || "image/jpeg" });
-        form.append("files", blob, f.filename || `image-${i + 1}.jpg`);
-      });
+      if (media.length && this.remoteMediaEnabled()) {
+        form.append("media", JSON.stringify(media));
+      } else {
+        files.forEach((f, i) => {
+          const blob = new Blob([f.data], { type: f.contentType || "image/jpeg" });
+          form.append("files", blob, f.filename || `image-${i + 1}.jpg`);
+        });
+      }
       if (title) form.append("title", title);
       if (tags) form.append("tags", tags);
       if (link) form.append("link", link);
