@@ -10,6 +10,20 @@
 
 ---
 
+## [1.11.0](https://github.com/redtidev1918/deviantdrop/compare/v1.10.0...v1.11.0) (2026-09-19)
+
+
+### Features
+
+* **cache:** per-asset file_id replay keyed by bot identity ([#37](https://github.com/redtidev1918/deviantdrop/issues/37)) ([d8d5e90](https://github.com/redtidev1918/deviantdrop/commit/d8d5e90a29b6c7275162545a1a1e00da49a543fd))
+* **gallery:** send MediaReference manifest to TelePress before buffering ([#38](https://github.com/redtidev1918/deviantdrop/issues/38)) ([ffe11e5](https://github.com/redtidev1918/deviantdrop/commit/ffe11e573aaef7341fcb1ff3ff927232dff1d777))
+
+
+### Bug Fixes
+
+* postRelease deploy-docs dispatches on default branch (Pages needs branch ref) ([0a7cee7](https://github.com/redtidev1918/deviantdrop/commit/0a7cee7020c020ac15379c3199d6554f9a688e33))
+* workflow_dispatch inputs must not carry description (GitHub dispatch 422) ([17d6e7b](https://github.com/redtidev1918/deviantdrop/commit/17d6e7b4822c68e5ceed77688080cf27e2373039))
+
 ## [1.10.0](https://github.com/redtidev1918/deviantdrop/compare/v1.9.0...v1.10.0) (2026-09-14)
 
 
