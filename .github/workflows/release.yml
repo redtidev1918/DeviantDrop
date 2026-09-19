@@ -19,6 +19,7 @@ permissions:
   pull-requests: write
   packages: write
   issues: write
+  actions: write # post-release workflow_dispatch from releasegraph (download page + Pages)
   id-token: write
 
 jobs:
