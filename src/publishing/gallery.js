@@ -14,7 +14,7 @@ export async function publishArtwork(env, id, media, sourceUrl, failed = false) 
     if(items.length>50)return null;
     // Manifest path first: send tiny MediaReference[] so TelePress fetches remotely and DeviantDrop never buffers MiB into memory.
     const refs = items.map((item) => ({ assetId: item.assetId, kind: item.kind, sourceUrl: item.url }));
-    const manifestResult = await client.publishGallery({ deviationId: id, title: media.title, media: refs, link: sourceUrl });
+    const manifestResult = await client.publishGallery({ deviationId: id, title: media.title, manifest: refs, link: sourceUrl });
     if (manifestResult?.url) return manifestResult.url;
     // Fallback: TelePress older/without media support -> legacy binary multipart.
     const files=[];let total=0;
