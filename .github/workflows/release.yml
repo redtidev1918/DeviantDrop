@@ -41,6 +41,7 @@ jobs:
     needs: release
     if: >-
       needs.release.result == 'success' &&
+      needs.release.outputs.run_release == '1' &&
       github.event_name != 'pull_request' &&
       needs.release.outputs.tag != null &&
       needs.release.outputs.tag != ''
