@@ -70,7 +70,7 @@ TELEPRESS_MODE=large-gallery      # 或 fallback；off 则完全不启用
 
 ## 4. 可选：给有公网 IP 的外部客户端开放 TelePress
 
-> 这一步**不推荐**，只在确实需要让 PixivFlow 等外部客户端用你的公网 IP 直接访问时采用。
+> 这一步**不推荐**，只在确实需要让受信任的外部客户端用你的公网 IP 直接访问时采用。
 
 ```bash
 # 1. TelePress 改为监听 0.0.0.0（注意：HTTP 明文）
