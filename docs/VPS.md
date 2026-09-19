@@ -9,6 +9,10 @@ Cloudflare Workers 的出口被 DeviantArt 全面封锁，因此 Bot 跑在普�
 > 2026-09 实测结论：阿里云直连 DA 超时（被墙）；经机场（HK）出口 DA 官方 API
 > 数据面与网页均为 200。Cloudflare Workers/Fly 出口则被 DA 按数据中心 IP 拦截。
 
+> 只有公网 IP、没有域名？直接看 [docs/VPS-public-ip.md](VPS-public-ip.md)：保持
+> `MODE=poll` + TelePress 绑回环口即可，不需要域名/TLS/反代；远程媒体 manifest
+> 是可选开关、默认关闭。
+
 ## 0. 30 秒检测你的出口可用性
 
 ```bash

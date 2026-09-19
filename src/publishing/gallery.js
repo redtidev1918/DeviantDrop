@@ -12,6 +12,14 @@ export async function publishArtwork(env, id, media, sourceUrl, failed = false) 
     if(cached)return cached;
     // ponytail: cap optional publication at 50 photos / 50 MiB; stream to TelePress if larger galleries matter.
     if(items.length>50)return null;
+    // 可选：两端都显式开启远程 MediaReference 后才发轻量 manifest（默认关闭）。
+    // 否则/失败都回落到底下原生二进制 multipart（图片直接发给 Telegram 的默认链路不受影响）。
+    if(client.remoteMediaEnabled() && items.every(i=>i.assetId&&i.url)){
+      const refs=items.map((item)=>({assetId:item.assetId,kind:item.kind,sourceUrl:item.url}));
+      const manifestResult=await client.publishGallery({deviationId:id,title:media.title,media:refs,link:sourceUrl});
+      if(manifestResult?.url)return manifestResult.url;
+      // manifest 失败（TelePress 较旧 / 未开远端拉图 / 网络异常）时继续走二进制 multipart 兜底。
+    }
     const files=[];let total=0;
     for(const item of items){
       const r=await fetchPublicMedia(item.url);

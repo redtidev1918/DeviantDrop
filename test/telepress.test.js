@@ -64,3 +64,44 @@ test("publishGallery：携带 Bearer 鉴权头", async () => {
   await t.publishGallery({ deviationId: "1", files: [{ data: new Uint8Array([1]) }] });
   assert.equal(seen.Authorization, "Bearer k123");
 });
+
+test("remoteMedia 默认关闭；开启后 remoteMediaEnabled 为真", () => {
+  const off = new TelePress({ url: "http://127.0.0.1:9000", mode: "large-gallery", ...memCache() });
+  assert.equal(off.remoteMediaEnabled(), false, "默认不进 manifest 路径");
+  const on = new TelePress({ url: "http://127.0.0.1:9000", mode: "large-gallery", remoteMedia: true, ...memCache() });
+  assert.equal(on.remoteMediaEnabled(), true);
+});
+
+test("publishGallery：remoteMedia 开启且传 media 时发送轻量 manifest，不带 files", async () => {
+  let seen = null;
+  const fetchImpl = async (url, init) => {
+    seen = init.body;
+    return Response.json({ url: "https://telegra.ph/manifest" });
+  };
+  const t = new TelePress({ url: "http://127.0.0.1:9000", mode: "large-gallery", remoteMedia: true, fetchImpl, ...memCache() });
+  const media = [
+    { assetId: "deviantart:u1:p0", kind: "photo", sourceUrl: "https://cdn.test/1.jpg" },
+    { assetId: "deviantart:u1:p1", kind: "photo", sourceUrl: "https://cdn.test/2.jpg" },
+  ];
+  const r = await t.publishGallery({ deviationId: "m1", title: "远程", media, link: "https://da/x" });
+  assert.equal(r.url, "https://telegra.ph/manifest");
+  assert.ok(seen instanceof FormData, "请求体应为 multipart FormData");
+  assert.equal(seen.get("files"), null, "media 路径不应携带 files 字段");
+  const payload = seen.get("media");
+  assert.ok(payload, "应包含 media 表单字段");
+  assert.deepEqual(JSON.parse(payload), media);
+});
+
+test("publishGallery：remoteMedia 关闭时即使传入 media 也只走原 files 字段", async () => {
+  let seen = null;
+  const fetchImpl = async (url, init) => {
+    seen = init.body;
+    return Response.json({ url: "https://telegra.ph/local" });
+  };
+  const t = new TelePress({ url: "http://127.0.0.1:9000", mode: "large-gallery", remoteMedia: false, fetchImpl, ...memCache() });
+  const r = await t.publishGallery({ deviationId: "m2", files: [{ data: new Uint8Array([1]) }], media: [{ sourceUrl: "https://cdn.test/1.jpg" }] });
+  assert.equal(r.url, "https://telegra.ph/local");
+  assert.ok(seen instanceof FormData);
+  assert.ok(seen.getAll("files").length === 1, "仍然走二进制 files 字段");
+  assert.equal(seen.get("media"), null, "默认不应发送 media");
+});
