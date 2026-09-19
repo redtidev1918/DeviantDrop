@@ -10,6 +10,13 @@
 
 ---
 
+## [1.12.1](https://github.com/redtidev1918/deviantdrop/compare/v1.12.0...v1.12.1) (2026-09-19)
+
+
+### Bug Fixes
+
+* **ci:** only refresh download page when a new release is published ([30b884d](https://github.com/redtidev1918/deviantdrop/commit/30b884d64164222601d1bc8aca65c3ea38fe0a42))
+
 ## [1.12.0](https://github.com/redtidev1918/deviantdrop/compare/v1.11.0...v1.12.0) (2026-09-19)
 
 
