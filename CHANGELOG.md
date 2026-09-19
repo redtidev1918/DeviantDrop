@@ -10,6 +10,13 @@
 
 ---
 
+## [1.12.0](https://github.com/redtidev1918/deviantdrop/compare/v1.11.0...v1.12.0) (2026-09-19)
+
+
+### Features
+
+* **telepress:** opt-in remote gallery media manifest + VPS/docs ([#45](https://github.com/redtidev1918/deviantdrop/issues/45)) ([374df94](https://github.com/redtidev1918/deviantdrop/commit/374df94efe2ae07e913ec3ef913f852af18f9be0))
+
 ## [1.11.0](https://github.com/redtidev1918/deviantdrop/compare/v1.10.0...v1.11.0) (2026-09-19)
 
 
