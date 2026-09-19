@@ -53,16 +53,20 @@ export class TelePress {
 
   // 发布图集。files: [{ data: ArrayBuffer/Buffer/Uint8Array, filename, contentType }]
   // 返回 { url } 或 null（失败/未启用）。永不抛出（兜底语义）。
-  async publishGallery({ deviationId, title = "", files = [], link = "", tags = "" } = {}) {
+  async publishGallery({ deviationId, title = "", files = [], link = "", tags = "", media = [] } = {}) {
     if (!this.enabled()) return null;
     try {
       const cached = await this.getCachedUrl(deviationId);
       if (cached) return { url: cached, cached: true };
       const form = new FormData();
-      files.forEach((f, i) => {
-        const blob = new Blob([f.data], { type: f.contentType || "image/jpeg" });
-        form.append("files", blob, f.filename || `image-${i + 1}.jpg`);
-      });
+      if (media.length) {
+        form.append("media", JSON.stringify(media));
+      } else {
+        files.forEach((f, i) => {
+          const blob = new Blob([f.data], { type: f.contentType || "image/jpeg" });
+          form.append("files", blob, f.filename || `image-${i + 1}.jpg`);
+        });
+      }
       if (title) form.append("title", title);
       if (tags) form.append("tags", tags);
       if (link) form.append("link", link);

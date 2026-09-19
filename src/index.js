@@ -653,11 +653,13 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
 }
 
 function toPublisherMedia(artwork) {
+  const first = artwork.media[0] || {};
   return {
     title: artwork.titleLabel,
-    kind: artwork.media[0]?.kind || "photo",
-    url: artwork.media[0]?.url,
-    extras: artwork.media.slice(1).map((item) => ({ kind: item.kind, url: item.url })),
+    kind: first.kind || "photo",
+    url: first.url,
+    assetId: first.assetId,
+    extras: artwork.media.slice(1).map((item) => ({ kind: item.kind, url: item.url, assetId: item.assetId })),
   };
 }
 
