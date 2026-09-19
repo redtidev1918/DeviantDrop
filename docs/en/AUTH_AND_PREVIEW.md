@@ -185,10 +185,18 @@ only to loopback/internal networks; never expose a key-less publish endpoint to 
 internet. Without a service URL, image-host configuration and valid Telegraph credentials, no
 online gallery is created.
 
+**Optional remote media manifest (off by default):** When the TelePress server sets
+`TELEPRESS_ALLOW_REMOTE_GALLERY_MEDIA=1` and DeviantDrop sets
+`TELEPRESS_REMOTE_GALLERY_MEDIA=1`, `/publish/gallery` accepts a lightweight `media` JSON
+(`assetId/kind/sourceUrl`) and the TelePress server fetches the https images itself; if either
+setting is missing it automatically falls back to binary multipart. Suited for internal/trusted
+clients that prefer not to have the bot buffer whole large albums; not recommended for direct
+public exposure. See [docs/VPS-public-ip.md](/VPS-public-ip.md).
+
 ## Configuration changes and modules
 
 Added/refined: `PUBLIC_BASE_URL`, `HTTP_HOST`, `ADMIN_IDS`, `AUTH_DIR`, `TELEPRESS_URL`,
-`TELEPRESS_API_KEY`, `TELEPRESS_MODE`. Kept: `MODE=poll|webhook`, proxy, cookie/OAuth seeds and
+`TELEPRESS_API_KEY`, `TELEPRESS_MODE`, `TELEPRESS_REMOTE_GALLERY_MEDIA`. Kept: `MODE=poll|webhook`, proxy, cookie/OAuth seeds and
 the existing cache-directory settings. `SERVER` must be set explicitly; the repository no longer
 ships a real deployment address as a default.
 

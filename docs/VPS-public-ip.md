@@ -1,6 +1,6 @@
 # 公网 IP / 无域名部署（VPS 只有 IP，没有域名）
 
-**语言 / Language:** 中文
+**语言 / Language:** 中文 · [English](/en/VPS-public-ip.md)
 
 如果你的 VPS 有公网 IP 但暂时不想注册域名，本文档给出不需要域名/TLS 的部署方式，
 并说明之前被回滚的「远程媒体 manifest」能力如何作为**可选开关**重新启用（默认关闭）。
@@ -50,7 +50,7 @@ TelePress 是可选辅助（大图集 / Telegram 发送失败兜底）。同机�
 
 ```bash
 # 装可选 API 依赖
-pip install "telepress[api]==0.13.1"
+pip install "telepress[api]==0.14.0"
 
 # 只绑回环口，不绑 0.0.0.0
 # 建议配 TELEPRESS_API_KEY，两端用同一个 Key

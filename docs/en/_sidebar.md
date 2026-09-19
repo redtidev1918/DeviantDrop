@@ -2,6 +2,7 @@
   - [Overview](/en/)
   - [Download & Deploy](/en/download.md)
   - [VPS Deployment Handbook](/en/VPS.md)
+  - [Public IP / No-domain Deployment](/en/VPS-public-ip.md)
 - Usage & Configuration
   - [Authentication, Preview and Publishing](/en/AUTH_AND_PREVIEW.md)
   - [Release Orchestration](/en/RELEASEGRAPH.md)

@@ -2,6 +2,7 @@
   - [概览](/)
   - [下载与部署](/download.md)
   - [部署（VPS / Docker / Node）](/VPS.md)
+  - [公网 IP / 无域名部署](/VPS-public-ip.md)
 - 使用与配置
   - [认证、预览与多图扩展](/AUTH_AND_PREVIEW.md)
   - [发布编排（ReleaseGraph）](/RELEASEGRAPH.md)

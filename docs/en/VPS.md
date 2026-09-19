@@ -11,6 +11,8 @@ the proxy's egress must be one DeviantArt allows.
 > airport (HK) egress both the official DA API data plane and the website return 200. Cloudflare
 > Workers / Fly egress is blocked by DA on datacenter IPs.
 
+> Only have a public IP and no domain? See [Public IP / no-domain deployment](/en/VPS-public-ip.md): keep `MODE=poll` and TelePress bound to loopback; remote media manifest is optional and off by default.
+
 ## 0. Check your egress in 30 seconds
 
 ```bash
