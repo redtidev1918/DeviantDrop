@@ -11,7 +11,7 @@ export const MEDIA_FIELDS = {
 
 export const MIME_BY_EXTENSION = {
   jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
-  gif: 'image/gif', mp4: 'video/mp4', m4v: 'video/mp4',
+  gif: 'image/gif', mp4: 'video/mp4', m4v: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', mkv: 'video/x-matroska',
 };
 
 export async function downloadMedia(item, onStatus = null, label = '媒体下载') {

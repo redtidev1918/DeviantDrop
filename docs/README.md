@@ -123,3 +123,6 @@ npm run check                               # 本地 12 项测试 + 语法检查
 - [TelePost](https://github.com/redtidev1918/TelePost)：Telegram photo/video/animation 类型映射。
 
 发布编排（ReleaseGraph 接入现状与下一代协议切换清单）见 [发布编排说明](RELEASEGRAPH.md)。
+可靠性架构：[认证](architecture/authentication.md)、[媒体管线](architecture/media-pipeline.md)、
+[Delivery 生命周期](architecture/delivery-lifecycle.md)、[会话恢复](operations/session-recovery.md)、
+[媒体交付测试](testing/media-delivery.md)。

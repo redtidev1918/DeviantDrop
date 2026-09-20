@@ -15,7 +15,7 @@ function notesEnabled(env, message) {
 
 function reply(message) {
   return {
-    reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true },
+    reply_parameters: { message_id: message.message_id, allow_sending_without_reply: false },
     ...(message.message_thread_id ? { message_thread_id: message.message_thread_id } : {}),
   };
 }
@@ -180,7 +180,7 @@ async function uploadSingle(entry, message, env, caption, primary, cap, onStatus
 function baseForm(message) {
   const form = new FormData();
   form.set('chat_id', String(message.chat.id));
-  form.set('reply_parameters', JSON.stringify({ message_id: message.message_id, allow_sending_without_reply: true }));
+  form.set('reply_parameters', JSON.stringify({ message_id: message.message_id, allow_sending_without_reply: false }));
   if (message.message_thread_id) form.set('message_thread_id', String(message.message_thread_id));
   return form;
 }

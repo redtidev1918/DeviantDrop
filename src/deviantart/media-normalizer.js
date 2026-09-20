@@ -8,7 +8,7 @@ function extensionKind(value = "") {
     pathname = String(value).split("?", 1)[0].toLowerCase();
   }
   if (pathname.endsWith(".gif")) return "animation";
-  if (pathname.endsWith(".mp4") || pathname.endsWith(".m4v")) return "video";
+  if (/\.(?:mp4|m4v|webm|mov|mkv)$/.test(pathname)) return "video";
   if (/\.(?:jpe?g|png|webp|avif)$/.test(pathname)) return "photo";
   return null;
 }
@@ -77,7 +77,7 @@ export function isBlurredUrl(value = "") {
 // 媒体 URL -> 发送类型（GIF 必须走 animation，不能混进 photo 相册）。
 export function kindOfUrl(value) {
   if (/\.gif($|\?)/i.test(value)) return "animation";
-  if (/\.(mp4|m4v)($|\?)/i.test(value)) return "video";
+  if (/\.(?:mp4|m4v|webm|mov|mkv)($|\?)/i.test(value)) return "video";
   return "photo";
 }
 

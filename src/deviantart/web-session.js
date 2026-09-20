@@ -91,7 +91,14 @@ export async function getWebSession(env, memo = {}, { cacheGet = async () => nul
   if (cookies) {
     const loggedIn = homepageLoggedIn(html);
     const loggedOutMarker = /\\?"isLoggedIn\\?"\s*:\s*false/.test(html);
-    if (loggedIn) env.cookieStore?.markStatus?.(WEB_SESSION_STATUS.VALID);
+    if (loggedIn) {
+      env.cookieStore?.markStatus?.(WEB_SESSION_STATUS.VALID);
+      // Only persist upstream rotation on an authoritative signed-in response;
+      // an anonymous/WAF response must never overwrite a live login snapshot.
+      if (!loggedOutMarker && env.cookieStore?.mergeCookies) {
+        env.cookieStore.mergeCookies(getCookies(home.headers));
+      }
+    }
     if (loggedOutMarker) {
       env.cookieStore?.markStatus?.(WEB_SESSION_STATUS.EXPIRED);
       await env.authNotifier?.notifyInvalid('homepage_logged_out', 'cookie');

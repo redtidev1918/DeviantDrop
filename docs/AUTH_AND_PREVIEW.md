@@ -88,6 +88,10 @@ TelePress 发起失败不会影响原生 Telegram 成功结果；Telegram 失败
 TelePress 端点是 `POST /publish/gallery`，默认只接受重复 `files` multipart + title/link，返回 url；两端配置同一个 `TELEPRESS_API_KEY`（Bearer）。服务只绑定回环/内部网络，不能把未设 key 的发布接口直接暴露公网。没有服务 URL、图片托管配置和有效 Telegraph 凭据时，本 Bot 不会代建在线图集。
 
 **可选远程 media manifest（默认关闭）**：TelePress 服务端设
+Web 会话文件在启动后始终优先于 `DA_COOKIES`；环境变量只是首次 seed。登录态 Cookie 的上游轮换会
+在已登录响应上合并写回 `/data/auth/deviantart-cookies.json`（原子写、`0600`），匿名/WAF 或未登录响应不会覆盖有效快照。
+详见 [架构/认证](architecture/authentication.md) 与 [会话恢复](operations/session-recovery.md)。
+
 `TELEPRESS_ALLOW_REMOTE_GALLERY_MEDIA=1`，DeviantDrop 设
 `TELEPRESS_REMOTE_GALLERY_MEDIA=1` 后，`/publish/gallery` 才接受轻量 `media`
 JSON（`assetId/kind/sourceUrl`），由 TelePress 服务端代拉 https 图片；任一缺失都会

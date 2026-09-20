@@ -58,6 +58,26 @@ export function normalizeCookieHeader(input) {
   return header;
 }
 
+export function parseCookiePairs(header) {
+  const pairs = new Map();
+  for (const part of String(header || '').split(';')) {
+    const index = part.indexOf('=');
+    const name = index < 1 ? '' : part.slice(0, index).trim();
+    const value = index < 1 ? '' : part.slice(index + 1);
+    if (!name || !/^[\w-]+$/.test(name)) continue;
+    pairs.set(name, value);
+  }
+  return pairs;
+}
+
+// Upstream Set-Cookie refresh must win per cookie, while cookies it did not
+// rotate (auth/auth_secure/userinfo) stay in the persisted snapshot.
+export function mergeCookieHeaders(current, incoming) {
+  const pairs = new Map([...parseCookiePairs(current), ...parseCookiePairs(incoming)]);
+  if (!pairs.size) return null;
+  return [...pairs.entries()].map(([name, value]) => `${name}=${value}`).join('; ');
+}
+
 export class CookieStore {
   constructor({ path = '/data/auth/deviantart-cookies.json', seedEnvCookie = null } = {}) {
     this.path = path;
@@ -121,6 +141,11 @@ export class CookieStore {
     this.checkedAt = state === WEB_SESSION_STATUS.VALID || state === WEB_SESSION_STATUS.EXPIRED ? now : this.checkedAt;
     this.initialized = true;
     this.stamp = null;
+  }
+  mergeCookies(incoming) {
+    if (!incoming) return;
+    const merged = mergeCookieHeaders(this.getCookies(), incoming);
+    if (merged) this.write(merged, WEB_SESSION_STATUS.UNKNOWN);
   }
   set(cookies) {
     // 统一先归一化：整行头 / JSON 对象 / JSON 数组都转成 "name=value; …"。

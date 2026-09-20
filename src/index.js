@@ -628,8 +628,15 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
 
   let results;
   try {
+    // This reply is the final source-validity checkpoint. Telegram rejects a
+    // reply to a deleted source message, so late-downloaded albums cannot
+    // appear after the user has withdrawn their request.
     results = await sendArtworkPlan(items, message, env, { upload: !origin, onStatus, cap });
   } catch (error) {
+    if (isSourceRemovedError(error)) {
+      event("delivery_cancelled", { work_id: target.id, stage: "source_checkpoint", chat_id: message.chat.id });
+      return;
+    }
     const publisherMedia = toPublisherMedia(artwork);
     const published = await publishArtwork(env, target.id, publisherMedia, url.href, true);
     if (!published) throw error;
@@ -650,6 +657,12 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
   }
   const published = await publishArtwork(env, target.id, toPublisherMedia(artwork), url.href);
   if (published) await sendPublishedLink(message, env, target.id, url.href, published).catch(() => {});
+}
+
+function isSourceRemovedError(error) {
+  return /message to be replied not found|message to reply not found|reply message not found/i.test(
+    error instanceof Error ? error.message : String(error)
+  );
 }
 
 function toPublisherMedia(artwork) {

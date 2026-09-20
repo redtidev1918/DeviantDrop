@@ -3,6 +3,13 @@
   - [Download & Deploy](/en/download.md)
   - [VPS Deployment Handbook](/en/VPS.md)
   - [Public IP / No-domain Deployment](/en/VPS-public-ip.md)
+- Architecture & Delivery
+  - [Authentication](/en/architecture/authentication.md)
+  - [Media Pipeline](/en/architecture/media-pipeline.md)
+  - [Delivery Lifecycle](/en/architecture/delivery-lifecycle.md)
+  - [Session Recovery](/en/operations/session-recovery.md)
+  - [Media Delivery Tests](/en/testing/media-delivery.md)
+
 - Usage & Configuration
   - [Authentication, Preview and Publishing](/en/AUTH_AND_PREVIEW.md)
   - [Release Orchestration](/en/RELEASEGRAPH.md)

@@ -21,6 +21,11 @@ under `/`.
 | :-- | :-- |
 | [VPS deployment handbook](VPS.md) | Mainland proxy setup, Docker/Node deployment, the egress check results, one-click login, push-to-deploy, and group-chat diagnostics |
 | [Public IP / no-domain deployment](VPS-public-ip.md) | Keep `MODE=poll` and TelePress loopback-only; optional remote media manifest and public-IP hardening |
+| [Authentication architecture](architecture/authentication.md) | OAuth versus web-session planes, persistence and refresh rules |
+| [Media pipeline](architecture/media-pipeline.md) | Normalized media model and Telegram delivery planning |
+| [Delivery lifecycle](architecture/delivery-lifecycle.md) | Source checkpoint, cancellation and failure semantics |
+| [Session recovery](operations/session-recovery.md) | Runtime files, restart recovery and troubleshooting |
+| [Media delivery tests](testing/media-delivery.md) | Reliability tests for auth, media and delivery |
 | [Authentication, preview and publishing](AUTH_AND_PREVIEW.md) | First-time setup, the OAuth-primary + optional web-extension model, persistence and migration, the preview fixer, Telegram layout and TelePress |
 | [Release orchestration](RELEASEGRAPH.md) | ReleaseGraph integration as verified, engine upgrade log, and the next-protocol switch-over checklist |
 
