@@ -4,6 +4,8 @@
 
 把 DeviantArt 作品“丢”进 Telegram 的 Bot：在聊天里发一个 DeviantArt 单作品链接，DeviantDrop 就把作品的图片、视频或 GIF 原样回复给你。
 
+**在线试用**：给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接就能看到回复效果；要自己跑一份再看下面的部署。
+
 ## 下载与部署
 
 本仓库不发布安装包（Bot 服务形态）。部署方式、出口要求与检测结论见

@@ -7,6 +7,8 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Docs-文档站点-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
 
+**使用示例**：直接给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接，它会把这件作品的图片 / 视频 / GIF 原样回给你，caption 末尾带原作品页 source 链接。只是想用的话不必自己部署。
+
 **部署形态**：DeviantArt 会封锁数据中心出口（Cloudflare Workers 与多数云主机被拦）。请把 Bot 跑在 DeviantArt 放行的出口（住宅网络或已检测通过的部分 VPS）上；部署步骤见 [VPS 手册](docs/VPS.md)。
 
 ## 快速部署
