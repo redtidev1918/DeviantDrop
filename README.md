@@ -23,9 +23,11 @@ DeviantArt 官方应用（在 deviantart.com/developers 申请，填入 `CLIENT_
 
 ## 支持范围
 
-- 识别消息与 caption 里的作品页链接（`https` / `www` / 旧式域名），最多同时处理 5 个；
-  `fav.me` 短链与 `/view/{id}` 不支持，会提示改用完整作品页网址。
-- **网页 `_puppy` 接口优先**（视频 / GIF / 新作品 / additionalMedia 都从同一适配器取），网络不可达且配置 OAuth 时用官方 API 兜底。
+- 识别消息与 caption 里的作品页链接（`https` / `www` / 旧式域名 / `fav.me` / `/view/{id}`），最多同时处理 5 个；
+  `fav.me`、`/view/{id}` 会先跟随重定向解析作者，解析不到时提示改用完整作品页网址。
+- **网页 `_puppy` 接口优先**（作品结构 / GIF / 新作品 / additionalMedia 都从同一适配器取），必要时用 OAuth 官方 API 兜底。
+- 视频的 `media.baseUri` 只是封面：可播放地址只取网页 `types[].t == "video"`，或官方 API `videos[].src`；拿不到播放源时回退官方 API，而不是把封面当图片发送。
+- 同一作品成功发送后按 Telegram `file_id` 缓存 30 天；同一 bot 内其他用户再发同一作品时直接复用，不重新下载/上传。
 - 照片/视频连续片段用 `sendMediaGroup` 相册发送（超过 10 张自动分批）；GIF/animation 始终独立 `sendAnimation`，不会拆散或重复 caption；超大图先压缩，失败再以 document 发送；Telegram 拉不动 CDN 时自动下载后 multipart 上传。
 - `/start` `/help` `/about` 命令；每聊天限流、去重、429/500/503 退避重试。
 

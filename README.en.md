@@ -27,12 +27,16 @@ into `.env` for OAuth access); and an egress DeviantArt allows (see above). No D
 
 ## What it handles
 
-- Recognises work-page links inside messages and captions (`https` / `www` / legacy domains),
-  processing up to 5 at once; `fav.me` short links and `/view/{id}` are not supported — the bot
-  asks you to send the full work-page URL instead.
-- **The website `_puppy` endpoints come first** (video / GIF / new works / `additionalMedia`
-  all come from the same adapter); when the network is unreachable and OAuth is configured,
-  the official API is the fallback.
+- Recognises work-page links inside messages and captions (`https` / `www` / legacy domains /
+  `fav.me` / `/view/{id}`), processing up to 5 at once; short links resolve the author by following
+  the redirect, and the bot asks for the full work-page URL when that does not resolve.
+- **The website `_puppy` endpoints come first** (work structure / GIF / new works /
+  `additionalMedia` all come from the same adapter); OAuth is used as the fallback when needed.
+- For videos, `media.baseUri` is only a poster. Playable URLs must come from web
+  `types[].t == "video"` or OAuth `videos[].src`; if neither is available, DeviantDrop falls
+  back to the official API instead of sending the poster as an image.
+- A successfully delivered work is cached by Telegram `file_id` for 30 days. Later requests from
+  any user of the same bot replay it without downloading or uploading the binary again.
 - Photo/video sequences are sent as `sendMediaGroup` albums (auto-batched above 10 items);
   GIF/animation always uses a standalone `sendAnimation` so captions are never split or
   duplicated; oversized images are compressed first and sent as documents if that fails; when

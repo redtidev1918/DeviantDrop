@@ -19,14 +19,14 @@ Bot 会同时检查普通消息、频道消息和媒体 caption，并识别：
 - 没有协议的 `www.deviantart.com/...`、旧式 `作者.deviantart.com/...`。
 - Telegram `url` entity 和文字背后的 `text_link` 隐藏链接。
 - 同一消息中的多个链接；保持出现顺序、删除完全重复项，最多处理 5 个。
-- 当前作品页（`作者.deviantart.com/art|journal/标题-数字id`）。
+- 当前作品页（`作者.deviantart.com/art|journal/标题-数字id`）、`fav.me` 短链和 `/view/{id}`。
 
 解析是双通道的：
 1. **OAuth 官方 API 是内容访问主认证层**——作品 metadata、**成熟（mature）作品主图**、官方 download/content 都由它提供，refresh token 自动续期；数字 id 需要 UUID 时会经 [archive.org](https://web.archive.org) 存档映射（新作品若无快照会收到明确中文提示）。
 2. **网页接口负责作品结构与多图扩展**——匿名即可取到作品结构与第 1 页（数字 id 直达、无需 UUID 映射），并返回官方 API 不提供的 `extended.additionalMedia`（多图第 2…N 页）。
 3. **网页扩展会话（Cookie）是可选项**——只用于取出成熟多图附加页的未打码版本；它失效只影响这部分附加页，**不会让成熟作品整体失败**，也不会用打码图顶替已经拿到的 OAuth 原图。
 
-无法定位作品页的旧式链接（`fav.me`、`/view/{id}`、`view.php?id=`）两类通道都不支持，会提示改用完整作品页网址。私密/付费/需登录作品同样会提示。
+旧式链接会先尝试解析作者；如果出口或页面重定向拿不到，Bot 会提示改用完整作品页网址。私密/付费/需登录作品同样会提示。
 
 不处理画廊、收藏夹、标签页、搜索结果、非 DeviantArt 直链。每个链接独立处理：一个失败不会阻止后续链接。
 
@@ -45,9 +45,11 @@ Bot 会同时检查普通消息、频道消息和媒体 caption，并识别：
 2. 从消息正文/caption 及 Telegram entities 中收集、规范化并去重链接（单条最多 5 个）。
 3. 逐链接解析（双通道）：
    - **OAuth 通道**（内容访问主认证层）：refresh token 换 access token → 官方 API 取 metadata 与媒体；成熟作品的主图一律优先用官方 `content`/`download`，因此未打码与 Cookie 无关；
-   - **网页通道**：匿名会话（CSRF/cookie，消息内复用 + 跨消息缓存）取作品结构与附加页；官方 API 不可用时也作为兜底来源；扩展会话失效只降级附加页。
+   - **网页通道**：匿名会话（CSRF/cookie，消息内复用 + 跨消息缓存）取作品结构与附加页；扩展会话失效只降级附加页。
+   - **视频源规则**：`media.baseUri` 只能当封面；可播放源来自网页 `types[].t == "video"`，网页缺源时用 OAuth `videos[].src` 兜底。
 4. 先回一条自动删除的「处理中」提示并随进度更新，然后发送媒体（媒体 caption 带原作品页链接）。
-5. 媒体送达：webhook 模式经 15 分钟 HMAC 签名代理流式转发（支持 Range）；轮询模式下载媒体后通过 multipart 上传；2–10 个照片/视频使用 `sendMediaGroup`，GIF 或更多文件逐项发送。
+5. 已成功交付的作品会按 `file_id` 缓存 30 天；同一 bot 内跨用户重复请求直接复用，不重新下载/上传。
+6. 媒体送达：webhook 模式经 15 分钟 HMAC 签名代理流式转发（支持 Range）；轮询模式下载媒体后通过 multipart 上传；2–10 个照片/视频使用 `sendMediaGroup`，GIF 或更多文件逐项发送。
 
 ## 限流与可靠性
 
@@ -69,7 +71,8 @@ Bot 内置了防滥用/防重复（常量在 `src/index.js` 顶部，可直接�
 - 每聊天限流：每个聊天每分钟最多处理 15 个作品链接，超出会收到中文提示并跳过。
 - Telegram 超时重试同一个 update 不会重复发送（90 秒去重窗口）；中途被掐断的重试仍会重新处理，宁重复不丢消息。
 - 相册消息（media_group）里多张照片都带链接时，只处理第一条。
-- 去重与限流基于 Cloudflare Cache API 的默认命名空间：无需额外绑定，代价是读改写非原子（尽力而为），且纯 Node 测试环境自动停用这些保护。
+- 已交付作品按 `file_id` 缓存 30 天；同一 bot 内跨用户重复请求直接复用，不重新下载/上传。
+- 运行时去重、限流和 `file_id` 缓存共用统一缓存层：Workers 用 Cache API，Node/VPS 用持久化缓存文件；读改写非原子，属尽力而为。
 
 ## 部署
 
@@ -109,7 +112,7 @@ node src/main.js
 ```bash
 docker compose logs -f deviantdrop          # 轮询模式持续 getUpdates
 node scripts/detect-da.mjs <client_id> <client_secret>   # 出口放行检测
-npm run check                               # 本地 12 项测试 + 语法检查
+npm run check                               # 全量测试 + 构建检查
 ```
 
 > 早期 Cloudflare Workers 形态代码仍在仓库中（wrangler.jsonc 等），仅适合未被 DA
