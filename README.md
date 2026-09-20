@@ -1,17 +1,17 @@
 # DeviantDrop
 
-把 DeviantArt 作品“丢”进 Telegram 的 Bot：在聊天里发一个作品链接，DeviantDrop 就把作品的图片、视频或 GIF 原样回复给你。
-
 **语言 / Language:** 中文 · [English](README.en.md)
+
+**把 DeviantArt 作品“丢”进 Telegram 的 Bot：发一条作品链接，就原样回复图片、视频或 GIF。**
 
 📖 完整文档：<https://redtidev1918.github.io/DeviantDrop/> · [更新日志](CHANGELOG.md)
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Docs-文档站点-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
 
-**使用示例**：直接给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接，它会把这件作品的图片 / 视频 / GIF 原样回给你，caption 末尾带原作品页 source 链接。只是想用的话不必自己部署。
+想直接用？给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接，它就把作品的图片 / 视频 / GIF 原样回给你，caption 末尾带原作品页 source 链接——不必自己部署。
 
-**部署形态**：DeviantArt 会封锁数据中心出口（Cloudflare Workers 与多数云主机被拦）。请把 Bot 跑在 DeviantArt 放行的出口（住宅网络或已检测通过的部分 VPS）上；部署步骤见 [VPS 手册](docs/VPS.md)。
+> **注意**：DeviantArt 会封锁数据中心出口（Cloudflare Workers 与多数云主机被拦）。请把 Bot 跑在 DeviantArt 放行的出口（住宅网络或已通过检测的部分 VPS）上；部署步骤见 [VPS 手册](docs/VPS.md)。
 
 ## 文档
 
@@ -108,10 +108,6 @@ DeviantArt 有两层**互相独立**的能力，不要把它们混成一件事�
 - [DAViewer 客户端（兄弟项目）](https://github.com/redtidev1918/DAViewer)：浏览 DeviantArt 的桌面客户端；bot 单图/视频回复里的「📲 DeviantArt 客户端」按钮指向其[下载页](https://redtidev1918.github.io/DAViewer/#/download)，`/about` 亦有提及。
 - [TelePress](https://github.com/redtidev1918/TelePress)：可选 Telegraph 图集发布。
 - 实现来源（反代/兼容细节）：[deviantart-downloader](https://github.com/redtidev1918/deviantart-downloader)（CSRF、作品 ID、cookie 复用、媒体 URL）、[DAKit](https://github.com/redtidev1918/DAKit)（`_puppy`/`dadeviation`/`init` 流程与 URL 兼容）、[TelePost](https://github.com/redtidev1918/TelePost)（Telegram 媒体类型映射）。完整清单见 [docs/README.md](docs/README.md#实现来源)。
-
-完整的解析机制、双通道细节、限流策略、部署与排错，请看**文档站点**：
-
-https://redtidev1918.github.io/DeviantDrop/
 
 ### 公开预览页
 

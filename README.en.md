@@ -2,20 +2,21 @@
 
 **Language / 语言:** [中文](README.md) · English
 
-📖 Full documentation: <https://redtidev1918.github.io/DeviantDrop/> · [Changelog](CHANGELOG.md)
+**A Telegram bot that "drops" DeviantArt works into your chat: send a work link and
+DeviantDrop replies with the artwork's image, video or GIF unchanged.**
 
-A Telegram bot that "drops" DeviantArt works into your chat: send a work link and
-DeviantDrop replies with the artwork's image, video or GIF unchanged.
+📖 Full documentation: <https://redtidev1918.github.io/DeviantDrop/> · [Changelog](CHANGELOG.md)
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Docs-documentation-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
 
-**Try it**: send a work link to [@DeviantDropBot](https://t.me/DeviantDropBot). It replies with that work's image / video / GIF and a `source` link in the caption. Self-hosting is only needed if you want your own instance.
+Just want to use it? Send a work link to [@DeviantDropBot](https://t.me/DeviantDropBot); it
+replies with that work's image / video / GIF and a `source` link in the caption. Self-hosting
+is only needed if you want your own instance.
 
-**Deployment constraint**: DeviantArt blocks datacenter egress (Cloudflare Workers and
-most cloud hosts are blocked). Run the bot on an egress DeviantArt allows (a residential
-network, or one of the VPS providers that has passed the check); see the
-[VPS handbook](docs/VPS.md).
+> **Note**: DeviantArt blocks datacenter egress (Cloudflare Workers and most cloud hosts are
+> blocked). Run the bot on an egress DeviantArt allows (a residential network, or one of the
+> VPS providers that has passed the check); see the [VPS handbook](docs/VPS.md).
 
 ## Documentation
 
@@ -85,11 +86,6 @@ TelePress publish path, and troubleshooting — live on the docs site:
   (`_puppy`/`dadeviation`/`init` flows and URL compatibility), and
   [TelePost](https://github.com/redtidev1918/TelePost) (Telegram media type mapping). Full list
   in [docs/README.md](docs/README.md#implementation-sources).
-
-The full parsing mechanics, dual-channel details, rate limiting, deployment and
-troubleshooting live on the **documentation site**:
-
-https://redtidev1918.github.io/DeviantDrop/
 
 ### Public preview page
 
