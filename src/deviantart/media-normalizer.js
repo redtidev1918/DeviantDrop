@@ -1,3 +1,4 @@
+import { NetworkError } from '../auth/errors.js';
 // DeviantArt private DTO -> stable artwork model used outside the adapter.
 
 function extensionKind(value = "") {
@@ -30,11 +31,14 @@ function videoRank(value) {
   return { "1080p": 4, "720p": 3, "480p": 2, "360p": 1 }[value] || 0;
 }
 
-export function pickDescriptorMedia(descriptor = {}) {
+// DeviantArt 的视频 `media.baseUri` 是封面图，不是可播放媒体；
+// 调用方必须把 DTO 顶层的视频标志传入，否则封面会被误判成图片。
+export function pickDescriptorMedia(descriptor = {}, { isVideo = false } = {}) {
   const types = Array.isArray(descriptor.types) ? descriptor.types : [];
   const videos = types
     .filter((item) => item?.t === "video" && item.b)
     .sort((a, b) => videoRank(b.q) - videoRank(a.q));
+  if (isVideo && !videos.length) return null;
   let url = videos[0]?.b;
   if (!url && extensionKind(descriptor.baseUri || "")) url = appendToken(descriptor.baseUri, descriptor.token);
   if (!url) {
@@ -95,8 +99,13 @@ export function normalizeArtwork(deviation, { sourceUrl, expansionAuthorized = t
   if (!deviation || typeof deviation !== "object") throw new Error("DeviantArt 没有返回作品数据");
   const mature = deviation.isMature === true || deviation.is_mature === true;
   const primaryDescriptor = deviation.media || {};
-  const main = pickDescriptorMedia(primaryDescriptor);
-  if (!main) throw new Error("DeviantArt 作品没有可用媒体");
+  const isVideo = deviation.isVideo === true
+    || ["video", "film"].includes(String(deviation.type || "").toLowerCase());
+  const main = pickDescriptorMedia(primaryDescriptor, { isVideo });
+  if (!main) {
+    if (isVideo) throw new NetworkError("DeviantArt 视频缺少可播放媒体，回退官方 API");
+    throw new Error("DeviantArt 作品没有可用媒体");
+  }
 
   const workId = deviation.extended?.deviationUuid
     || String(deviation.deviationId || deviation.deviationid || deviation.id || "");

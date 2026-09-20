@@ -40,13 +40,16 @@ export async function pickOfficialMediaUrl(env, deviation, uuid, wantOriginal = 
       if (error instanceof AuthRevokedError) throw error;
     }
   }
-  return deviation?.content?.src || deviation?.thumbs?.[0]?.src || deviation?.preview?.src || null;
+  // OAuth 的 videos[] 是唯一的可播放视频来源；content/thumbs 只是封面。
+  return deviation?.videos?.find?.((video) => video?.src)?.src
+    || deviation?.content?.src || deviation?.thumbs?.[0]?.src || deviation?.preview?.src || null;
 }
 
 export function normalizeOfficialArtwork(deviation, { sourceUrl } = {}) {
-  const url = deviation?.content?.src || deviation?.thumbs?.[0]?.src || deviation?.preview?.src;
+  const video = deviation?.videos?.find?.((video) => video?.src)?.src;
+  const url = video || deviation?.content?.src || deviation?.thumbs?.[0]?.src || deviation?.preview?.src;
   if (!url) throw new Error('作品没有可用的公开媒体');
-  const kind = kindOfUrl(url);
+  const kind = deviation?.videos?.some?.((item) => item.src === url) ? 'video' : kindOfUrl(url);
   return {
     uuid: deviation.deviationid || null,
     title: deviation.title || 'DeviantArt',

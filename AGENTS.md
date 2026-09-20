@@ -11,7 +11,7 @@
 
 ## Media and delivery
 
-7. DeviantArt media is normalized into one model (`photo`, `video`, `animation`, `document`) before Telegram.
+7. DeviantArt media is normalized into one model (`photo`, `video`, `animation`, `document`) before Telegram. A video DTO `media.baseUri` is only a poster; playable URLs must come from video sources (`media.types[].t === "video"` or OAuth `videos[]`).
 8. Telegram handlers and senders must not reinterpret DeviantArt DTOs; they execute the normalized delivery plan.
 9. Every media item carries a stable `assetId`; replay and fallback use the same plan.
 10. Delivery has a lifecycle: `received → processing → ready → checkpoint → sending → sent`, with `cancelled`/`failed`.

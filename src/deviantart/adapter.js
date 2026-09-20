@@ -68,7 +68,9 @@ export class DeviantArtAdapter {
         }
 
         const artwork = normalizeArtwork(deviation, { sourceUrl: url.href, expansionAuthorized });
-        if (artwork.mature) await this.resolveMatureMain(env, artwork, { target, url, expansionAuthorized });
+        if (artwork.mature || artwork.media[0].kind === 'video') {
+          await this.resolveMatureMain(env, artwork, { target, url, expansionAuthorized });
+        }
         artwork.titleLabel = titleWithAuthor(artwork);
         artwork.accessStatus = this.accessStatus(artwork);
         return artwork;
@@ -115,6 +117,8 @@ export class DeviantArtAdapter {
       const original = await pickOfficialMediaUrl(env, deviation, uuid, preferOriginal(env));
       if (!original) return false;
       const kind = kindOfUrl(original);
+      // 网页 DTO 若已有可播放视频，不要被 OAuth 封面替换。
+      if (artwork.media[0]?.kind === 'video' && kind !== 'video') return false;
       artwork.media[0] = {
         kind,
         url: original,
