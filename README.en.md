@@ -17,6 +17,16 @@ most cloud hosts are blocked). Run the bot on an egress DeviantArt allows (a res
 network, or one of the VPS providers that has passed the check); see the
 [VPS handbook](docs/VPS.md).
 
+## Documentation
+
+| I want to… | See |
+| --- | --- |
+| Get it running fast | [Download & deploy](docs/en/download.md) · [VPS handbook](docs/en/VPS.md) · [Public IP / no domain](docs/en/VPS-public-ip.md) |
+| Understand auth and the dual channel | [Authentication architecture](docs/en/architecture/authentication.md) · [Auth, preview & multi-image](docs/en/AUTH_AND_PREVIEW.md) |
+| Understand how media is fetched and delivered | [Media pipeline](docs/en/architecture/media-pipeline.md) · [Delivery lifecycle](docs/en/architecture/delivery-lifecycle.md) |
+| Troubleshoot / recover sessions | [Session recovery](docs/en/operations/session-recovery.md) · [Media delivery tests](docs/en/testing/media-delivery.md) |
+| Wire up release orchestration | [ReleaseGraph integration](docs/en/RELEASEGRAPH.md) |
+
 ## Quick deployment
 
 ```bash

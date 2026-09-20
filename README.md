@@ -13,6 +13,16 @@
 
 **部署形态**：DeviantArt 会封锁数据中心出口（Cloudflare Workers 与多数云主机被拦）。请把 Bot 跑在 DeviantArt 放行的出口（住宅网络或已检测通过的部分 VPS）上；部署步骤见 [VPS 手册](docs/VPS.md)。
 
+## 文档
+
+| 我想… | 看这里 |
+| --- | --- |
+| 快速跑起来 | [下载与部署](docs/download.md) · [VPS 手册](docs/VPS.md) · [公网 IP / 无域名](docs/VPS-public-ip.md) |
+| 理解认证与双通道 | [认证架构](docs/architecture/authentication.md) · [认证、预览与多图扩展](docs/AUTH_AND_PREVIEW.md) |
+| 理解媒体怎么取、怎么发 | [媒体管线](docs/architecture/media-pipeline.md) · [Delivery 生命周期](docs/architecture/delivery-lifecycle.md) |
+| 排障 / 会话恢复 | [会话恢复](docs/operations/session-recovery.md) · [媒体交付测试](docs/testing/media-delivery.md) |
+| 接入发布编排 | [ReleaseGraph 接入](docs/RELEASEGRAPH.md) |
+
 ## 快速部署
 
 ```bash
