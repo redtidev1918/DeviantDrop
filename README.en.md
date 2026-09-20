@@ -113,7 +113,7 @@ Therefore: **NSFW ≠ requires cookies.**
   the **bottom of the media caption** (a `<a>` anchor with `parse_mode=HTML`, parsed
   server-side and reliable across every send path including multipart), pointing back to the
   original artwork page. Single images/videos additionally carry a "📲 DeviantArt 客户端" inline
-  button pointing to the [DAViewer client download page](https://redtidev1918.github.io/daviewer/#/download)
+  button pointing to the [DAViewer client download page](https://redtidev1918.github.io/DAViewer/#/download)
   (reliable across direct URL pass-through, `file_id` replay, and multipart upload); albums
   (`sendMediaGroup` silently drops buttons) only get the `source` anchor on the first item's
   caption — no follow-up text message.
@@ -125,7 +125,7 @@ Therefore: **NSFW ≠ requires cookies.**
 ### TelePress (optional)
 
 For oversized galleries (>10 images) or Telegram send failures, a
-[TelePress](https://github.com/redtidev1918/telepress) Telegraph page can be generated. It is
+[TelePress](https://github.com/redtidev1918/TelePress) Telegraph page can be generated. It is
 disabled when no URL is configured; once configured it defaults to failure fallback only
 (`TELEPRESS_MODE=fallback`), while large galleries require `large-gallery`. A failure never
 affects native Telegram sending. For same-host deployments prefer
@@ -138,19 +138,19 @@ affects native Telegram sending. For same-host deployments prefer
   compression, lazy-loaded). See [package.json](package.json).
 - **Development**: `wrangler` is only used for local `dev`/dry-run validation and is never
   installed into the Docker image.
-- **Optional external services**: [TelePress](https://github.com/redtidev1918/telepress)
-  (Telegraph gallery fallback) and the [DAViewer](https://github.com/redtidev1918/daviewer)
+- **Optional external services**: [TelePress](https://github.com/redtidev1918/TelePress)
+  (Telegraph gallery fallback) and the [DAViewer](https://github.com/redtidev1918/DAViewer)
   client (desktop DeviantArt browser, see below).
 
 ### Related projects & credits
 
-- [DAViewer client (sister project)](https://github.com/redtidev1918/daviewer): a desktop
+- [DAViewer client (sister project)](https://github.com/redtidev1918/DAViewer): a desktop
   DeviantArt browser. The "📲 DeviantArt 客户端" button on single-image/video replies points to
-  its [download page](https://redtidev1918.github.io/daviewer/#/download), and `/about`
+  its [download page](https://redtidev1918.github.io/DAViewer/#/download), and `/about`
   mentions it too.
-- [TelePress](https://github.com/redtidev1918/telepress): optional Telegraph gallery publishing.
+- [TelePress](https://github.com/redtidev1918/TelePress): optional Telegraph gallery publishing.
 - Implementation sources: [deviantart-downloader](https://github.com/redtidev1918/deviantart-downloader)
-  (CSRF, deviation IDs, cookie reuse, media URLs), [DAKit](https://github.com/redtidev1918/dakit)
+  (CSRF, deviation IDs, cookie reuse, media URLs), [DAKit](https://github.com/redtidev1918/DAKit)
   (`_puppy`/`dadeviation`/`init` flows and URL compatibility), and
   [TelePost](https://github.com/redtidev1918/TelePost) (Telegram media type mapping). Full list
   in [docs/README.md](docs/README.md#implementation-sources).

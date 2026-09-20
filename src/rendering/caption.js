@@ -16,7 +16,7 @@ const CAPTION_LIMIT = 1024;
 
 // 客户端按钮 / 来源锚点的标签与地址。
 export const CLIENT_BUTTON_TEXT = "📲 DeviantArt 客户端";
-export const CLIENT_DOWNLOAD_URL = "https://redtidev1918.github.io/daviewer/#/download";
+export const CLIENT_DOWNLOAD_URL = "https://redtidev1918.github.io/DAViewer/#/download";
 export const SOURCE_LINK_TEXT = "source";
 
 function escapeHtml(value) {

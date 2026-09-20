@@ -71,24 +71,24 @@ DeviantArt 有两层**互相独立**的能力，不要把它们混成一件事�
 ### 回复排版
 
 - 统一排版：`🎨 标题 / 👤 作者 / 🖼 N 个媒体`，外加一个可靠的来源入口（见下）。
-- 来源入口**每个作品只有一个、绝不重复**：小号蓝色 `source` 链接嵌在**媒体 caption 末尾（空行 + 🔗 前缀隔开）（`parse_mode=HTML` 的 `<a>` 锚点，服务端解析、各路径含 multipart 都可靠），指向原作品页。单图/视频的图片下方另有「📲 DeviantArt 客户端」内联按钮，指向 [DAViewer 客户端下载页](https://redtidev1918.github.io/daviewer/#/download)；相册（sendMediaGroup 会静默丢弃按钮）只有首图 caption 末尾的 `source` 锚点，不补客户端按钮、也不补发独立文本行。
+- 来源入口**每个作品只有一个、绝不重复**：小号蓝色 `source` 链接嵌在**媒体 caption 末尾（空行 + 🔗 前缀隔开）（`parse_mode=HTML` 的 `<a>` 锚点，服务端解析、各路径含 multipart 都可靠），指向原作品页。单图/视频的图片下方另有「📲 DeviantArt 客户端」内联按钮，指向 [DAViewer 客户端下载页](https://redtidev1918.github.io/DAViewer/#/download)；相册（sendMediaGroup 会静默丢弃按钮）只有首图 caption 末尾的 `source` 锚点，不补客户端按钮、也不补发独立文本行。
 - 技术性状态提示（`⚠️ 已压缩 / 原图暂不可用 / 已作为文件发送` 等）默认只在**私聊**显示便于运营排查；群聊/频道里自动隐藏（对看图的人是噪音，想看原图点来源入口即可）。可用环境变量强制：`CAPTION_NOTES=auto`（默认，私聊显示/群聊隐藏）、`always`（总是显示）、`never`（总是隐藏）。
 
 ### TelePress（可选）
 
-超大图集（>10 张）或 Telegram 发送失败时，可借助 [TelePress](https://github.com/redtidev1918/telepress) 生成 Telegraph 页面。未配置 URL 时不启用；配置后默认仅失败兜底（`TELEPRESS_MODE=fallback`），大图集需选择 `large-gallery`，失败绝不影响原生 Telegram 发送。同机部署建议 `TELEPRESS_URL=http://127.0.0.1:<port>` 并在两端配置同一个 `TELEPRESS_API_KEY`。
+超大图集（>10 张）或 Telegram 发送失败时，可借助 [TelePress](https://github.com/redtidev1918/TelePress) 生成 Telegraph 页面。未配置 URL 时不启用；配置后默认仅失败兜底（`TELEPRESS_MODE=fallback`），大图集需选择 `large-gallery`，失败绝不影响原生 Telegram 发送。同机部署建议 `TELEPRESS_URL=http://127.0.0.1:<port>` 并在两端配置同一个 `TELEPRESS_API_KEY`。
 
 ### 依赖
 
 - **运行时**：Node.js ≥ 22。生产依赖只有两个——`undici`（HTTP 与国内出口代理）和 `sharp`（>10MB 图片压缩，懒加载）。详见 [package.json](package.json)。
 - **开发**：`wrangler` 仅用于本地 `dev`/dry-run 校验，不进入 Docker 镜像。
-- **可选外部服务**：[TelePress](https://github.com/redtidev1918/telepress)（Telegraph 图集兜底）、[DAViewer](https://github.com/redtidev1918/daviewer) 客户端（浏览 DeviantArt 的桌面客户端，见下）。
+- **可选外部服务**：[TelePress](https://github.com/redtidev1918/TelePress)（Telegraph 图集兜底）、[DAViewer](https://github.com/redtidev1918/DAViewer) 客户端（浏览 DeviantArt 的桌面客户端，见下）。
 
 ### 相关项目与致谢
 
-- [DAViewer 客户端（兄弟项目）](https://github.com/redtidev1918/daviewer)：浏览 DeviantArt 的桌面客户端；bot 单图/视频回复里的「📲 DeviantArt 客户端」按钮指向其[下载页](https://redtidev1918.github.io/daviewer/#/download)，`/about` 亦有提及。
-- [TelePress](https://github.com/redtidev1918/telepress)：可选 Telegraph 图集发布。
-- 实现来源（反代/兼容细节）：[deviantart-downloader](https://github.com/redtidev1918/deviantart-downloader)（CSRF、作品 ID、cookie 复用、媒体 URL）、[DAKit](https://github.com/redtidev1918/dakit)（`_puppy`/`dadeviation`/`init` 流程与 URL 兼容）、[TelePost](https://github.com/redtidev1918/TelePost)（Telegram 媒体类型映射）。完整清单见 [docs/README.md](docs/README.md#实现来源)。
+- [DAViewer 客户端（兄弟项目）](https://github.com/redtidev1918/DAViewer)：浏览 DeviantArt 的桌面客户端；bot 单图/视频回复里的「📲 DeviantArt 客户端」按钮指向其[下载页](https://redtidev1918.github.io/DAViewer/#/download)，`/about` 亦有提及。
+- [TelePress](https://github.com/redtidev1918/TelePress)：可选 Telegraph 图集发布。
+- 实现来源（反代/兼容细节）：[deviantart-downloader](https://github.com/redtidev1918/deviantart-downloader)（CSRF、作品 ID、cookie 复用、媒体 URL）、[DAKit](https://github.com/redtidev1918/DAKit)（`_puppy`/`dadeviation`/`init` 流程与 URL 兼容）、[TelePost](https://github.com/redtidev1918/TelePost)（Telegram 媒体类型映射）。完整清单见 [docs/README.md](docs/README.md#实现来源)。
 
 完整的解析机制、双通道细节、限流策略、部署与排错，请看**文档站点**：
 
