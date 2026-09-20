@@ -16,6 +16,8 @@
 
 DeviantDrop 是 Telegram Bot 服务，**不发安装包**，也不需要克隆仓库即可部署。发布产物只有发版元数据。
 
+**不想自己部署**：直接给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接就能看到效果。
+
 ```bash
 cp .env.example .env    # 填 BOT_TOKEN / WEBHOOK_SECRET / 官方 API 凭据；国内机器填代理
 docker compose up -d --build
