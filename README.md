@@ -2,7 +2,9 @@
 
 把 DeviantArt 作品“丢”进 Telegram 的 Bot：在聊天里发一个作品链接，DeviantDrop 就把作品的图片、视频或 GIF 原样回复给你。
 
-**语言 / Language:** 中文 · [English](README.en.md) · [完整文档](https://redtidev1918.github.io/DeviantDrop/) · [更新日志](CHANGELOG.md)
+**语言 / Language:** 中文 · [English](README.en.md)
+
+📖 完整文档：<https://redtidev1918.github.io/DeviantDrop/> · [更新日志](CHANGELOG.md)
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Docs-文档站点-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)

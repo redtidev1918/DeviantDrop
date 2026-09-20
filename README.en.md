@@ -1,12 +1,14 @@
 # DeviantDrop
 
-**Language / 语言:** [中文](README.md) · English · [Documentation](https://redtidev1918.github.io/DeviantDrop/) · [Changelog](CHANGELOG.md)
+**Language / 语言:** [中文](README.md) · English
+
+📖 Full documentation: <https://redtidev1918.github.io/DeviantDrop/> · [Changelog](CHANGELOG.md)
 
 A Telegram bot that "drops" DeviantArt works into your chat: send a work link and
 DeviantDrop replies with the artwork's image, video or GIF unchanged.
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Docs](https://img.shields.io/badge/Docs-documentation_site-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
+[![Docs](https://img.shields.io/badge/Docs-documentation-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
 
 **Try it**: send a work link to [@DeviantDropBot](https://t.me/DeviantDropBot). It replies with that work's image / video / GIF and a `source` link in the caption. Self-hosting is only needed if you want your own instance.
 
