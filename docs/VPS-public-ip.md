@@ -50,7 +50,7 @@ TelePress 是可选辅助（大图集 / Telegram 发送失败兜底）。同机�
 
 ```bash
 # 装可选 API 依赖
-pip install "telepress[api]==0.14.0"
+pip install "telepress[api]==0.14.1"
 
 # 只绑回环口，不绑 0.0.0.0
 # 建议配 TELEPRESS_API_KEY，两端用同一个 Key

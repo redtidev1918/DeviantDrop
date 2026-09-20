@@ -7,7 +7,7 @@
 ## 下载与部署
 
 本仓库不发布安装包（Bot 服务形态）。部署方式、出口要求与检测结论见
-[下载与部署](/download.md) 与 [部署（VPS / Docker / Node）](/VPS.md)；英文版见 [English docs](/en/)。
+[下载与部署](/download.md) 与 [部署（VPS / Docker / Node）](/VPS.md)、[公网 IP / 无域名部署](/VPS-public-ip.md)；英文版见 [English docs](/en/)。
 
 **部署形态**：DeviantArt 会封锁数据中心出口（Cloudflare Workers 与多数云主机的页面/API 数据面均被拦，见 [VPS 手册](VPS.md) 的检测结论）。请把 Bot 跑在 DeviantArt 放行的出口（住宅网络或已检测通过的部分 VPS）上；Node 版部署步骤见 [VPS 手册](VPS.md)。本仓库同时保留 Workers 形态代码，仅适合自建/未被封禁的出口。
 

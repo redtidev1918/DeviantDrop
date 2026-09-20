@@ -20,6 +20,7 @@ under `/`.
 | Document | Content |
 | :-- | :-- |
 | [VPS deployment handbook](VPS.md) | Mainland proxy setup, Docker/Node deployment, the egress check results, one-click login, push-to-deploy, and group-chat diagnostics |
+| [Public IP / no-domain deployment](VPS-public-ip.md) | Keep `MODE=poll` and TelePress loopback-only; optional remote media manifest and public-IP hardening |
 | [Authentication, preview and publishing](AUTH_AND_PREVIEW.md) | First-time setup, the OAuth-primary + optional web-extension model, persistence and migration, the preview fixer, Telegram layout and TelePress |
 | [Release orchestration](RELEASEGRAPH.md) | ReleaseGraph integration as verified, engine upgrade log, and the next-protocol switch-over checklist |
 

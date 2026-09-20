@@ -54,7 +54,7 @@ the same host:
 
 ```bash
 # install the optional API dependency
-pip install "telepress[api]==0.14.0"
+pip install "telepress[api]==0.14.1"
 
 # bind only the loopback interface, not 0.0.0.0
 # set TELEPRESS_API_KEY and use the same key on both ends
