@@ -14,3 +14,5 @@
 - Usage & Configuration
   - [Authentication, Preview and Publishing](/en/AUTH_AND_PREVIEW.md)
   - [Release Orchestration](/en/RELEASEGRAPH.md)
+- 中文
+  - [中文文档](/)
