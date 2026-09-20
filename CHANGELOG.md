@@ -10,6 +10,13 @@
 
 ---
 
+## [1.12.2](https://github.com/redtidev1918/DeviantDrop/compare/v1.12.1...v1.12.2) (2026-09-20)
+
+
+### Bug Fixes
+
+* **delivery:** persist web session and cancel removed-source sends ([c8cfb97](https://github.com/redtidev1918/DeviantDrop/commit/c8cfb97267b5d6a2c6d2f6fd8997410268e56947))
+
 ## [1.12.1](https://github.com/redtidev1918/deviantdrop/compare/v1.12.0...v1.12.1) (2026-09-19)
 
 
