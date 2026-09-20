@@ -27,6 +27,9 @@ DeviantArt 官方应用（在 deviantart.com/developers 申请，填入 `CLIENT_
 
 ## 支持范围
 
+登录与 Owner 命令、群组/频道配置、回复版式、可选的 TelePress 发布链路和排查步骤都在文档站：
+<https://redtidev1918.github.io/DeviantDrop/>
+
 - 识别消息与 caption 里的作品页链接（`https` / `www` / 旧式域名 / `fav.me` / `/view/{id}`），最多同时处理 5 个；
   `fav.me`、`/view/{id}` 会先跟随重定向解析作者，解析不到时提示改用完整作品页网址。
 - **网页 `_puppy` 接口优先**（作品结构 / GIF / 新作品 / additionalMedia 都从同一适配器取），必要时用 OAuth 官方 API 兜底。

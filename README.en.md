@@ -31,6 +31,10 @@ into `.env` for OAuth access); and an egress DeviantArt allows (see above). No D
 
 ## What it handles
 
+Full guides — sign-in and owner commands, groups and channels, reply layout, the optional
+TelePress publish path, and troubleshooting — live on the docs site:
+<https://redtidev1918.github.io/DeviantDrop/>
+
 - Recognises work-page links inside messages and captions (`https` / `www` / legacy domains /
   `fav.me` / `/view/{id}`), processing up to 5 at once; short links resolve the author by following
   the redirect, and the bot asks for the full work-page URL when that does not resolve.
@@ -47,97 +51,6 @@ into `.env` for OAuth access); and an egress DeviantArt allows (see above). No D
   Telegram cannot reach the CDN, the file is downloaded and uploaded as multipart.
 - `/start` `/help` `/about` commands; per-chat rate limiting, de-duplication, and
   429/500/503 backoff retries.
-
-### Groups and channels
-
-- The bot has **group privacy mode on by default**, so in groups it only sees commands. To let
-  it act on work links in a group: in **BotFather** use `/mybots` → pick the bot →
-  **Bot Settings → Group Privacy → Turn off**, then remove and re-add the bot (or make it an
-  administrator) for the change to take effect.
-- In a channel, make the bot an administrator and post the link "to the channel"
-  (`channel_post` is handled the same way).
-- Groups and channels **hide** technical status notes by default (see "Reply layout"), which
-  keeps captions cleaner.
-
-### Sign-in and owner commands
-
-Admin commands (`/login`, `/cookie`, `/status`) are restricted to the **bot owner**: set
-`ADMIN_IDS=<your Telegram user id>` in `.env`. Without it, admin commands are always refused;
-the regular user allowlist (`ALLOWED_USER_IDS`) is not an admin list.
-
-DeviantArt has two **independent** capability layers — do not conflate them:
-
-| Layer | Role | Covers |
-| --- | --- | --- |
-| **OAuth (official API)** | **Primary content-access auth** | Work metadata, **mature main image**, official download/content, unattended refresh-token renewal |
-| **Web extension session** (`auth`/`auth_secure`/`userinfo`) | **Optional enhancement** | Only fills in the website's `deviation.extended.additionalMedia` (pages 2…N of multi-image works), which the official API does not provide |
-
-Therefore: **NSFW ≠ requires cookies.**
-
-- A single-image mature work is fully deliverable with OAuth alone — the unmasked main image
-  is fetched without any web session.
-- An expired web session only affects **extra pages of some multi-image works**; it never fails
-  the whole mature work and never substitutes a censored image for an OAuth original already
-  obtained.
-- When extra pages are unavailable, the bot adds a single note ("some additional images are
-  temporarily unavailable, please view them on the original site") rather than claiming the
-  sign-in failed.
-
-- **Recommended: one-click desktop login (works without a public domain).** On your computer
-  (Chrome/Edge installed), inside the DeviantDrop directory run:
-  ```bash
-  VPS=root@<your server> npm run login
-  ```
-  The script opens Chrome at DeviantArt's official login page: sign in and click
-  "Authorize"; it saves both the OAuth and web extension sessions and hot-applies them.
-  DeviantArt's login page has an AWS WAF human check, which passes normally when you sign in
-  with your real browser. Afterwards `/status` shows `OAuth API: ✅ valid` and
-  `Multi-image web expansion: ✅ valid`.
-- **With a public domain (`PUBLIC_BASE_URL`)**: send `/login` in a private chat; click the
-  OAuth authorize button on first setup or when the refresh token expires. A public page
-  cannot write DA cookies cross-origin, so the extension-session entry uses a one-shot paste
-  form.
-- **Phone only, no computer**: in a browser already signed in to DA, copy the whole
-  `Cookie:` line and send `/cookie auth=…; auth_secure=…; userinfo=…` in a private chat. The
-  bot stores it, probes immediately and reports status. Note this credential passes through
-  Telegram — delete the message afterwards (the bot tries to delete it for you); if you are
-  worried, use "log out of all devices" in DA settings to invalidate it.
-- **`/status` (owner private chat)**: shows two independent statuses, `OAuth API:` and
-  `Multi-image web expansion: missing|unknown|valid|expired` (no secrets shown). Network
-  timeouts, WAF and 5xx only make the extension capability `unknown` — never a false `expired`
-  — and never affect OAuth status; only a login redirect or `mature_loggedout` marks it
-  `expired`.
-- `DA_REFRESH_TOKEN` / `DA_COOKIES` are only a **first-migration seed**: on startup they are
-  written to the OAuth and web-session files respectively; a rotated refresh token is persisted
-  immediately, and cookies hot-update without falling back to the old `.env` value.
-- When the OAuth session or the web extension session expires, the bot owner is notified
-  separately, each message stating its own scope of impact (6-hour cooldown, plus a recovery
-  notification when it comes back).
-
-### Reply layout
-
-- Consistent layout: `🎨 title / 👤 author / 🖼 N media`, plus exactly one reliable source entry.
-- The source entry is **singular and never duplicated**: a small blue `source` link lives at
-  the **bottom of the media caption** (a `<a>` anchor with `parse_mode=HTML`, parsed
-  server-side and reliable across every send path including multipart), pointing back to the
-  original artwork page. Single images/videos additionally carry a "📲 DeviantArt 客户端" inline
-  button pointing to the [DAViewer client download page](https://redtidev1918.github.io/DAViewer/#/download)
-  (reliable across direct URL pass-through, `file_id` replay, and multipart upload); albums
-  (`sendMediaGroup` silently drops buttons) only get the `source` anchor on the first item's
-  caption — no follow-up text message.
-- Technical status notes (`⚠️ compressed / original temporarily unavailable / sent as a file`,
-  etc.) are shown only in **private chats** by default, for operations troubleshooting; groups
-  and channels hide them automatically (noise for viewers, who can just tap the source entry).
-  Force with `CAPTION_NOTES=auto` (default: private shows / group hides), `always`, `never`.
-
-### TelePress (optional)
-
-For oversized galleries (>10 images) or Telegram send failures, a
-[TelePress](https://github.com/redtidev1918/TelePress) Telegraph page can be generated. It is
-disabled when no URL is configured; once configured it defaults to failure fallback only
-(`TELEPRESS_MODE=fallback`), while large galleries require `large-gallery`. A failure never
-affects native Telegram sending. For same-host deployments prefer
-`TELEPRESS_URL=http://127.0.0.1:<port>` with the same `TELEPRESS_API_KEY` on both sides.
 
 ### Dependencies
 
