@@ -266,7 +266,7 @@ test("answers /about, parses media captions, and ignores link-less or own-forwar
     message_id: 1, from: { id: 42 }, chat: { id: 42, type: "private" }, text: "/about",
   });
   assert.equal(about.replies.length, 1);
-  assert.match(about.replies[0].body.text, /github\.com\/redtidev1918\/deviantdrop/);
+  assert.match(about.replies[0].body.text, /github\.com\/redtidev1918\/DeviantDrop/);
 
   // 图片 + caption 带链接：照常解析并下载（“处理中”提示会自动删除）。
   const caption = await send({

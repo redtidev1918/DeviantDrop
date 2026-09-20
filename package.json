@@ -5,13 +5,13 @@
   "type": "module",
   "license": "MIT",
   "author": "redtidev1918",
-  "homepage": "https://redtidev1918.github.io/deviantdrop/",
+  "homepage": "https://redtidev1918.github.io/DeviantDrop/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/redtidev1918/deviantdrop.git"
+    "url": "git+https://github.com/redtidev1918/DeviantDrop.git"
   },
   "bugs": {
-    "url": "https://github.com/redtidev1918/deviantdrop/issues"
+    "url": "https://github.com/redtidev1918/DeviantDrop/issues"
   },
   "keywords": [
     "telegram",

@@ -13,7 +13,7 @@ under `/`.
 | Document | Content |
 | :-- | :-- |
 | [Download & deploy](download.md) | How to get it running, and the DeviantArt egress requirement |
-| [README (English)](https://github.com/redtidev1918/deviantdrop/blob/main/README.en.md) | Overview, supported links, sign-in model, reply layout |
+| [README (English)](https://github.com/redtidev1918/DeviantDrop/blob/main/README.en.md) | Overview, supported links, sign-in model, reply layout |
 
 ## Guides
 
@@ -26,6 +26,6 @@ under `/`.
 
 ## Links
 
-- Repository: <https://github.com/redtidev1918/deviantdrop>
-- Releases: <https://github.com/redtidev1918/deviantdrop/releases>
-- Changelog: <https://github.com/redtidev1918/deviantdrop/blob/main/CHANGELOG.md>
+- Repository: <https://github.com/redtidev1918/DeviantDrop>
+- Releases: <https://github.com/redtidev1918/DeviantDrop/releases>
+- Changelog: <https://github.com/redtidev1918/DeviantDrop/blob/main/CHANGELOG.md>

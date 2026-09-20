@@ -33,7 +33,7 @@ Bot 会同时检查普通消息、频道消息和媒体 caption，并识别：
 ## 命令与交互
 
 - `/start`、`/help`：查看用法。
-- `/about`：项目介绍与源码仓库（github.com/redtidev1918/deviantdrop，聊天里直接可点）。
+- `/about`：项目介绍与源码仓库（github.com/redtidev1918/DeviantDrop，聊天里直接可点）。
 - 图片/视频的 caption 里带 DeviantArt 链接同样会被解析下载；不带 caption 的图片、贴纸等消息会被静默忽略。
 - 每条媒体回复的 caption 都会附带原作品页链接（Telegram 自动使其可点击），方便回原页查看或确认作者。
 - 下载/解析期间会先回一条自动删除的「处理中」提示（多链接时带进度 `⏳ 第 x/N 个`），完成后提示自动消失。

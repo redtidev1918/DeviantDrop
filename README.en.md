@@ -1,12 +1,12 @@
 # DeviantDrop
 
-**Language / 语言:** [中文](README.md) · English · [Documentation](https://redtidev1918.github.io/deviantdrop/) · [Changelog](CHANGELOG.md)
+**Language / 语言:** [中文](README.md) · English · [Documentation](https://redtidev1918.github.io/DeviantDrop/) · [Changelog](CHANGELOG.md)
 
 A Telegram bot that "drops" DeviantArt works into your chat: send a work link and
 DeviantDrop replies with the artwork's image, video or GIF unchanged.
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Docs](https://img.shields.io/badge/Docs-documentation_site-6366f1?style=flat-square)](https://redtidev1918.github.io/deviantdrop/)
+[![Docs](https://img.shields.io/badge/Docs-documentation_site-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
 
 **Deployment constraint**: DeviantArt blocks datacenter egress (Cloudflare Workers and
 most cloud hosts are blocked). Run the bot on an egress DeviantArt allows (a residential
@@ -158,7 +158,7 @@ affects native Telegram sending. For same-host deployments prefer
 The full parsing mechanics, dual-channel details, rate limiting, deployment and
 troubleshooting live on the **documentation site**:
 
-https://redtidev1918.github.io/deviantdrop/
+https://redtidev1918.github.io/DeviantDrop/
 
 ### Public preview page
 

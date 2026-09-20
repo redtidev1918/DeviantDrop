@@ -224,7 +224,7 @@ src/
 ```
 
 The original problems behind this refactor and their conclusions are folded into this document
-and the [CHANGELOG](https://github.com/redtidev1918/deviantdrop/blob/main/CHANGELOG.md).
+and the [CHANGELOG](https://github.com/redtidev1918/DeviantDrop/blob/main/CHANGELOG.md).
 Validation runs `npm run check`; the tests cover real HTTP multipart, poll + HTTP, credential
 rotation/corruption/hot-update, OAuth state/expiry/failure, caption/album, preview/SSRF,
 TelePress policy and failure isolation. A successful deployment does not mean the user's OAuth
