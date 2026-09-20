@@ -1,5 +1,6 @@
 - 开始使用
   - [概览](/)
+  - [在线试用 @DeviantDropBot](https://t.me/DeviantDropBot)
   - [下载与部署](/download.md)
   - [部署（VPS / Docker / Node）](/VPS.md)
   - [公网 IP / 无域名部署](/VPS-public-ip.md)

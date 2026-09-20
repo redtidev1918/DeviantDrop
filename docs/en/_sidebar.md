@@ -1,5 +1,6 @@
 - Getting Started
   - [Overview](/en/)
+  - [Try @DeviantDropBot](https://t.me/DeviantDropBot)
   - [Download & Deploy](/en/download.md)
   - [VPS Deployment Handbook](/en/VPS.md)
   - [Public IP / No-domain Deployment](/en/VPS-public-ip.md)
