@@ -10,9 +10,9 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Docs-documentation-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
 
-Just want to use it? Send a work link to [@DeviantDropBot](https://t.me/DeviantDropBot); it
-replies with that work's image / video / GIF and a `source` link in the caption. Self-hosting
-is only needed if you want your own instance.
+Send a work link to [@DeviantDropBot](https://t.me/DeviantDropBot); it replies
+with that work's image / video / GIF and a `source` link in the caption.
+Self-hosting is only needed if you want your own instance.
 
 > **Note**: DeviantArt blocks datacenter egress (Cloudflare Workers and most cloud hosts are
 > blocked). Run the bot on an egress DeviantArt allows (a residential network, or one of the
