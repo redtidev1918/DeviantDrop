@@ -4,7 +4,7 @@
 
 **把 DeviantArt 作品“丢”进 Telegram 的 Bot：发一条作品链接，就原样回复图片、视频或 GIF。**
 
-📖 完整文档：<https://redtidev1918.github.io/DeviantDrop/> · [更新日志](CHANGELOG.md)
+📖 [完整文档](https://redtidev1918.github.io/DeviantDrop/) · [更新日志](CHANGELOG.md)
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Docs-文档站点-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
@@ -37,8 +37,7 @@ DeviantArt 官方应用（在 deviantart.com/developers 申请，填入 `CLIENT_
 
 ## 支持范围
 
-登录与 Owner 命令、群组/频道配置、回复版式、可选的 TelePress 发布链路和排查步骤都在文档站：
-<https://redtidev1918.github.io/DeviantDrop/>
+登录与 Owner 命令、群组/频道配置、回复版式、可选的 TelePress 发布链路和排查步骤都在[文档站](https://redtidev1918.github.io/DeviantDrop/)。
 
 - 识别消息与 caption 里的作品页链接（`https` / `www` / 旧式域名 / `fav.me` / `/view/{id}`），最多同时处理 5 个；
   `fav.me`、`/view/{id}` 会先跟随重定向解析作者，解析不到时提示改用完整作品页网址。

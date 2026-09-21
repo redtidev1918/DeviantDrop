@@ -5,7 +5,7 @@
 **A Telegram bot that "drops" DeviantArt works into your chat: send a work link and
 DeviantDrop replies with the artwork's image, video or GIF unchanged.**
 
-📖 Full documentation: <https://redtidev1918.github.io/DeviantDrop/> · [Changelog](CHANGELOG.md)
+📖 [Full documentation](https://redtidev1918.github.io/DeviantDrop/) · [Changelog](CHANGELOG.md)
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Docs-documentation-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
@@ -43,8 +43,7 @@ into `.env` for OAuth access); and an egress DeviantArt allows (see above). No D
 ## What it handles
 
 Full guides — sign-in and owner commands, groups and channels, reply layout, the optional
-TelePress publish path, and troubleshooting — live on the docs site:
-<https://redtidev1918.github.io/DeviantDrop/>
+TelePress publish path, and troubleshooting — live on the [docs site](https://redtidev1918.github.io/DeviantDrop/).
 
 - Recognises work-page links inside messages and captions (`https` / `www` / legacy domains /
   `fav.me` / `/view/{id}`), processing up to 5 at once; short links resolve the author by following
