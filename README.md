@@ -2,7 +2,7 @@
 
 **语言 / Language:** 中文 · [English](README.en.md)
 
-**把 DeviantArt 作品“丢”进 Telegram 的 Bot：发一条作品链接，就原样回复图片、视频或 GIF。**
+> **把 DeviantArt 作品“丢”进 Telegram 的 Bot：发一条作品链接，就原样回复图片、视频或 GIF。**
 
 📖 [完整文档](https://redtidev1918.github.io/DeviantDrop/) · [更新日志](CHANGELOG.md)
 
