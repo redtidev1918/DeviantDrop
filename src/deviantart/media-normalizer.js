@@ -101,6 +101,45 @@ export function shouldSkipMatureExtras(input = {}) {
   return isMature === true && expansionAuthorized === false && Array.isArray(raw) && raw.length > 0;
 }
 
+// Literature works use `/art/...` URLs and can have no media descriptor. Their
+// content is inline tiptap JSON (or legacy HTML), not a downloadable image.
+export function extractLiteratureText(deviation = {}) {
+  const markup = deviation?.textContent?.html?.markup;
+  if (typeof markup !== "string" || !markup.trim()) return "";
+  try {
+    const doc = JSON.parse(markup);
+    const parts = [];
+    const walk = (node) => {
+      if (!node || typeof node !== "object") return;
+      if (typeof node.text === "string") parts.push(node.text);
+      if (node.type === "hardBreak") parts.push("\n");
+      for (const child of Array.isArray(node.content) ? node.content : []) walk(child);
+      if (["paragraph", "bulletList", "orderedList", "blockquote", "codeBlock"].includes(node.type)) parts.push("\n");
+    };
+    walk(doc);
+    return parts.join("").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  } catch {
+    return markup
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/?p(?:\s[^>]*)?>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, "> ")
+      .replace(/&quot;/gi, "\"")
+      .replace(/&#39;/gi, "'")
+      .replace(/[ \t]+/g, " ")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }
+}
+
+function safeFileStem(value = "") {
+  const stem = String(value).replace(/[\\/:*?"<>|]+/g, "-").trim();
+  return (stem || "literature").slice(0, 80);
+}
+
 // 网页 DTO -> 稳定 artwork 模型。
 // expansionAuthorized 是「本次响应是否授权了网页端扩展能力」，
 // 不参与主图可用性判断：成熟主图由 OAuth 提供，Cookie 缺失只影响附加页。
@@ -110,10 +149,17 @@ export function normalizeArtwork(deviation, { sourceUrl, expansionAuthorized = t
   const primaryDescriptor = deviation.media || {};
   const isVideo = deviation.isVideo === true
     || ["video", "film"].includes(String(deviation.type || "").toLowerCase());
-  const main = pickDescriptorMedia(primaryDescriptor, { isVideo });
+  let main = pickDescriptorMedia(primaryDescriptor, { isVideo });
   if (!main) {
+    const text = extractLiteratureText(deviation);
     if (isVideo) throw new NetworkError("DeviantArt 视频缺少可播放媒体，回退官方 API");
-    throw new Error("DeviantArt 作品没有可用媒体");
+    if (!text) throw new Error("DeviantArt 作品没有可用媒体");
+    main = {
+      kind: "document",
+      text,
+      extension: "txt",
+      fileName: safeFileStem(deviation.title),
+    };
   }
 
   const workId = deviation.extended?.deviationUuid
@@ -124,10 +170,15 @@ export function normalizeArtwork(deviation, { sourceUrl, expansionAuthorized = t
     assetId: `deviantart:${workId}:p${index}`,
     index,
     kind: main.kind,
-    url: main.url,
-    fallbackUrl: displayMediaUrl(primaryDescriptor),
-    mimeType: mimeForKind(main.kind),
-    originalAvailable: !isBlurredUrl(main.url),
+    url: main.url ?? null,
+    fallbackUrl: main.text ? null : displayMediaUrl(primaryDescriptor),
+    mimeType: main.text ? "text/plain" : mimeForKind(main.kind),
+    originalAvailable: main.text ? true : !isBlurredUrl(main.url),
+    ...(main.text ? {
+      content: main.text,
+      extension: main.extension,
+      fileName: main.fileName,
+    } : {}),
   });
   index += 1;
 

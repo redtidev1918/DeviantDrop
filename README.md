@@ -2,14 +2,14 @@
 
 **语言 / Language:** 中文 · [English](README.en.md)
 
-> **把 DeviantArt 作品转到 Telegram 的 Bot：发一条作品链接，收到图片、视频或 GIF。**
+> **把 DeviantArt 作品转到 Telegram 的 Bot：发一条作品链接，收到图片、视频、GIF 或文字作品。**
 
 [完整文档](https://redtidev1918.github.io/DeviantDrop/) · [更新日志](CHANGELOG.md)
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Docs-文档站点-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
 
-直接给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接，它就会把图片 / 视频 / GIF 发回来，caption 末尾带原作品页 source 链接；不需要自己部署。
+直接给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接，它就会把图片 / 视频 / GIF / 文字作品发回来，caption 末尾带原作品页 source 链接；不需要自己部署。
 
 > **注意**：DeviantArt 会封锁数据中心出口（Cloudflare Workers 与多数云主机被拦）。请把 Bot 跑在 DeviantArt 放行的出口（住宅网络或已通过检测的部分 VPS）上；部署步骤见 [VPS 手册](docs/VPS.md)。
 
@@ -41,7 +41,7 @@ DeviantArt 官方应用（在 deviantart.com/developers 申请，填入 `CLIENT_
 
 - 识别消息与 caption 里的作品页链接（`https` / `www` / 旧式域名 / `fav.me` / `/view/{id}`），最多同时处理 5 个；
   `fav.me`、`/view/{id}` 会先跟随重定向解析作者，解析不到时提示改用完整作品页网址。
-- **网页 `_puppy` 接口优先**（作品结构 / GIF / 新作品 / additionalMedia 都从同一适配器取），必要时用 OAuth 官方 API 兜底。
+- **网页 `_puppy` 接口优先**（作品结构 / GIF / literature 文字 / additionalMedia 都从同一适配器取），必要时用 OAuth 官方 API 兜底。文字作品以 `.txt` 文档发送。
 - 视频的 `media.baseUri` 只是封面：可播放地址只取网页 `types[].t == "video"`，或官方 API `videos[].src`；拿不到播放源时回退官方 API，而不是把封面当图片发送。
 - 同一作品成功发送后按 Telegram `file_id` 缓存 30 天；同一 bot 内其他用户再发同一作品时直接复用，不重新下载/上传。
 - 照片/视频连续片段用 `sendMediaGroup` 相册发送（超过 10 张自动分批）；GIF/animation 始终独立 `sendAnimation`，不会拆散或重复 caption；超大图先压缩，失败再以 document 发送；Telegram 拉不动 CDN 时自动下载后 multipart 上传。

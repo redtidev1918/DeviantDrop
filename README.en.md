@@ -11,7 +11,7 @@
 [![Docs](https://img.shields.io/badge/Docs-documentation-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
 
 Send a work link to [@DeviantDropBot](https://t.me/DeviantDropBot); it replies
-with that work's image / video / GIF and a `source` link in the caption.
+with that work's image / video / GIF / text and a `source` link in the caption.
 Self-hosting is only needed if you want your own instance.
 
 > **Note**: DeviantArt blocks datacenter egress (Cloudflare Workers and most cloud hosts are
@@ -48,8 +48,8 @@ TelePress publish path, and troubleshooting — live on the [docs site](https://
 - Recognises work-page links inside messages and captions (`https` / `www` / legacy domains /
   `fav.me` / `/view/{id}`), processing up to 5 at once; short links resolve the author by following
   the redirect, and the bot asks for the full work-page URL when that does not resolve.
-- **The website `_puppy` endpoints come first** (work structure / GIF / new works /
-  `additionalMedia` all come from the same adapter); OAuth is used as the fallback when needed.
+- **The website `_puppy` endpoints come first** (work structure / GIF / literature text /
+  `additionalMedia` all come from the same adapter); OAuth is used as the fallback when needed. Literature works are delivered as `.txt` documents.
 - For videos, `media.baseUri` is only a poster. Playable URLs must come from web
   `types[].t == "video"` or OAuth `videos[].src`; if neither is available, DeviantDrop falls
   back to the official API instead of sending the poster as an image.

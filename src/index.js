@@ -25,9 +25,9 @@ function daAdapter(env) {
 
 const REPO = "https://github.com/redtidev1918/DeviantDrop";
 const DAVIEWER = "https://github.com/redtidev1918/DAViewer";
-const HELP_TEXT = `发送 DeviantArt 作品页链接，我会回复其中的图片、视频或 GIF（fav.me 短链不支持，请发完整作品页网址）。单条消息最多处理 ${MAX_LINKS} 个链接；图片/视频的 caption 里带链接也可以。\n\n/start 开始 · /help 用法 · /about 项目与源码`;
-const ABOUT_TEXT = `DeviantDrop：把 DeviantArt 作品转到 Telegram 的 Bot。\n\n发送 DeviantArt 作品页链接，即可收到图片、视频或 GIF（fav.me 短链不支持）；每条回复的媒体 caption 末尾都带「🔗 source | 📲 DAViewer app」两个超链接，分别回到原作品页和下载成品客户端。\n\n开源项目（MIT）：${REPO}\nDAViewer 客户端（兄弟项目）：${DAVIEWER}\n源码、部署与使用说明都在仓库里，欢迎 star、提 issue。`;
-const HINT_TEXT = `没有找到可下载的 DeviantArt 链接。\n\n发送 DeviantArt 作品页链接（不支持 fav.me 短链），即可收到图片、视频或 GIF。\n/help 查看用法，/about 查看项目与源码。`;
+const HELP_TEXT = `发送 DeviantArt 作品页链接，我会回复其中的图片、视频、GIF 或文字作品（fav.me 短链不支持，请发完整作品页网址）。单条消息最多处理 ${MAX_LINKS} 个链接；图片/视频的 caption 里带链接也可以。\n\n/start 开始 · /help 用法 · /about 项目与源码`;
+const ABOUT_TEXT = `DeviantDrop：把 DeviantArt 作品转到 Telegram 的 Bot。\n\n发送 DeviantArt 作品页链接，即可收到图片、视频、GIF 或文字作品（fav.me 短链不支持）；每条回复的媒体 caption 末尾都带「🔗 source | 📲 DAViewer app」两个超链接，分别回到原作品页和下载成品客户端。\n\n开源项目（MIT）：${REPO}\nDAViewer 客户端（兄弟项目）：${DAVIEWER}\n源码、部署与使用说明都在仓库里，欢迎 star、提 issue。`;
+const HINT_TEXT = `没有找到可下载的 DeviantArt 链接。\n\n发送 DeviantArt 作品页链接（不支持 fav.me 短链），即可收到图片、视频、GIF 或文字作品。\n/help 查看用法，/about 查看项目与源码。`;
 
 // 入口结果词汇表：handleMessage 返回的原因里，哪些算「候选被拒」（有意不处理），
 // 哪些算「已处理」。以前 /start 也会被记成 rejected，等于把「正常回复」误报成丢弃，
@@ -623,23 +623,39 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
   }
   try { await env.preview?.remember({ id: target.id, ...cap }); } catch { /* preview must not block delivery */ }
 
-  const items = await Promise.all(artwork.media.map(async (item) => ({
-    kind: item.kind,
-    url: await createProxyUrl(origin, item.url, env.WEBHOOK_SECRET),
-    fallbackUrl: item.fallbackUrl ? await createProxyUrl(origin, item.fallbackUrl, env.WEBHOOK_SECRET) : null,
-  })));
+  const items = await Promise.all(artwork.media.map(async (item) => {
+    // Inline literature has no CDN URL: deliver it as a multipart .txt even in
+    // webhook mode, where media items are otherwise sent by proxied URL.
+    if (typeof item.content === 'string' && item.content.length) {
+      return {
+        kind: item.kind,
+        content: item.content,
+        extension: item.extension || 'txt',
+        fileName: item.fileName || 'literature',
+        url: null,
+        fallbackUrl: null,
+      };
+    }
+    return {
+      kind: item.kind,
+      url: await createProxyUrl(origin, item.url, env.WEBHOOK_SECRET),
+      fallbackUrl: item.fallbackUrl ? await createProxyUrl(origin, item.fallbackUrl, env.WEBHOOK_SECRET) : null,
+    };
+  }));
 
   let results;
   try {
     // This reply is the final source-validity checkpoint. Telegram rejects a
     // reply to a deleted source message, so late-downloaded albums cannot
     // appear after the user has withdrawn their request.
-    results = await sendArtworkPlan(items, message, env, { upload: !origin, onStatus, cap });
+    const hasInlineContent = items.some((item) => typeof item.content === 'string' && item.content.length);
+    results = await sendArtworkPlan(items, message, env, { upload: !origin || hasInlineContent, onStatus, cap });
   } catch (error) {
     if (isSourceRemovedError(error)) {
       event("delivery_cancelled", { work_id: target.id, stage: "source_checkpoint", chat_id: message.chat.id });
       return;
     }
+    if (artwork.media.some((item) => item.content)) throw error;
     const publisherMedia = toPublisherMedia(artwork);
     const published = await publishArtwork(env, target.id, publisherMedia, url.href, true);
     if (!published) throw error;
@@ -658,8 +674,10 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
     }
     await cacheSet("fid", workCacheKey, { title: artwork.titleLabel, cap, assets }, 30 * 24 * 3600);
   }
-  const published = await publishArtwork(env, target.id, toPublisherMedia(artwork), url.href);
-  if (published) await sendPublishedLink(message, env, target.id, url.href, published).catch(() => {});
+  if (!artwork.media.some((item) => item.content)) {
+    const published = await publishArtwork(env, target.id, toPublisherMedia(artwork), url.href);
+    if (published) await sendPublishedLink(message, env, target.id, url.href, published).catch(() => {});
+  }
 }
 
 function isSourceRemovedError(error) {

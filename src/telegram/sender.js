@@ -81,6 +81,17 @@ async function uploadUnit(unit, message, env, caption, primary, onStatus, cap) {
 
   for (let i = 0; i < unit.items.length; i += 1) {
     const item = unit.items[i];
+    // Literature DTOs are normalized into inline text documents. They must not
+    // go through the CDN downloader (which requires a URL).
+    if (typeof item.content === 'string' && item.content.length) {
+      const extension = item.extension || 'txt';
+      entries.push({
+        item,
+        bytes: new TextEncoder().encode(item.content),
+        extension,
+      });
+      continue;
+    }
     const downloaded = await downloadMedia(item, onStatus, `第 ${i + 1}/${unit.items.length} 张`);
     let { bytes, extension } = downloaded;
     if (downloaded.usedFallback) extension = 'jpg';
@@ -152,7 +163,7 @@ async function uploadAlbumBatches(entries, message, env, caption, primary, cap, 
 async function uploadSingle(entry, message, env, caption, primary, cap, onStatus, forceKind = null) {
   const kind = forceKind || entry.item.kind;
   const [method, field] = MEDIA_FIELDS[kind];
-  const makeForm = (methodField = field, fileName = field) => {
+  const makeForm = (methodField = field, fileName = entry.item.fileName || field) => {
     const form = baseForm(message);
     if (caption) {
       form.set('caption', caption);

@@ -63,6 +63,29 @@ test('normalizeArtwork attaches stable asset identity to every media file', () =
 });
 
 
+test('literature deviations normalize into an inline text document', () => {
+  const markup = JSON.stringify({
+    type: 'doc',
+    content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'First' }] },
+      { type: 'paragraph', content: [{ type: 'text', text: 'Second' }] },
+    ],
+  });
+  const artwork = normalizeArtwork({
+    deviationId: '1381144810',
+    type: 'literature',
+    title: 'Through Closed Eyes',
+    author: { username: 'caisiel' },
+    textContent: { html: { markup } },
+  }, { sourceUrl: 'https://www.deviantart.com/caisiel/art/Through-Closed-Eyes-1381144810' });
+
+  assert.equal(artwork.media.length, 1);
+  assert.equal(artwork.media[0].kind, 'document');
+  assert.equal(artwork.media[0].content, 'First\nSecond');
+  assert.equal(artwork.media[0].mimeType, 'text/plain');
+  assert.equal(artwork.media[0].extension, 'txt');
+  assert.equal(artwork.media[0].fileName, 'Through Closed Eyes');
+});
 test('shared conformance fixture normalizes consistently', () => {
   const fixture = JSON.parse(readFileSync(new URL('./fixtures/deviantart_deviation.json', import.meta.url), 'utf8'));
   const artwork = normalizeArtwork(fixture, { sourceUrl: fixture.url });

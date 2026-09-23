@@ -30,3 +30,28 @@ test('multipart album does not silently drop a photo that cannot be compressed',
     globalThis.fetch = originalFetch;
   }
 });
+
+test('inline literature content uploads as a text document without a CDN fetch', async () => {
+  const originalFetch = globalThis.fetch;
+  const posts = [];
+  globalThis.fetch = async (input, init = {}) => {
+    const form = init.body;
+    posts.push({
+      method: String(input).split('/').pop(),
+      fields: form instanceof FormData ? [...form.keys()] : [],
+      document: form instanceof FormData ? form.get('document') : null,
+    });
+    return Response.json({ ok: true, result: { document: { file_id: 'doc-text' } } });
+  };
+  try {
+    const message = { message_id: 1, chat: { id: 9, type: 'private' } };
+    const results = await sendArtworkPlan([
+      { kind: 'document', content: 'A small representation', extension: 'txt', fileName: 'story' },
+    ], message, { BOT_TOKEN: '123:test' }, { upload: true });
+    assert.equal(results.length, 1);
+    assert.equal(posts[0].method, 'sendDocument');
+    assert.equal(posts[0].document?.name, 'story.txt');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

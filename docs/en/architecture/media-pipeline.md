@@ -20,6 +20,7 @@ Telegram delivery
 - If the web response has no playable video source, the adapter falls back to the official API. It must not relabel the poster as a sendable image.
 - Variants are ranked from the response (1080p → 360p). Recognized extensions include `mp4`, `m4v`, `webm`, `mov`, and `mkv`.
 - GIF remains `animation`, never an image album item.
+- Literature uses `/art/` URLs and may have no media descriptor. The adapter reads inline `textContent`, normalizes it to a `.txt` document, and never fakes it as an image or fails outright.
 - Paid / subscription-locked (Premium Folder / tier) works surface as `locked-preview`: a blurred non-mature main is no longer sent as the original, and the caption says the work needs a subscription/purchase.
 - The planner groups contiguous photo/video runs into `sendMediaGroup` batches (≤10 items) and sends animation standalone.
 - Oversized photos are compressed or demoted to document; unsupported media fails visibly rather than becoming a false preview.
