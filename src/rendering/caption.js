@@ -42,6 +42,7 @@ export function renderArtworkCaption(meta = {}, status = {}, { showNotes = true,
     if (status.compressed) notes.push("部分图片超过 10MB，已压缩发送");
     if (status.skippedPages) notes.push("部分附加图片暂时无法获取，请在原站查看");
     if (status.blurredPreview) notes.push("仅能获取打码预览，请在原站查看");
+    if (status.lockedPreview) notes.push("作品需要订阅/购买，当前为打码预览，请在原站查看");
     if (status.previewOnly) notes.push("原图暂不可用，已使用高清展示图");
     if (status.docFallback) notes.push("图片过大，已作为文件发送");
     if (notes.length) lines.push(`⚠️ ${notes.join("；")}`);

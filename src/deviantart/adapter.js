@@ -162,8 +162,10 @@ export class DeviantArtAdapter {
   }
 
   accessStatus(artwork) {
-    if (!artwork.mature) return 'public';
-    return artwork.media[0]?.originalAvailable ? 'mature' : 'mature-preview';
+    if (artwork.media[0]?.originalAvailable === false) {
+      return artwork.mature ? 'mature-preview' : 'locked-preview';
+    }
+    return artwork.mature ? 'mature' : 'public';
   }
 
   async guardedFetch(url, init) {

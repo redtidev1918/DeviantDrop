@@ -72,6 +72,15 @@ export function isMatureLoggedOut(deviation = {}) {
     && (deviation.blockReasons || []).includes("mature_loggedout");
 }
 
+// 付费/订阅（Premium Folder / tier）作品：DTO 可能带显式字段，也可能只把媒体
+// 换成模糊预览。两者都表示「当前账号未订阅、拿不到原图」，与 NSFW 打码不同。
+export function isPremiumLocked(deviation = {}) {
+  const premium = deviation.premiumFolderData ?? deviation.premium_folder_data;
+  if (premium && typeof premium === "object" && premium.hasAccess === false) return true;
+  const tier = deviation.tierAccess ?? deviation.tier_access;
+  return tier === "locked" || tier === "locked-subscribed";
+}
+
 // DeviantArt 对未授权的成熟内容会下发打码版本，URL 里带 blur_ 标记。
 // 这是「响应事实」，比任何缓存的会话状态都可靠。
 export function isBlurredUrl(value = "") {
@@ -158,6 +167,7 @@ export function normalizeArtwork(deviation, { sourceUrl, expansionAuthorized = t
     author: deviation.author?.username || null,
     sourceUrl,
     mature,
+    premium: isPremiumLocked(deviation),
     expansionAuthorized,
     mainSource: "web",
     media,

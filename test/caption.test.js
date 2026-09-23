@@ -31,6 +31,14 @@ test("caption 排版：标题/作者/数量分行，warning 独立成行不粘�
   assert.match(text, /⚠️ 部分图片超过 10MB，已压缩发送；原图暂不可用，已使用高清展示图/);
 });
 
+test("caption：付费/订阅锁定预览有明确提示，与成熟打码区分", () => {
+  const { text } = renderArtworkCaption(
+    { title: "Paid", author: "A" },
+    { lockedPreview: true },
+  );
+  assert.match(text, /作品需要订阅\/购买，当前为打码预览，请在原站查看/);
+});
+
 test("sourceUrl 存在时 caption 末尾追加 <a>source</a> 锚点，并做 HTML 转义", () => {
   const { text } = renderArtworkCaption(
     { title: 'Heavy "Mama" & Hunt', author: "A&B<C>" },

@@ -148,6 +148,60 @@ test('没有 OAuth 时成熟作品仍可发送：网页结果按响应标注是�
   assert.equal(stub.officialCalls.length, 0);
 });
 
+test('非成熟但主图打码：付费/订阅锁定，标注 locked-preview', async (t) => {
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+  const pieces = {
+    deviation: {
+      deviationId: '1',
+      title: 'Paid single',
+      author: { username: 'artist' },
+      isMature: false,
+      media: { baseUri: 'https://cdn.test/blur_only.jpg' },
+    },
+  };
+  const stub = stubFetch({ onPuppy: () => pieces });
+  const env = {
+    WEBHOOK_SECRET: 'secret',
+    DA_COOKIES: null,
+    cookieStore: { getCookies: () => null, getState: () => ({ hasCookie: false, state: WEB_SESSION_STATUS.MISSING }) },
+  };
+
+  const artwork = await new DeviantArtAdapter().getArtwork('https://www.deviantart.com/artist/art/work-1', env, {});
+
+  assert.equal(artwork.mature, false);
+  assert.equal(artwork.premium, false);
+  assert.equal(artwork.media[0].originalAvailable, false);
+  assert.equal(artwork.accessStatus, 'locked-preview');
+  assert.equal(stub.officialCalls.length, 0);
+});
+
+test('premiumFolderData.hasAccess=false：显式标记 premium 锁定', async (t) => {
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+  const pieces = {
+    deviation: {
+      deviationId: '2',
+      title: 'Premium folder',
+      author: { username: 'artist' },
+      isMature: false,
+      premiumFolderData: { type: 'premium', hasAccess: false },
+      media: { baseUri: 'https://cdn.test/main.jpg' },
+    },
+  };
+  const stub = stubFetch({ onPuppy: () => pieces });
+  const env = {
+    WEBHOOK_SECRET: 'secret',
+    DA_COOKIES: null,
+    cookieStore: { getCookies: () => null, getState: () => ({ hasCookie: false, state: WEB_SESSION_STATUS.MISSING }) },
+  };
+
+  const artwork = await new DeviantArtAdapter().getArtwork('https://www.deviantart.com/artist/art/work-2', env, {});
+
+  assert.equal(artwork.premium, true);
+  assert.equal(stub.officialCalls.length, 0);
+});
+
 test('HTTP 400 重试必须重建匿名会话 csrf，不能再复用缓存的旧值', async (t) => {
   const original = globalThis.fetch;
   t.after(() => { globalThis.fetch = original; });

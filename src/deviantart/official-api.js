@@ -1,7 +1,7 @@
 import { getOfficialToken, clearOAuthAccessToken } from '../auth/token.js';
 import { AuthError, AuthRevokedError, NetworkError, NotFoundError, PermissionDeniedError, RateLimitError } from '../auth/errors.js';
 import { DA_HEADERS } from './http.js';
-import { pickDescriptorMedia, displayMediaUrl, kindOfUrl, mimeForKind } from './media-normalizer.js';
+import { pickDescriptorMedia, displayMediaUrl, kindOfUrl, mimeForKind, isPremiumLocked, isBlurredUrl } from './media-normalizer.js';
 
 export const DA_API_BASE = 'https://www.deviantart.com/api/v1/oauth2/';
 const DA_MINOR_VERSION = '20240701';
@@ -56,10 +56,11 @@ export function normalizeOfficialArtwork(deviation, { sourceUrl } = {}) {
     author: deviation.author?.username || null,
     sourceUrl,
     mature: deviation.is_mature === true,
+    premium: isPremiumLocked(deviation),
     // 官方 API 完全不提供 additionalMedia：这条路径没有网页扩展能力。
     expansionAuthorized: false,
     mainSource: 'oauth',
-    media: [{ kind, url, fallbackUrl: deviation.preview?.src || null, mimeType: mimeForKind(kind), originalAvailable: !!deviation.content?.src }],
+    media: [{ kind, url, fallbackUrl: deviation.preview?.src || null, mimeType: mimeForKind(kind), originalAvailable: !!deviation.content?.src && !isBlurredUrl(deviation.content.src) }],
     skippedMedia: 0,
   };
 }
