@@ -53,6 +53,9 @@ TelePress publish path, and troubleshooting — live on the [docs site](https://
 - For videos, `media.baseUri` is only a poster. Playable URLs must come from web
   `types[].t == "video"` or OAuth `videos[].src`; if neither is available, DeviantDrop falls
   back to the official API instead of sending the poster as an image.
+- Paid / subscription-locked (Premium Folder / tier) works surface as `locked-preview`: the
+  caption says the work needs a subscription/purchase instead of sending the blurred preview
+  as if it were the original.
 - A successfully delivered work is cached by Telegram `file_id` for 30 days. Later requests from
   any user of the same bot replay it without downloading or uploading the binary again.
 - Photo/video sequences are sent as `sendMediaGroup` albums (auto-batched above 10 items);

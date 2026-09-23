@@ -615,9 +615,12 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
     status: {},
     text: null,
   };
-  // 两种缺页原因分开表达：附加页拿不到 ≠ 成熟内容没权限。
+  // 三种缺页原因分开表达：附加页拿不到 ≠ 成熟内容没权限 ≠ 付费/订阅锁定。
   if (artwork.skippedMedia > 0) cap.status.skippedPages = true;
-  if (artwork.mature && artwork.media.some((item) => !item.originalAvailable)) cap.status.blurredPreview = true;
+  if (artwork.media.some((item) => !item.originalAvailable)) {
+    if (artwork.mature) cap.status.blurredPreview = true;
+    else cap.status.lockedPreview = true;
+  }
   try { await env.preview?.remember({ id: target.id, ...cap }); } catch { /* preview must not block delivery */ }
 
   const items = await Promise.all(artwork.media.map(async (item) => ({

@@ -22,3 +22,10 @@
 
 13. Before adding a media/auth behavior, investigate DAKit, DAViewer, and deviantart-downloader; reuse a proven implementation where it fits.
 14. Architecture, operations, and testing docs must change together when these invariants change.
+
+## Transient docs
+
+15. One-off reports, phase snapshots and verification outputs are not committed.
+    Keep completed work in the workspace archive, or move the evidence to
+    `docs/archive/` with the docsite lifecycle block and keep it out of the
+    user sidebar (`docsite.py lifecyclecheck` validates the conventions).
