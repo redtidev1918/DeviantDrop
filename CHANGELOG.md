@@ -10,6 +10,13 @@
 
 ---
 
+## [1.13.1](https://github.com/redtidev1918/DeviantDrop/compare/v1.13.0...v1.13.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* **caption:** shorten client link label to DAViewer app ([9ac29c3](https://github.com/redtidev1918/DeviantDrop/commit/9ac29c3766c04e164a25c8de958e260d4d2f858a))
+
 ## [1.13.0](https://github.com/redtidev1918/DeviantDrop/compare/v1.12.4...v1.13.0) (2026-09-23)
 
 
