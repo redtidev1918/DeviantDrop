@@ -10,6 +10,13 @@
 
 ---
 
+## [1.13.0](https://github.com/redtidev1918/DeviantDrop/compare/v1.12.4...v1.13.0) (2026-09-23)
+
+
+### Features
+
+* **caption:** replace inline client button with caption source/client hyperlinks ([b8ca494](https://github.com/redtidev1918/DeviantDrop/commit/b8ca494827d42622f3d280daf5fc266748306d3e))
+
 ## [1.12.4](https://github.com/redtidev1918/DeviantDrop/compare/v1.12.3...v1.12.4) (2026-09-23)
 
 
