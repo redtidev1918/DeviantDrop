@@ -20,6 +20,7 @@ Telegram delivery
 - 网页响应缺少可播放视频源时，适配器回退官方 API；不会把封面图误标成可发送图片。
 - 按响应里的质量排序（1080p → 360p）；扩展名识别覆盖 `mp4`、`m4v`、`webm`、`mov`、`mkv`。
 - GIF 保持 `animation`，不进入 photo/video 相册。
+- 付费/订阅（Premium Folder / tier）作品识别为 `locked-preview`：非成熟内容的模糊主图不再当作原图发送，caption 明确提示需要订阅/购买。
 - Planner 只按规范化后的模型分批：连续 photo/video 用 `sendMediaGroup`（≤10 项），animation 单独发送。
 - 超大图先压缩，失败则转 document；不支持的媒体显式失败，不能静默降级成假预览。
 - 成功交付后按作品/资产保存 Telegram `file_id`（30 天）。同一 bot 内跨用户重复请求直接复用；任一资产缺失则回退完整抓取并重建缓存。
