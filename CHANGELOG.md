@@ -10,6 +10,15 @@
 
 ---
 
+## [1.12.3](https://github.com/redtidev1918/DeviantDrop/compare/v1.12.2...v1.12.3) (2026-09-23)
+
+
+### Bug Fixes
+
+* mark subscription-locked previews instead of sending blurred originals ([84c217c](https://github.com/redtidev1918/DeviantDrop/commit/84c217c0a593bd154b67b0b07f62b1901395fdd2))
+* mark subscription-locked previews instead of sending blurred originals ([fd530f2](https://github.com/redtidev1918/DeviantDrop/commit/fd530f2b789bebdbc74cfa6856e4bc5cf54d5bd1))
+* **media:** never deliver video posters as playable media ([1d7219e](https://github.com/redtidev1918/DeviantDrop/commit/1d7219eb62cdcb71ef82e5aded7ceb3007693f43))
+
 ## [1.12.2](https://github.com/redtidev1918/DeviantDrop/compare/v1.12.1...v1.12.2) (2026-09-20)
 
 
