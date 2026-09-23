@@ -162,9 +162,10 @@ A single pure planner decides the send units: consecutive photos/videos enter `s
 groups of 2–10; GIF/animation can never enter a Telegram media group and always uses a standalone
 `sendAnimation`. The caption, status and source attach only to the first send unit, and later
 media carry no duplicate caption. Direct URL sending, multipart upload and file_id replay share
-the same planner, so the three paths never diverge. The source is **one reliable, non-duplicated
-clickable entry**: inline button for a single media, and a follow-up `text_link` source message
-after an album.
+the same planner, so the three paths never diverge. The source and client entries are **two
+hyperlinks at the end of the first media caption** (`🔗 source | 📲 DAViewer client`, HTML
+`<a>` anchors): single media, albums, direct URL sending, multipart upload and file_id replay
+all behave the same. Inline buttons are no longer used (sendMediaGroup silently drops them).
 
 With `TELEPRESS_URL` unset there is no extra dependency. Once set, `TELEPRESS_MODE=fallback` is
 the default; `large-gallery` generates an optional gallery for image-only sets above 10,

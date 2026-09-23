@@ -79,8 +79,8 @@ TelePress publish path, and troubleshooting — live on the [docs site](https://
 ### Related projects & credits
 
 - [DAViewer client (sister project)](https://github.com/redtidev1918/DAViewer): a desktop
-  DeviantArt browser. The "📲 DeviantArt 客户端" button on single-image/video replies points to
-  its [download page](https://redtidev1918.github.io/DAViewer/#/download), and `/about`
+  DeviantArt browser. The "📲 DAViewer client" link at the end of every media caption points
+  to its [download page](https://redtidev1918.github.io/DAViewer/#/download), and `/about`
   mentions it too.
 - [TelePress](https://github.com/redtidev1918/TelePress): optional Telegraph gallery publishing.
 - Implementation sources: [deviantart-downloader](https://github.com/redtidev1918/deviantart-downloader)

@@ -1,23 +1,23 @@
 // 统一的作品 caption / 来源渲染。
 //
-// 设计：媒体消息的 caption 只放标题/作者/数量/状态 + text 末尾的小号蓝色 "source" 链接
-// （<a href=…>source</a>，parse_mode=HTML 由服务端解析，不依赖自定义 caption_entities——
-// multipart 上传端点对自定义 caption_entities 的 offset/length 有 bug：按 code point 收、
-// 却按 UTF-16/字节存，含 emoji 时高亮错位，实测 2026-09；HTML 锚点没有偏移概念，emoji
-// 也不影响）。title/author/URL 全部做 HTML 转义，防 Telegram 422。
-//   - 「📲 DeviantArt 客户端」按钮：单图/单视频图片下方的 inline 键盘按钮
-//     （JSON 传 URL、file_id 重放、multipart 上传/文档降级都可靠生效），指向 DAViewer
-//     客户端下载页——用客户端浏览 DeviantArt 更顺手。
-//   - 相册（多图）：Telegram 的 sendMediaGroup（无论 JSON 还是 multipart、无论顶层
-//     还是条目级 reply_markup）都会静默丢弃按钮，所以相册只有首图 caption 里的 source
-//     锚点，不再补发独立文本行（也省掉第二条回复消息）。
+// 设计：媒体消息的 caption 只放标题/作者/数量/状态 + 末尾空行隔开的两个超链接
+// （🔗 source | 📲 DAViewer client，parse_mode=HTML 的 <a> 锚点，由服务端解析，
+// 不依赖自定义 caption_entities——multipart 上传端点对自定义 caption_entities 的
+// offset/length 有 bug：按 code point 收、却按 UTF-16/字节存，含 emoji 时高亮错位，
+// 实测 2026-09；HTML 锚点没有偏移概念，emoji 也不影响）。title/author/URL 全部做
+// HTML 转义，防 Telegram 422。
+//   - 不再用 inline 键盘按钮：sendMediaGroup（无论 JSON 还是 multipart、无论顶层
+//     还是条目级 reply_markup）都会静默丢弃按钮，导致单图与相册行为不一致；
+//     caption 超链接在所有发送路径上都可靠。
+//   - 单图/视频/相册/上传/file_id 重放行为一致：两个链接只出现在首条发送单元的
+//     caption 末尾，每个作品一次、绝不重复。
 
 const CAPTION_LIMIT = 1024;
 
-// 客户端按钮 / 来源锚点的标签与地址。
-export const CLIENT_BUTTON_TEXT = "📲 DeviantArt 客户端";
-export const CLIENT_DOWNLOAD_URL = "https://redtidev1918.github.io/DAViewer/#/download";
+// caption 末尾超链接的标签与地址。
 export const SOURCE_LINK_TEXT = "source";
+export const CLIENT_LINK_TEXT = "DAViewer client";
+export const CLIENT_DOWNLOAD_URL = "https://redtidev1918.github.io/DAViewer/#/download";
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (c) => (
@@ -28,7 +28,7 @@ function escapeHtml(value) {
 // 媒体 caption（parse_mode=HTML，见文件头注释）。返回 { text }。
 // opts.showNotes=false 时省略技术性 ⚠️ 提示（压缩/打码/原图不可用/转文件）：
 // 这些对运营者排查有用，对群里看图的人是噪音，群聊默认不显示（见 telegram/sender.js 的 notesEnabled）。
-// opts.sourceUrl 存在时在末尾追加 <a href="…">source</a>；1024 上限优先保证锚点完整。
+// opts.sourceUrl 存在时在末尾空行后追加「🔗 source | 📲 DAViewer client」；1024 上限优先保证链接行完整。
 export function renderArtworkCaption(meta = {}, status = {}, { showNotes = true, sourceUrl = null } = {}) {
   const lines = [];
   const title = (meta.title || "DeviantArt 作品").trim();
@@ -49,21 +49,12 @@ export function renderArtworkCaption(meta = {}, status = {}, { showNotes = true,
   }
   const body = lines.join("\n");
   if (sourceUrl) {
-    // 空行隔开 + 🔗 前缀：Telegram HTML 不支持居中标签，用分隔与 emoji 让来源入口更醒目。
-    const footer = `\n\n🔗 <a href="${escapeHtml(sourceUrl)}">source</a>`;
+    // 空行隔开 + 「🔗 | 📲」两个超链接：Telegram HTML 不支持居中标签，用空行与 emoji 分隔。
+    const footer = `\n\n🔗 <a href="${escapeHtml(sourceUrl)}">${SOURCE_LINK_TEXT}</a> | 📲 <a href="${escapeHtml(CLIENT_DOWNLOAD_URL)}">${CLIENT_LINK_TEXT}</a>`;
     const head = body.slice(0, Math.max(0, CAPTION_LIMIT - footer.length)).replace(/[\uD800-\uDBFF]$/, "");
     return { text: `${head}${footer}` };
   }
   return { text: body.slice(0, CAPTION_LIMIT).replace(/[\uD800-\uDBFF]$/, "") };
-}
-
-// 单媒体的 inline 键盘（仅单图/单视频用；相册会被静默丢弃，相册走 caption 锚点）。
-// 也用于非媒体消息（如 Telegraph 兜底入口）。按钮=DAViewer 客户端下载页，与原作品页无关
-// （原作品页由 caption 末尾的 source 锚点承载）。
-export function openButtonMarkup(sourceUrl, extraButtons = []) {
-  if (!sourceUrl) return undefined;
-  const row = [{ text: CLIENT_BUTTON_TEXT, url: CLIENT_DOWNLOAD_URL }, ...extraButtons];
-  return { inline_keyboard: [row] };
 }
 
 // 把 resolveWebMedia 的 media 对象 + 作品页 URL 归一化成发送函数使用的 cap：

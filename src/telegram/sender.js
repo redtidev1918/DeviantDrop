@@ -1,4 +1,4 @@
-import { renderArtworkCaption, openButtonMarkup } from '../rendering/caption.js';
+import { renderArtworkCaption } from '../rendering/caption.js';
 import { planDelivery } from './delivery-planner.js';
 import { telegram, telegramForm } from './api.js';
 import {
@@ -54,13 +54,11 @@ async function urlUnit(unit, message, env, caption, primary, cap) {
   }
   const item = unit.type === 'single' ? unit.items[0] : unit.item;
   const fields = MEDIA_FIELDS[item.kind];
-  const markup = primary ? openButtonMarkup(cap?.sourceUrl) : undefined;
   try {
     const result = await telegram(env, fields[0], {
       chat_id: message.chat.id,
       [fields[1]]: item.url,
       ...(caption ? { caption, parse_mode: 'HTML' } : {}),
-      ...(markup ? { reply_markup: markup } : {}),
       ...reply(message),
     });
     return [result];
@@ -70,7 +68,6 @@ async function urlUnit(unit, message, env, caption, primary, cap) {
         chat_id: message.chat.id,
         [MEDIA_FIELDS.document[1]]: item.url,
         ...(caption ? { caption, parse_mode: 'HTML' } : {}),
-        ...(markup ? { reply_markup: markup } : {}),
         ...reply(message),
       });
       return [result];
@@ -155,14 +152,12 @@ async function uploadAlbumBatches(entries, message, env, caption, primary, cap, 
 async function uploadSingle(entry, message, env, caption, primary, cap, onStatus, forceKind = null) {
   const kind = forceKind || entry.item.kind;
   const [method, field] = MEDIA_FIELDS[kind];
-  const markup = primary ? openButtonMarkup(cap?.sourceUrl) : undefined;
   const makeForm = (methodField = field, fileName = field) => {
     const form = baseForm(message);
     if (caption) {
       form.set('caption', caption);
       form.set('parse_mode', 'HTML');
     }
-    if (markup) form.set('reply_markup', JSON.stringify(markup));
     form.set(methodField, new Blob([entry.bytes], { type: MIME_BY_EXTENSION[entry.extension] || 'application/octet-stream' }), `${fileName}.${entry.extension}`);
     return form;
   };
@@ -205,12 +200,10 @@ export async function sendFileIdPlan(files, message, env, cap) {
       const kind = item.kind;
       const value = item.file_id || item.url;
       const [method, field] = MEDIA_FIELDS[kind];
-      const markup = unit.primary ? openButtonMarkup(cap.sourceUrl) : undefined;
       await telegram(env, method, {
         chat_id: message.chat.id,
         [field]: value,
         ...(unitCaption ? { caption: unitCaption, parse_mode: 'HTML' } : {}),
-        ...(markup ? { reply_markup: markup } : {}),
         ...reply(message),
       });
     }

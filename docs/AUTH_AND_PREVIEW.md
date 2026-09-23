@@ -79,7 +79,7 @@ access token 与网页 `_puppy` 会话（CSRF + Cookie 复用）只放内存，�
 
 ## Telegram 排版与 TelePress
 
-媒体由同一个纯 planner 决定发送单元：连续 photo/video 才进入 `sendMediaGroup`，每 2–10 项一组；GIF/animation 不能进入 Telegram media group，始终独立 `sendAnimation`。caption、状态和来源只归属第一个发送单元，后续媒体不带重复 caption。URL 直发、multipart 上传与 file_id 重放共用同一 planner，避免三条路径行为不一致。来源用**一个可靠、不重复的可点入口**：单媒体走 inline 按钮；相册在发送后补发一条 `text_link` 来源文本。
+媒体由同一个纯 planner 决定发送单元：连续 photo/video 才进入 `sendMediaGroup`，每 2–10 项一组；GIF/animation 不能进入 Telegram media group，始终独立 `sendAnimation`。caption、状态和来源只归属第一个发送单元，后续媒体不带重复 caption。URL 直发、multipart 上传与 file_id 重放共用同一 planner，避免三条路径行为不一致。来源与客户端入口是**首条媒体 caption 末尾的两个超链接**（`🔗 source | 📲 DAViewer client`，HTML `<a>` 锚点）：单图、相册、URL 直发、multipart 上传与 file_id 重放行为一致；不再用 inline 按钮（sendMediaGroup 会静默丢弃）。
 
 `TELEPRESS_URL` 未设置时无额外依赖。设置后默认 `TELEPRESS_MODE=fallback`；`large-gallery` 为纯图片 >10 张生成可选图集，`always` 仅明确选择时使用，`off` 完全关闭。视频/GIF 不转 Telegraph。缓存同作品 URL 90 天，重复使用，不反复创建页面。额外 Telegraph 入口才发送按钮消息；配置了公网预览域名时该消息的 link_preview_options 指向本站。
 

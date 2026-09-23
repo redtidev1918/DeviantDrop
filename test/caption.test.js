@@ -2,9 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   renderArtworkCaption,
-  openButtonMarkup,
   buildCapFromMedia,
-  CLIENT_BUTTON_TEXT,
+  CLIENT_LINK_TEXT,
   CLIENT_DOWNLOAD_URL,
   SOURCE_LINK_TEXT,
 } from "../src/rendering/caption.js";
@@ -39,7 +38,7 @@ test("caption：付费/订阅锁定预览有明确提示，与成熟打码区分
   assert.match(text, /作品需要订阅\/购买，当前为打码预览，请在原站查看/);
 });
 
-test("sourceUrl 存在时 caption 末尾追加 <a>source</a> 锚点，并做 HTML 转义", () => {
+test("sourceUrl 存在时 caption 末尾追加「source | DAViewer client」超链接，并做 HTML 转义", () => {
   const { text } = renderArtworkCaption(
     { title: 'Heavy "Mama" & Hunt', author: "A&B<C>" },
     {},
@@ -48,9 +47,8 @@ test("sourceUrl 存在时 caption 末尾追加 <a>source</a> 锚点，并做 HTM
   // 标题/作者转义，防 Telegram 422
   assert.match(text, /Heavy &quot;Mama&quot; &amp; Hunt/);
   assert.match(text, /A&amp;B&lt;C&gt;/);
-  // 末尾锚点：URL 转义，"source" 二字即蓝色超链接，空行 + 🔗 前缀隔开更醒目
-  assert.match(text, /<a href="https:\/\/www\.deviantart\.com\/x\?a=1&amp;b=2">source<\/a>$/);
-  assert.match(text, /\n\n🔗 <a href="https:\/\/www\.deviantart\.com\/x\?a=1&amp;b=2">source<\/a>$/);
+  // 末尾空行 + 「🔗 | 📲」两个超链接，URL 转义
+  assert.match(text, /\n\n🔗 <a href="https:\/\/www\.deviantart\.com\/x\?a=1&amp;b=2">source<\/a> \| 📲 <a href="https:\/\/redtidev1918\.github\.io\/DAViewer\/#\/download">DAViewer client<\/a>$/);
   assert.ok(text.length <= 1024);
 });
 
@@ -61,17 +59,8 @@ test("超长标题截断且保留完整 source 锚点", () => {
     { sourceUrl: "https://www.deviantart.com/x" },
   );
   assert.ok(text.length <= 1024);
-  assert.ok(text.endsWith('</a>'), "1024 上限优先保证锚点不被截断");
+  assert.ok(text.endsWith('</a>'), "1024 上限优先保证链接行不被截断");
   assert.ok(text.includes('>source</a>'));
-});
-
-test("openButtonMarkup：单媒体 inline 按钮指向 DAViewer 客户端下载页，无来源时为 undefined", () => {
-  const markup = openButtonMarkup("https://www.deviantart.com/x");
-  assert.ok(markup?.inline_keyboard?.[0]?.[0]);
-  assert.equal(markup.inline_keyboard[0][0].url, CLIENT_DOWNLOAD_URL);
-  assert.equal(markup.inline_keyboard[0][0].text, CLIENT_BUTTON_TEXT);
-  assert.equal(openButtonMarkup(null), undefined);
-  assert.equal(openButtonMarkup(""), undefined);
 });
 
 test("buildCapFromMedia：拆分 '标题 — 作者'，计算 mediaCount", () => {
@@ -104,6 +93,8 @@ test("技术性 ⚠️ 提示：showNotes=true 显示，false 省略", () => {
   assert.match(withoutNotes, /👤 A/);
 });
 
-test("SOURCE_LINK_TEXT 保持小写 source，供锚点/文档引用", () => {
+test("链接标签与地址保持稳定，供锚点/文档引用", () => {
   assert.equal(SOURCE_LINK_TEXT, "source");
+  assert.equal(CLIENT_LINK_TEXT, "DAViewer client");
+  assert.equal(CLIENT_DOWNLOAD_URL, "https://redtidev1918.github.io/DAViewer/#/download");
 });

@@ -5,7 +5,7 @@ import worker, {
   extractDeviantArtUrls,
   parseDeviantArtTarget,
 } from "../src/index.js";
-import { CLIENT_BUTTON_TEXT, CLIENT_DOWNLOAD_URL } from "../src/rendering/caption.js";
+import { CLIENT_DOWNLOAD_URL, CLIENT_LINK_TEXT } from "../src/rendering/caption.js";
 
 test("parses plain, hidden, schemeless and multiple DeviantArt links", () => {
   const hiddenText = "先看 www.deviantart.com/bob/art/second-2，再点这里。";
@@ -130,13 +130,16 @@ test("resolves two links with one DeviantArt session and serves the signed proxy
   assert.equal(initCalls, 2);
   assert.equal(mediaCalls.length, 2);
   assert.match(mediaCalls[0].url, /sendVideo$/);
-  // caption 只含标题/作者 + 末尾 source 锚点；单视频另有客户端按钮（webhook JSON 路径）。
+  // caption 只含标题/作者 + 末尾「source | DAViewer client」超链接；不再有 inline 按钮。
   assert.match(mediaCalls[0].body.caption, /🎨 作品/);
   assert.match(mediaCalls[0].body.caption, /👤 artist/);
-  assert.match(mediaCalls[0].body.caption, /<a href="https:\/\/www\.deviantart\.com\/artist\/art\/work-123456">source<\/a>$/);
-  const btn = mediaCalls[0].body.reply_markup?.inline_keyboard?.[0]?.[0];
-  assert.equal(btn?.url, CLIENT_DOWNLOAD_URL, "单视频按钮应指向 DAViewer 客户端下载页");
-  assert.equal(btn?.text, CLIENT_BUTTON_TEXT);
+  assert.ok(
+    mediaCalls[0].body.caption.endsWith(
+      `<a href="https://www.deviantart.com/artist/art/work-123456">source</a> | 📲 <a href="${CLIENT_DOWNLOAD_URL}">${CLIENT_LINK_TEXT}</a>`,
+    ),
+    "单视频 caption 末尾应是两个超链接",
+  );
+  assert.equal(mediaCalls[0].body.reply_markup, undefined, "媒体消息不应再带 inline 按钮");
   const proxied = await worker.fetch(new Request(mediaCalls[0].body.video, {
     headers: { Range: "bytes=0-4" },
   }), env);
@@ -278,11 +281,13 @@ test("answers /about, parses media captions, and ignores link-less or own-forwar
   assert.equal(caption.downloads, 1);
   assert.equal(captionMedia.length, 1);
   assert.match(captionMedia[0].url, /sendPhoto$/);
-  // 单图 caption 末尾带 source 锚点，无自定义 entity / reply_markup 之外的额外负担。
-  assert.match(captionMedia[0].body.caption || "", /<a href="https:\/\/www\.deviantart\.com\/artist\/art\/work-123">source<\/a>$/);
-  const cBtn = captionMedia[0].body.reply_markup?.inline_keyboard?.[0]?.[0];
-  assert.equal(cBtn?.url, CLIENT_DOWNLOAD_URL, "单图按钮应指向 DAViewer 客户端下载页");
-  assert.equal(cBtn?.text, CLIENT_BUTTON_TEXT);
+  // 单图 caption 末尾带「source | DAViewer client」超链接，无 inline 按钮。
+  assert.ok(
+    (captionMedia[0].body.caption || "").endsWith(
+      `<a href="https://www.deviantart.com/artist/art/work-123">source</a> | 📲 <a href="${CLIENT_DOWNLOAD_URL}">${CLIENT_LINK_TEXT}</a>`,
+    ),
+  );
+  assert.equal(captionMedia[0].body.reply_markup, undefined);
 
   // 无 caption 的图片：静默忽略。
   const plain = await send({
@@ -495,11 +500,13 @@ test("resolves artwork via official API and archive.org UUID mapping", async (t)
   const mediaCalls = calls.telegram.filter((c) => /send(Photo|Video|Animation)$/.test(c.url));
   assert.equal(mediaCalls.length, 2);
   assert.match(mediaCalls[0].url, /sendPhoto$/);
-  // 官方 API fallback 也用统一渲染：单图来源走 inline 按钮，caption 无裸 URL。
-  const oBtn = mediaCalls[0].body.reply_markup?.inline_keyboard?.[0]?.[0];
-  assert.equal(oBtn?.url, CLIENT_DOWNLOAD_URL, "官方 fallback 按钮应指向 DAViewer 客户端下载页");
-  assert.equal(oBtn?.text, CLIENT_BUTTON_TEXT);
-  assert.match(mediaCalls[0].body.caption, /<a href="https:\/\/www\.deviantart\.com\/loish\/art\/underwater-913624585">source<\/a>$/, "caption 末尾应有指向作品页的 source 锚点");
+  // 官方 API fallback 也用统一渲染：caption 末尾两个超链接，无 inline 按钮、无裸 URL。
+  assert.equal(mediaCalls[0].body.reply_markup, undefined);
+  assert.ok(
+    mediaCalls[0].body.caption.endsWith(
+      `<a href="https://www.deviantart.com/loish/art/underwater-913624585">source</a> | 📲 <a href="${CLIENT_DOWNLOAD_URL}">${CLIENT_LINK_TEXT}</a>`,
+    ),
+  );
 });
 
 test("explains that fav.me short links need a canonical page URL", async (t) => {
@@ -707,7 +714,7 @@ test("poll uploads a photo/video album, preserves group topic, and replays all f
   // 来源锚点嵌在每次相册首图 caption 末尾（parse_mode=HTML），不再补发独立文本消息。
   for (const g of sends.filter(x => x.method === 'sendMediaGroup')) {
     const media = typeof g.body.media === 'string' ? JSON.parse(g.body.media) : g.body.media;
-    assert.match(media[0].caption || '', /<a href="https:\/\/www\.deviantart\.com\/artist\/art\/album-777777">source<\/a>$/, "每次相册首图 caption 都应带 source 锚点");
+    assert.match(media[0].caption || '', /<a href="https:\/\/www\.deviantart\.com\/artist\/art\/album-777777">source<\/a> \| 📲 <a href="https:\/\/redtidev1918\.github\.io\/DAViewer\/#\/download">DAViewer client<\/a>$/, "每次相册首图 caption 都应带 source/客户端链接");
   }
   assert.equal(sends.filter(x => x.method === 'sendMessage' && x.body.entities?.some(e => e.type === 'text_link')).length, 0, "来源不再用补发文本消息");
 });
@@ -897,7 +904,7 @@ test('TelePress large-gallery hook publishes once, and failure leaves Telegram d
  const albumReply = replies.find(r => r.method === 'sendMediaGroup')?.body;
  const rawMedia = albumReply?.media;
  const albumCaption = albumReply?.caption ?? (typeof rawMedia === 'string' ? JSON.parse(rawMedia)[0]?.caption : rawMedia?.[0]?.caption);
- assert.match(albumCaption || '', /<a href="https:\/\/www\.deviantart\.com\/artist\/art\/gallery-7654321">source<\/a>$/, '相册首图 caption 应带 source 锚点');
+ assert.match(albumCaption || '', /<a href="https:\/\/www\.deviantart\.com\/artist\/art\/gallery-7654321">source<\/a> \| 📲 <a href="https:\/\/redtidev1918\.github\.io\/DAViewer\/#\/download">DAViewer client<\/a>$/, '相册首图 caption 应带 source/客户端链接');
  assert.equal(replies.filter(r => r.body.entities?.some(e => e.type === 'text_link' && /gallery-7654321/.test(e.url))).length, 0, '不再补发来源文本消息');
  fail=true;mem.clear();await handleUpdate({message:{...msg,chat:{id:986,type:'private'}}},env);
  assert.equal(albums,3);assert.ok(!replies.some(r=>r.body.text?.includes('处理失败')));
