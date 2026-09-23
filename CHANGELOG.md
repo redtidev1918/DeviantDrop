@@ -10,6 +10,13 @@
 
 ---
 
+## [1.14.0](https://github.com/redtidev1918/DeviantDrop/compare/v1.13.1...v1.14.0) (2026-09-23)
+
+
+### Features
+
+* **literature:** deliver inline literature works as text documents ([f6b227a](https://github.com/redtidev1918/DeviantDrop/commit/f6b227a8ce0997cf3f5c1211c35f994c9c32febe))
+
 ## [1.13.1](https://github.com/redtidev1918/DeviantDrop/compare/v1.13.0...v1.13.1) (2026-09-23)
 
 
