@@ -2,7 +2,7 @@
 
 **语言 / Language:** 中文 · [English](/en/)
 
-把 DeviantArt 作品“丢”进 Telegram 的 Bot：在聊天里发一个 DeviantArt 单作品链接，DeviantDrop 就把作品的图片、视频或 GIF 原样回复给你。
+DeviantDrop 是一个 Telegram Bot：在聊天里发一个 DeviantArt 单作品链接，它就把图片、视频或 GIF 发回给你。
 
 **在线试用**：给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接就能看到回复效果；要自己跑一份再看下面的部署。
 

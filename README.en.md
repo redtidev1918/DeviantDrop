@@ -2,8 +2,8 @@
 
 **Language / 语言:** [中文](README.md) · English
 
-> **A Telegram bot that "drops" DeviantArt works into your chat: send a work link and
-> DeviantDrop replies with the artwork's image, video or GIF unchanged.**
+> **A Telegram bot that forwards DeviantArt works to your chat: send a work link and
+> DeviantDrop replies with the image, video or GIF.**
 
 📖 [Full documentation](https://redtidev1918.github.io/DeviantDrop/) · [Changelog](CHANGELOG.md)
 

@@ -2,14 +2,14 @@
 
 **语言 / Language:** 中文 · [English](README.en.md)
 
-> **把 DeviantArt 作品“丢”进 Telegram 的 Bot：发一条作品链接，就原样回复图片、视频或 GIF。**
+> **把 DeviantArt 作品转到 Telegram 的 Bot：发一条作品链接，收到图片、视频或 GIF。**
 
 [完整文档](https://redtidev1918.github.io/DeviantDrop/) · [更新日志](CHANGELOG.md)
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Docs-文档站点-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
 
-直接给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接，它就会原样回复图片 / 视频 / GIF，caption 末尾带原作品页 source 链接；不需要自己部署。
+直接给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接，它就会把图片 / 视频 / GIF 发回来，caption 末尾带原作品页 source 链接；不需要自己部署。
 
 > **注意**：DeviantArt 会封锁数据中心出口（Cloudflare Workers 与多数云主机被拦）。请把 Bot 跑在 DeviantArt 放行的出口（住宅网络或已通过检测的部分 VPS）上；部署步骤见 [VPS 手册](docs/VPS.md)。
 
