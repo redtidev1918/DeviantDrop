@@ -10,6 +10,13 @@
 
 ---
 
+## [1.12.4](https://github.com/redtidev1918/DeviantDrop/compare/v1.12.3...v1.12.4) (2026-09-23)
+
+
+### Bug Fixes
+
+* reword AI-flavored taglines in /about and docs ([1a474bb](https://github.com/redtidev1918/DeviantDrop/commit/1a474bb1d269bb081450394f79b9c249b6444116))
+
 ## [1.12.3](https://github.com/redtidev1918/DeviantDrop/compare/v1.12.2...v1.12.3) (2026-09-23)
 
 
