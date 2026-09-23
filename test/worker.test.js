@@ -130,7 +130,7 @@ test("resolves two links with one DeviantArt session and serves the signed proxy
   assert.equal(initCalls, 2);
   assert.equal(mediaCalls.length, 2);
   assert.match(mediaCalls[0].url, /sendVideo$/);
-  // caption 只含标题/作者 + 末尾「source | DAViewer client」超链接；不再有 inline 按钮。
+  // caption 只含标题/作者 + 末尾「source | DAViewer app」超链接；不再有 inline 按钮。
   assert.match(mediaCalls[0].body.caption, /🎨 作品/);
   assert.match(mediaCalls[0].body.caption, /👤 artist/);
   assert.ok(
@@ -281,7 +281,7 @@ test("answers /about, parses media captions, and ignores link-less or own-forwar
   assert.equal(caption.downloads, 1);
   assert.equal(captionMedia.length, 1);
   assert.match(captionMedia[0].url, /sendPhoto$/);
-  // 单图 caption 末尾带「source | DAViewer client」超链接，无 inline 按钮。
+  // 单图 caption 末尾带「source | DAViewer app」超链接，无 inline 按钮。
   assert.ok(
     (captionMedia[0].body.caption || "").endsWith(
       `<a href="https://www.deviantart.com/artist/art/work-123">source</a> | 📲 <a href="${CLIENT_DOWNLOAD_URL}">${CLIENT_LINK_TEXT}</a>`,
@@ -714,7 +714,7 @@ test("poll uploads a photo/video album, preserves group topic, and replays all f
   // 来源锚点嵌在每次相册首图 caption 末尾（parse_mode=HTML），不再补发独立文本消息。
   for (const g of sends.filter(x => x.method === 'sendMediaGroup')) {
     const media = typeof g.body.media === 'string' ? JSON.parse(g.body.media) : g.body.media;
-    assert.match(media[0].caption || '', /<a href="https:\/\/www\.deviantart\.com\/artist\/art\/album-777777">source<\/a> \| 📲 <a href="https:\/\/redtidev1918\.github\.io\/DAViewer\/#\/download">DAViewer client<\/a>$/, "每次相册首图 caption 都应带 source/客户端链接");
+    assert.match(media[0].caption || '', /<a href="https:\/\/www\.deviantart\.com\/artist\/art\/album-777777">source<\/a> \| 📲 <a href="https:\/\/redtidev1918\.github\.io\/DAViewer\/#\/download">DAViewer app<\/a>$/, "每次相册首图 caption 都应带 source/客户端链接");
   }
   assert.equal(sends.filter(x => x.method === 'sendMessage' && x.body.entities?.some(e => e.type === 'text_link')).length, 0, "来源不再用补发文本消息");
 });
@@ -904,7 +904,7 @@ test('TelePress large-gallery hook publishes once, and failure leaves Telegram d
  const albumReply = replies.find(r => r.method === 'sendMediaGroup')?.body;
  const rawMedia = albumReply?.media;
  const albumCaption = albumReply?.caption ?? (typeof rawMedia === 'string' ? JSON.parse(rawMedia)[0]?.caption : rawMedia?.[0]?.caption);
- assert.match(albumCaption || '', /<a href="https:\/\/www\.deviantart\.com\/artist\/art\/gallery-7654321">source<\/a> \| 📲 <a href="https:\/\/redtidev1918\.github\.io\/DAViewer\/#\/download">DAViewer client<\/a>$/, '相册首图 caption 应带 source/客户端链接');
+ assert.match(albumCaption || '', /<a href="https:\/\/www\.deviantart\.com\/artist\/art\/gallery-7654321">source<\/a> \| 📲 <a href="https:\/\/redtidev1918\.github\.io\/DAViewer\/#\/download">DAViewer app<\/a>$/, '相册首图 caption 应带 source/客户端链接');
  assert.equal(replies.filter(r => r.body.entities?.some(e => e.type === 'text_link' && /gallery-7654321/.test(e.url))).length, 0, '不再补发来源文本消息');
  fail=true;mem.clear();await handleUpdate({message:{...msg,chat:{id:986,type:'private'}}},env);
  assert.equal(albums,3);assert.ok(!replies.some(r=>r.body.text?.includes('处理失败')));

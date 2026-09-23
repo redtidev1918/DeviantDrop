@@ -163,7 +163,7 @@ groups of 2–10; GIF/animation can never enter a Telegram media group and alway
 `sendAnimation`. The caption, status and source attach only to the first send unit, and later
 media carry no duplicate caption. Direct URL sending, multipart upload and file_id replay share
 the same planner, so the three paths never diverge. The source and client entries are **two
-hyperlinks at the end of the first media caption** (`🔗 source | 📲 DAViewer client`, HTML
+hyperlinks at the end of the first media caption** (`🔗 source | 📲 DAViewer app`, HTML
 `<a>` anchors): single media, albums, direct URL sending, multipart upload and file_id replay
 all behave the same. Inline buttons are no longer used (sendMediaGroup silently drops them).
 

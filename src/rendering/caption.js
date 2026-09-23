@@ -1,7 +1,7 @@
 // 统一的作品 caption / 来源渲染。
 //
 // 设计：媒体消息的 caption 只放标题/作者/数量/状态 + 末尾空行隔开的两个超链接
-// （🔗 source | 📲 DAViewer client，parse_mode=HTML 的 <a> 锚点，由服务端解析，
+// （🔗 source | 📲 DAViewer app，parse_mode=HTML 的 <a> 锚点，由服务端解析，
 // 不依赖自定义 caption_entities——multipart 上传端点对自定义 caption_entities 的
 // offset/length 有 bug：按 code point 收、却按 UTF-16/字节存，含 emoji 时高亮错位，
 // 实测 2026-09；HTML 锚点没有偏移概念，emoji 也不影响）。title/author/URL 全部做
@@ -16,7 +16,7 @@ const CAPTION_LIMIT = 1024;
 
 // caption 末尾超链接的标签与地址。
 export const SOURCE_LINK_TEXT = "source";
-export const CLIENT_LINK_TEXT = "DAViewer client";
+export const CLIENT_LINK_TEXT = "DAViewer app";
 export const CLIENT_DOWNLOAD_URL = "https://redtidev1918.github.io/DAViewer/#/download";
 
 function escapeHtml(value) {
@@ -28,7 +28,7 @@ function escapeHtml(value) {
 // 媒体 caption（parse_mode=HTML，见文件头注释）。返回 { text }。
 // opts.showNotes=false 时省略技术性 ⚠️ 提示（压缩/打码/原图不可用/转文件）：
 // 这些对运营者排查有用，对群里看图的人是噪音，群聊默认不显示（见 telegram/sender.js 的 notesEnabled）。
-// opts.sourceUrl 存在时在末尾空行后追加「🔗 source | 📲 DAViewer client」；1024 上限优先保证链接行完整。
+// opts.sourceUrl 存在时在末尾空行后追加「🔗 source | 📲 DAViewer app」；1024 上限优先保证链接行完整。
 export function renderArtworkCaption(meta = {}, status = {}, { showNotes = true, sourceUrl = null } = {}) {
   const lines = [];
   const title = (meta.title || "DeviantArt 作品").trim();

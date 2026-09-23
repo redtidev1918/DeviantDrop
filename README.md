@@ -90,7 +90,7 @@ DeviantArt 有两层**互相独立**的能力，不要把它们混成一件事�
 ### 回复排版
 
 - 统一排版：`🎨 标题 / 👤 作者 / 🖼 N 个媒体`，外加一个可靠的来源入口（见下）。
-- 来源入口**每个作品只有一个、绝不重复**：嵌在**首条媒体 caption 末尾（空行隔开）**的「🔗 source | 📲 DAViewer client」两个超链接（`parse_mode=HTML` 的 `<a>` 锚点，服务端解析、URL 直发/multipart 上传/file_id 重放各路径都可靠），分别指向原作品页与 [DAViewer 客户端下载页](https://redtidev1918.github.io/DAViewer/#/download)。不再用 inline 按钮——sendMediaGroup 会静默丢弃按钮，caption 超链接让单图与相册行为一致。
+- 来源入口**每个作品只有一个、绝不重复**：嵌在**首条媒体 caption 末尾（空行隔开）**的「🔗 source | 📲 DAViewer app」两个超链接（`parse_mode=HTML` 的 `<a>` 锚点，服务端解析、URL 直发/multipart 上传/file_id 重放各路径都可靠），分别指向原作品页与 [DAViewer 客户端下载页](https://redtidev1918.github.io/DAViewer/#/download)。不再用 inline 按钮——sendMediaGroup 会静默丢弃按钮，caption 超链接让单图与相册行为一致。
 - 技术性状态提示（`⚠️ 已压缩 / 原图暂不可用 / 已作为文件发送` 等）默认只在**私聊**显示便于运营排查；群聊/频道里自动隐藏（对看图的人是噪音，想看原图点来源入口即可）。可用环境变量强制：`CAPTION_NOTES=auto`（默认，私聊显示/群聊隐藏）、`always`（总是显示）、`never`（总是隐藏）。
 
 ### TelePress（可选）
@@ -105,7 +105,7 @@ DeviantArt 有两层**互相独立**的能力，不要把它们混成一件事�
 
 ### 相关项目与致谢
 
-- [DAViewer 客户端（兄弟项目）](https://github.com/redtidev1918/DAViewer)：浏览 DeviantArt 的桌面客户端；bot 回复 caption 末尾的「📲 DAViewer client」链接指向其[下载页](https://redtidev1918.github.io/DAViewer/#/download)，`/about` 亦有提及。
+- [DAViewer 客户端（兄弟项目）](https://github.com/redtidev1918/DAViewer)：浏览 DeviantArt 的桌面客户端；bot 回复 caption 末尾的「📲 DAViewer app」链接指向其[下载页](https://redtidev1918.github.io/DAViewer/#/download)，`/about` 亦有提及。
 - [TelePress](https://github.com/redtidev1918/TelePress)：可选 Telegraph 图集发布。
 - 实现来源（反代/兼容细节）：[deviantart-downloader](https://github.com/redtidev1918/deviantart-downloader)（CSRF、作品 ID、cookie 复用、媒体 URL）、[DAKit](https://github.com/redtidev1918/DAKit)（`_puppy`/`dadeviation`/`init` 流程与 URL 兼容）、[TelePost](https://github.com/redtidev1918/TelePost)（Telegram 媒体类型映射）。完整清单见 [docs/README.md](docs/README.md#实现来源)。
 
