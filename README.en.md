@@ -89,6 +89,23 @@ TelePress publish path, and troubleshooting — live on the [docs site](https://
   [TelePost](https://github.com/redtidev1918/TelePost) (Telegram media type mapping). Full list
   in [docs/README.md](docs/README.md#implementation-sources).
 
+### Update transport: polling (default) or webhook (optional)
+
+Updates are received via **long polling** by default — no public IP, domain, HTTPS or inbound
+port needed; the bot pulls `getUpdates` from Telegram. `MODE` (default `poll`) selects the mode,
+and existing deployments need no new configuration.
+
+- **`MODE=poll`** (default): manual-free, runs anywhere that can reach Telegram and DeviantArt.
+- **`MODE=webhook`** (optional): Telegram pushes to your HTTP endpoint. When `PUBLIC_BASE_URL`
+  is set, the bot registers `setWebhook` automatically at startup (after the HTTP server is
+  ready); a failed registration surfaces as unhealthy in `/health` instead of pretending to work.
+  Without `PUBLIC_BASE_URL` the webhook can be registered manually. Poll and webhook are mutually
+  exclusive — never both.
+
+> **The Telegram webhook and DeviantArt egress are two independent problems.** Webhook only
+> solves Telegram → bot; fetching DeviantArt still uses the egress of the machine the bot runs on.
+> Enabling webhook neither changes nor bypasses the DeviantArt egress requirement.
+
 ### Public preview page
 
 With an HTTPS `PUBLIC_BASE_URL`, the bot serves `/d/:id` for Telegram/Discord to read OG
