@@ -72,19 +72,33 @@ node src/main.js            # MODE=poll is the default: getUpdates long polling,
 
 - **`MODE=poll` (default, recommended for mainland servers)**: polls Telegram for messages; no
   public HTTPS, domain or certificate required, and no inbound port on the host. Media is handed
-  to Telegram as a token-bearing CDN URL for Telegram to download.
-- **`MODE=webhook`**: the bot starts an HTTP service, so you need a public HTTPS reverse proxy
-  (Caddy/Nginx/Cloudflare Tunnel) pointing at `127.0.0.1:8080`, and must register the webhook:
+  to Telegram as a token-bearing CDN URL for Telegram to download. Upgrading with no config change
+  keeps polling: **`TELEGRAM_UPDATE_MODE`-style variables do not exist; `MODE` defaults to `poll`.**
+- **`MODE=webhook`** (optional): Telegram pushes updates to your HTTP endpoint. Auto-registers
+  automatically when `PUBLIC_BASE_URL` is set:
+
+  - Set `MODE=webhook` + `PUBLIC_BASE_URL=https://your-host`, and on startup the bot calls
+    `setWebhook` (`${PUBLIC_BASE_URL}/webhook`, secret token + allowed_updates) itself, after the
+    HTTP server is ready. A failed registration marks `telegram_ingress=webhook_unregistered`
+    (unhealthy) in `/health` instead of pretending to work.
+  - No `PUBLIC_BASE_URL`: keeps the manual path below. Either way, only one update transport runs.
+
+  Manual registration (no `PUBLIC_BASE_URL`):
 
   ```bash
   curl -fsS "https://api.telegram.org/bot${BOT_TOKEN}/setWebhook" \
-    --data-urlencode "url=https://bot.example.com/webhook" \
+    --data-urlencode "url=https://your-host/webhook" \
     --data-urlencode "secret_token=${WEBHOOK_SECRET}" \
-    --data-urlencode 'allowed_updates=["message"]'
+    --data-urlencode 'allowed_updates=["message","channel_post"]'
   ```
 
-> Pick one, never both. Before switching between polling and webhook, run `deleteWebhook` or stop
-> the polling process.
+> Pick one, never both. `MODE=poll` clears a stale webhook at startup, and webhook mode never
+> starts a poll loop. See docs/deployment.md for the full picture.
+
+> **The Telegram webhook and DeviantArt egress are two independent problems.** Webhook only solves
+> Telegram → bot; the bot still fetches DeviantArt using the egress of the host it runs on. Enabling
+> webhook does not change or bypass the DeviantArt egress requirement — verify yours with
+> `npm run detect` first.
 
 ## 4. Command menu (one-off)
 
