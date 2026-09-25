@@ -1,19 +1,23 @@
 - 开始使用
   - [概览](/)
   - [在线试用 @DeviantDropBot](https://t.me/DeviantDropBot)
-  - [下载与部署](/download.md)
-  - [部署（VPS / Docker / Node）](/VPS.md)
-  - [公网 IP / 无域名部署](/VPS-public-ip.md)
-- 架构与交付
+  - [部署](/deployment.md)
+  - [无域名部署](/VPS-public-ip.md)
+  - [配置](/configuration.md)
+  - [认证与登录](/authentication.md)
+  - [运维](/operations.md)
+  - [排障](/troubleshooting.md)
+- 架构
+  - [内部架构](/architecture.md)
   - [认证架构](/architecture/authentication.md)
   - [媒体管线](/architecture/media-pipeline.md)
   - [Delivery 生命周期](/architecture/delivery-lifecycle.md)
   - [会话恢复](/operations/session-recovery.md)
   - [媒体交付测试](/testing/media-delivery.md)
-
-- 使用与配置
+- 进阶
   - [认证、预览与多图扩展](/AUTH_AND_PREVIEW.md)
   - [发布编排（ReleaseGraph）](/RELEASEGRAPH.md)
+- [下载与版本](/download.md)
 - [更新日志（GitHub）](https://github.com/redtidev1918/DeviantDrop/blob/main/CHANGELOG.md)
 - English
   - [English index](/en/)

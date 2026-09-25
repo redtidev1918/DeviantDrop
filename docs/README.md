@@ -1,133 +1,51 @@
-# DeviantDrop
+# DeviantDrop 文档
 
-**语言 / Language:** 中文 · [English](/en/)
+**语言 / Language:** 中文 · [English](/en/README.md)
 
-DeviantDrop 是一个 Telegram Bot：在聊天里发一个 DeviantArt 单作品链接，它就把图片、视频或 GIF 发回给你。
+DeviantDrop 是一个 **Telegram Bot**:在聊天里发一个 [DeviantArt](https://www.deviantart.com/) 作品链接,它就把图片 / 视频 / GIF / 文字作品发回给你。
 
-**在线试用**：给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接就能看到回复效果；要自己跑一份再看下面的部署。
+**在线试用**:给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接即可体验;要自己跑一份,看下面的部署文档。
 
-## 下载与部署
+---
 
-本仓库不发布安装包（Bot 服务形态）。部署方式、出口要求与检测结论见
-[下载与部署](/download.md) 与 [部署（VPS / Docker / Node）](/VPS.md)、[公网 IP / 无域名部署](/VPS-public-ip.md)；英文版见 [English docs](/en/)。
+## 快速了解
 
-**部署形态**：DeviantArt 会封锁数据中心出口（Cloudflare Workers 与多数云主机的页面/API 数据面均被拦，见 [VPS 手册](VPS.md) 的检测结论）。请把 Bot 跑在 DeviantArt 放行的出口（住宅网络或已检测通过的部分 VPS）上；Node 版部署步骤见 [VPS 手册](VPS.md)。本仓库同时保留 Workers 形态代码，仅适合自建/未被封禁的出口。
+- **Telegram 更新通过长轮询接收,不需要公网 IP、域名或 HTTPS**(可直接部署在家用服务器 / VPS / NAS)。
+- **必须**跑在 DeviantArt 放行的出口上(数据中心出口会被封锁,见 [部署](deployment.md#出口要求))。
+- 配置入口是 `.env`(从 [`.env.example`](https://github.com/redtidev1918/DeviantDrop/blob/main/.env.example) 复制)。
 
-## 支持范围
+## 部署 / 配置 / 运维
 
-Bot 会同时检查普通消息、频道消息和媒体 caption，并识别：
+| 我想… | 文档 |
+| --- | --- |
+| 30 秒判断这台机器能不能用 | [部署与出口检测](deployment.md#出口要求) |
+| 用 Docker 跑起来(推荐) | [Docker 部署](deployment.md#docker) |
+| 不装 Docker,直接跑 Node | [Node 运行](deployment.md#node) |
+| 只有公网 IP、没有域名 | [无域名部署](deployment.md#无域名部署) |
+| 理解每个环境变量 | [配置](configuration.md) |
+| 部署后怎么维护(日志、更新、token 热更新) | [运维](operations.md) |
+| 出问题了怎么排查 | [排障](troubleshooting.md) |
 
-- 明文 `https://`、`http://` 链接；已知 DeviantArt 域名会统一升级为 HTTPS。
-- 没有协议的 `www.deviantart.com/...`、旧式 `作者.deviantart.com/...`。
-- Telegram `url` entity 和文字背后的 `text_link` 隐藏链接。
-- 同一消息中的多个链接；保持出现顺序、删除完全重复项，最多处理 5 个。
-- 当前作品页（`作者.deviantart.com/art|journal/标题-数字id`）、`fav.me` 短链和 `/view/{id}`。
+## 认证 / 用法
 
-解析是双通道的：
-1. **OAuth 官方 API 是内容访问主认证层**——作品 metadata、**成熟（mature）作品主图**、官方 download/content 都由它提供，refresh token 自动续期；数字 id 需要 UUID 时会经 [archive.org](https://web.archive.org) 存档映射（新作品若无快照会收到明确中文提示）。
-2. **网页接口负责作品结构与多图扩展**——匿名即可取到作品结构与第 1 页（数字 id 直达、无需 UUID 映射），并返回官方 API 不提供的 `extended.additionalMedia`（多图第 2…N 页）。
-3. **网页扩展会话（Cookie）是可选项**——只用于取出成熟多图附加页的未打码版本；它失效只影响这部分附加页，**不会让成熟作品整体失败**，也不会用打码图顶替已经拿到的 OAuth 原图。
+| 我想… | 文档 |
+| --- | --- |
+| 完成 Telegram + DeviantArt 登录 | [认证与登录](authentication.md) |
+| 特殊服务器如何适配(代理、TelePress) | [认证与预览](AUTH_AND_PREVIEW.md) |
 
-旧式链接会先尝试解析作者；如果出口或页面重定向拿不到，Bot 会提示改用完整作品页网址。私密/付费/需登录作品同样会提示。付费/订阅（Premium Folder / tier）作品没有显式字段时也会表现为模糊主图（`blur_`），Bot 会识别为需要订阅/购买，在回复里明确提示「作品需要订阅/购买，当前为打码预览」，不会把打码图当原图发送。
+## 架构
 
-不处理画廊、收藏夹、标签页、搜索结果、非 DeviantArt 直链。每个链接独立处理：一个失败不会阻止后续链接。
+了解 Bot 内部如何取媒体、如何交付:
 
-## 命令与交互
+- [认证架构](architecture/authentication.md)
+- [媒体管线](architecture/media-pipeline.md)
+- [Delivery 生命周期](architecture/delivery-lifecycle.md)
+- [会话恢复](operations/session-recovery.md)
+- [媒体交付测试](testing/media-delivery.md)
 
-- `/start`、`/help`：查看用法。
-- `/about`：项目介绍与源码仓库（github.com/redtidev1918/DeviantDrop，聊天里直接可点）。
-- 图片/视频的 caption 里带 DeviantArt 链接同样会被解析下载；不带 caption 的图片、贴纸等消息会被静默忽略。
-- 每条媒体回复的 caption 都会附带原作品页链接（Telegram 自动使其可点击），方便回原页查看或确认作者。
-- 下载/解析期间会先回一条自动删除的「处理中」提示（多链接时带进度 `⏳ 第 x/N 个`），完成后提示自动消失。
-- 转发自 Bot 自己的消息会被忽略，不会把 caption 里的来源链接再重复下载一遍。
+## 其它
 
-## 工作方式
-
-1. 接入消息：webhook 校验 secret / 长轮询拉取（`MODE=poll`，免公网入口），并检查可选用户白名单。
-2. 从消息正文/caption 及 Telegram entities 中收集、规范化并去重链接（单条最多 5 个）。
-3. 逐链接解析（双通道）：
-   - **OAuth 通道**（内容访问主认证层）：refresh token 换 access token → 官方 API 取 metadata 与媒体；成熟作品的主图一律优先用官方 `content`/`download`，因此未打码与 Cookie 无关；
-   - **网页通道**：匿名会话（CSRF/cookie，消息内复用 + 跨消息缓存）取作品结构与附加页；扩展会话失效只降级附加页。
-   - **视频源规则**：`media.baseUri` 只能当封面；可播放源来自网页 `types[].t == "video"`，网页缺源时用 OAuth `videos[].src` 兜底。
-4. 先回一条自动删除的「处理中」提示并随进度更新，然后发送媒体（媒体 caption 带原作品页链接）。
-5. 已成功交付的作品会按 `file_id` 缓存 30 天；同一 bot 内跨用户重复请求直接复用，不重新下载/上传。
-6. 媒体送达：webhook 模式经 15 分钟 HMAC 签名代理流式转发（支持 Range）；轮询模式下载媒体后通过 multipart 上传；2–10 个照片/视频使用 `sendMediaGroup`，GIF 或更多文件逐项发送。
-
-## 限流与可靠性
-
-不存在合法的“绕过 DeviantArt 限额”。官方 API 按应用配额与自适应限流；Bot 对网络错误、HTTP 429、500 和 503 会退避重试，token 与 UUID 映射在消息之间缓存复用，显著降低请求总量。持续高并发时应接入 Cloudflare Queue，不能通过轮换 IP 或并发轰炸规避限制。
-
-DA 网页面（含网页作品接口）对其认为是数据中心的出口 IP 段返回 403，Cloudflare Workers 与多数云主机都被封锁；官方 OAuth API 与媒体 CDN（wixmp）相对放行。配置官方 API 凭据后，网页通道被封时会自动改用官方通道；反之官方 API 失败也会保留网页结果继续发送。
-
-Telegram 单会话也可能触发 429；Bot 会读取 `retry_after` 并重试一次。以下情况会直接回复用户可理解的错误：
-
-- 链接不是单作品页，或作品不存在/已删除。
-- 作品需要登录、无权访问或 DeviantArt 拒绝请求。
-- DeviantArt 限流、超时、服务故障或页面结构变化。
-- 媒体超过 Telegram 限制，或 Telegram 无法读取媒体格式。
-
-当前 Telegram Bot API 的图片上限为 10 MB，视频/GIF 为 50 MB。Webhook 采用同步处理以保持最小部署；若实际出现长视频超时、重复投递或并发积压，再增加 Queue 与持久化 `update_id` 去重。
-
-Bot 内置了防滥用/防重复（常量在 `src/index.js` 顶部，可直接调）：
-
-- 每聊天限流：每个聊天每分钟最多处理 15 个作品链接，超出会收到中文提示并跳过。
-- Telegram 超时重试同一个 update 不会重复发送（90 秒去重窗口）；中途被掐断的重试仍会重新处理，宁重复不丢消息。
-- 相册消息（media_group）里多张照片都带链接时，只处理第一条。
-- 已交付作品按 `file_id` 缓存 30 天；同一 bot 内跨用户重复请求直接复用，不重新下载/上传。
-- 运行时去重、限流和 `file_id` 缓存共用统一缓存层：Workers 用 Cache API，Node/VPS 用持久化缓存文件；读改写非原子，属尽力而为。
-
-## 部署
-
-Bot 必须跑在 **DeviantArt 放行的出口**上（DA 封锁数据中心出口；国内服务器需经
-clash/mihomo 等代理，实测机场出口可用）。完整步骤见 **[docs/VPS.md](VPS.md)**，
-推荐两种方式：
-
-**Docker Compose（推荐）**
-
-```bash
-cp .env.example .env    # 填 BOT_TOKEN / WEBHOOK_SECRET / 官方 API 凭据；国内机器填 HTTP(S)_PROXY
-docker compose up -d --build
-```
-
-**直接 Node 运行**
-
-```bash
-npm install --omit=dev
-export BOT_TOKEN=... WEBHOOK_SECRET=... CLIENT_ID=... CLIENT_SECRET=...
-export MODE=poll HTTP_PROXY=http://127.0.0.1:7890 HTTPS_PROXY=http://127.0.0.1:7890
-node src/main.js
-```
-
-要点：
-
-- **MODE=poll（默认）**：getUpdates 长轮询，无需公网地址/域名/证书；`MODE=webhook` 需要 HTTPS 反代并注册 setWebhook（见 docs）。
-- **DeviantArt 官方 API 凭据（必需）**：在 [deviantart.com/developers](https://www.deviantart.com/developers/) 注册 Confidential 应用拿 Client ID/Secret，填进 `.env`/环境变量（不要入库）。
-- 国内服务器出口代理：`.env` 中 `HTTP_PROXY=http://127.0.0.1:7890`（指向本机 clash）；订阅热更新见 `scripts/refresh-clash.sh`。
-- 先跑 `npm run detect`（`scripts/detect-da.mjs`）确认出口可用。
-- 命令菜单（`/start /help /about`）注册：见 docs/VPS.md。
-
-> 早期 Cloudflare Workers 形态代码仍在仓库中（wrangler.jsonc 等），仅适合未被 DA
-> 封禁的自建出口，不建议继续使用。
-
-## 验证与排错
-
-```bash
-docker compose logs -f deviantdrop          # 轮询模式持续 getUpdates
-node scripts/detect-da.mjs <client_id> <client_secret>   # 出口放行检测
-npm run check                               # 全量测试 + 构建检查
-```
-
-> 早期 Cloudflare Workers 形态代码仍在仓库中（wrangler.jsonc 等），仅适合未被 DA
-> 封禁的自建出口，不建议继续使用。
-
-## 实现来源
-
-- [deviantart-downloader](https://github.com/redtidev1918/deviantart-downloader)：CSRF、作品 ID、cookie 复用、媒体 URL 和失败语义。
-- [DAKit](https://github.com/redtidev1918/DAKit)：`_puppy/dadeviation/init` 流程、`fav.me`/作品页 URL 兼容。
-- [DAViewer](https://github.com/redtidev1918/DAViewer)（兄弟项目）：浏览 DeviantArt 的桌面客户端；bot 回复 caption 末尾的「📲 DAViewer app」链接指向其[下载页](https://redtidev1918.github.io/DAViewer/#/download)。
-- [TelePost](https://github.com/redtidev1918/TelePost)：Telegram photo/video/animation 类型映射。
-
-发布编排（ReleaseGraph 接入现状与下一代协议切换清单）见 [发布编排说明](RELEASEGRAPH.md)。
-可靠性架构：[认证](architecture/authentication.md)、[媒体管线](architecture/media-pipeline.md)、
-[Delivery 生命周期](architecture/delivery-lifecycle.md)、[会话恢复](operations/session-recovery.md)、
-[媒体交付测试](testing/media-delivery.md)。
+- [下载与版本](download.md)
+- [发布编排(ReleaseGraph)](RELEASEGRAPH.md)
+- [更新日志](https://github.com/redtidev1918/DeviantDrop/blob/main/CHANGELOG.md)
+- [GitHub 仓库](https://github.com/redtidev1918/DeviantDrop)

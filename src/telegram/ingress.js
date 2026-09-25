@@ -209,30 +209,99 @@ export class TelegramIngressController {
   }
 
   async #startWebhookMode(identity = {}, { reason = 'startup' } = {}) {
-    // 本项目从不自动 setWebhook（webhook 的注册是操作员的显式动作，见 docs/VPS.md）。
-    // 但 token 换了以后，新 bot 不一定已经注册过 webhook——这一点必须出现在 health 里，
-    // 而不是假装入口可用。
+    // webhook 注册策略（向后兼容）:
+    //   配置了公网 webhook URL（由 PUBLIC_BASE_URL 派生的 https://<host>/webhook）
+    //   时，本模式会尝试自动 setWebhook（失败则明确标记不健康，不假装可用）；
+    //   未配置 publicBaseUrl 时保持旧的"手动注册"语义——只检查/报告状态，
+    //   把注册留给操作员显式 curl（见 docs）。两者都不会启动 poll loop。
     setComponent('telegram_ingress', { state: 'starting', ok: false, critical: true });
-    const state = await this.#webhookState();
-    if (!state.readable) {
-      setComponent('telegram_ingress', { state: 'webhook_unknown', ok: false, critical: true, detail: state.transport || null });
+
+    const publicBase = (this.env.PUBLIC_BASE_URL || "").replace(/\/+$/, "");
+    const registered = await this.#ensureWebhookRegistered(publicBase, { reason, identity });
+
+    // 已注册（自动或已存在）→ 健康；检查到未注册且未配置自动注册 → 降级提示。
+    if (registered === true) {
+      setComponent('telegram_ingress', { state: 'webhook', ok: true, critical: true, detail: publicBase ? new URL(publicBase).host : null });
+      return identity;
+    }
+    if (registered === false || registered === 'manual') {
+      const state = await this.#webhookState();
+      if (registered === false) {
+        // 自动注册失败：明确失败，不假装入口可用。进程仍存活以便 /health 可读。
+        setComponent('telegram_ingress', {
+          state: 'webhook_unregistered', ok: false, critical: true,
+          detail: 'setWebhook failed for the current token',
+        });
+        event('telegram_webhook_registration_failed', {
+          mode: 'webhook', phase: reason,
+          hint: publicBase ? '无法向 Telegram 注册 webhook（检查 network / WEBHOOK_SECRET / PUBLIC_BASE_URL）' : '未配置 PUBLIC_BASE_URL,webhook 需手动注册',
+        });
+        return identity;
+      }
+      // 'manual'：无 PUBLIC_BASE_URL,走操作员手动注册。
+      setComponent('telegram_ingress', {
+        state: state.has_webhook ? 'webhook' : 'webhook_unregistered',
+        ok: state.has_webhook, critical: true,
+        detail: state.has_webhook ? (state.host || null) : 'setWebhook not registered for the current token',
+      });
       event('telegram_webhook_state', { mode: 'webhook', phase: reason, ...state });
       return identity;
     }
-    if (state.has_webhook) {
-      setComponent('telegram_ingress', { state: 'webhook', ok: true, critical: true, detail: state.host || null });
-    } else {
-      setComponent('telegram_ingress', {
-        state: 'webhook_unregistered', ok: false, critical: true,
-        detail: 'setWebhook not registered for the current token',
-      });
-      event('telegram_webhook_reregistration_required', {
-        mode: 'webhook', phase: reason,
-        hint: 'token 轮换后需要为当前 bot 重新注册 setWebhook（本项目不自动注册）',
-      });
-    }
-    event('telegram_webhook_state', { mode: 'webhook', phase: reason, ...state });
+    // 'unknown'：探测不到 webhook 状态（网络/DNS 级失败），不误报健康。
+    setComponent('telegram_ingress', { state: 'webhook_unknown', ok: false, critical: true, detail: registered });
+    event('telegram_webhook_state', { mode: 'webhook', phase: reason, readable: false, transport: registered });
     return identity;
+  }
+
+  /**
+   * 确保 webhook 已注册。返回:
+   *   true      已注册（自动注册成功，或探测到已存在）
+   *   false     需要注册但自动注册失败
+   *   'manual'  未配置 PUBLIC_BASE_URL,走手动注册（不自动干预）
+   *   'unknown' 状态不可探测（网络/DNS 故障）
+   */
+  async #ensureWebhookRegistered(publicBase, { reason = 'startup' } = {}) {
+    const state = await this.#webhookState();
+    if (!state.readable) return state.transport || 'unknown';
+    if (state.has_webhook) return true;
+
+    // 无 publicBase：保持手动注册语义（向后兼容）。
+    if (!publicBase) return 'manual';
+
+    // 配置了公网 URL → 自动 setWebhook（HTTP server 已就绪后调用）。
+    const url = `${publicBase}/webhook`;
+    const token = this.env.BOT_TOKEN;
+    event('telegram_webhook_registering', { mode: 'webhook', phase: reason, host: new URL(url).host });
+    try {
+      const body = new URLSearchParams({
+        url,
+        secret_token: this.env.WEBHOOK_SECRET || "",
+        allowed_updates: JSON.stringify(["message", "channel_post"]),
+      });
+      const response = await fetch(`${TELEGRAM_API}/bot${token}/setWebhook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+        signal: AbortSignal.timeout(15_000),
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.ok) {
+        event('telegram_webhook_registered', { mode: 'webhook', phase: reason, host: new URL(url).host });
+        bump('telegram_webhook_registrations');
+        return true;
+      }
+      event('telegram_webhook_registration_rejected', {
+        mode: 'webhook', phase: reason,
+        status: response.status, reason: data?.description || `HTTP ${response.status}`,
+      });
+      return false;
+    } catch (error) {
+      event('telegram_webhook_registration_error', {
+        mode: 'webhook', phase: reason,
+        error: error?.cause?.code || error?.name || 'error',
+      });
+      return false;
+    }
   }
 
   /**

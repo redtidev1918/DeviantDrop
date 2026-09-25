@@ -264,8 +264,13 @@ tokenStore.subscribe(async (candidate) => {
 });
 
 if (mode === "webhook") {
-  // webhook 模式：Telegram 推送到 /webhook（需公网 HTTPS 反代并 setWebhook）。HTTP server 已在上面启动。
-  console.log("webhook mode: 请用 https://<host>/webhook 注册 Telegram setWebhook（X-Telegram-Bot-Api-Secret-Token=WEBHOOK_SECRET）");
+  // webhook 模式：Telegram 推送到 /webhook（需公网 HTTPS 反代）。HTTP server 已在上面启动。
+  // 配置了 PUBLIC_BASE_URL 时由 ingress 自动 setWebhook（见 #ensureWebhookRegistered）；
+  // 未配置则需手动注册（见 docs/deployment.md）。
+  const hint = publicBaseUrl
+    ? `webhook mode: 自动注册 setWebhook → ${publicBaseUrl}/webhook（X-Telegram-Bot-Api-Secret-Token=${env.WEBHOOK_SECRET ? "WEBHOOK_SECRET" : "未配置"}）`
+    : "webhook mode: 未配置 PUBLIC_BASE_URL,请手动 setWebhook 到 https://<host>/webhook";
+  console.log(hint);
 }
 
 // 启动入口（预检 + 唯一 poll loop），随后开始观察运行时 secret 文件。

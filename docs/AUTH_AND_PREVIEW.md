@@ -2,127 +2,74 @@
 
 **语言 / Language:** 中文 · [English](/en/AUTH_AND_PREVIEW.md)
 
-## 首次配置与登录
+> **登录怎么做**看 [认证与登录](authentication.md)。本页讲认证模型、公开预览页,以及特殊的 TelePress / 远程媒体配置。
 
-### 有公网域名（推荐，启用 Telegram 内 `/login` 与预览页）
+## 认证模型:OAuth 主认证 + 可选的网页扩展
 
-1. 将域名解析到 VPS，配置 HTTPS 反向代理到 `127.0.0.1:8080`。应用默认仅监听本机；无需公开原始 HTTP 端口。
-2. 设置 `PUBLIC_BASE_URL=https://bot.example.com`、`CLIENT_ID`、`CLIENT_SECRET`、`ADMIN_IDS`（Telegram 用户 ID）。未指定管理员且用户白名单为空时，管理命令全部拒绝；不要把普通使用者当作管理员。
-3. 在 DeviantArt 应用的 redirect whitelist 加入完整的 `https://bot.example.com/auth/deviantart/callback`。
-4. 初次环境配置需重建容器；之后管理员在 **Bot 私聊**发送 `/login`，打开 5 分钟一次性链接，在 DeviantArt 官方站授权。
-5. 回调校验 state、浏览器会话、PKCE；保存成功后立即生效，并发一次恢复通知。落盘失败不会显示成功。OAuth 协议见 [官方认证文档](https://deviantart.readme.io/docs/authentication)。
-
-### 只有公网 IP、没有域名（电脑一键登录，推荐）
-
-无需开放任何公网端口、无需域名、无需手动复制 Cookie、无需重启。DA 应用回调白名单已含 `http://127.0.0.1:8787/callback`。在**你自己的电脑**上（需装有 Chrome/Edge，能访问 deviantart.com），于 DeviantDrop 目录运行：
-
-```bash
-VPS=root@<VPS-IP> npm run login        # 等价于 node scripts/dd-login.mjs
-```
-
-脚本用 Chrome DevTools Protocol 驱动本机 Chrome：打开 DeviantArt 官方登录页，你登录并点「Authorize/允许」后，脚本在网络层同时捕获 ① OAuth 授权回调的 `code` 和 ② 网页登录 Cookie（`auth/auth_secure/userinfo`），经 ssh 推送到服务器，由 `scripts/dd-exchange.mjs` 用 `CLIENT_SECRET` 换 refresh token 并把 OAuth + Cookie 一起原子落盘，**立即热生效**。
-
-为什么在你电脑上跑浏览器而不是服务器：DA 登录页有 AWS WAF 人机校验（`detectIp`/`validateHostname`），令牌绑定浏览器自身环境；真实浏览器在**真实 DA 域**登录天然通过，而服务器反代登录页或服务器端无头浏览器都会被 WAF 拦、且低内存 VPS 不适合跑 Chromium。脚本零新增依赖（Node ≥22 自带 WebSocket/fetch），浏览器 profile 持久化在 `~/.config/deviantdrop/chrome-login-profile`，登录过 DA 后下次可免登录。
-
-- 链路：`dd-login.mjs`（本机）→ ssh → `scripts/dd-receive.sh`（VPS 宿主）→ `docker cp` + `dd-exchange.mjs`（容器内，以 node 用户写 `/data/auth`）。
-- 失败不污染凭据：兑换失败（如 code 过期）直接报错退出，不覆盖现有 token/Cookie。
-
-有公网域名时 `/login` 会分别给出 OAuth 与「更新多图扩展」入口：OAuth 仍有效就无需重新授权；只有想要完整多图附加页时才需要扩展会话。浏览器不能跨 deviantart.com 写 Cookie，所以公网入口采用一次性表单粘贴；不想手动复制时用电脑一键登录自动建立两者。两者分别写入 `/data/auth/deviantart.json` 与 `deviantart-cookies.json`，轮换/失效通知也分开处理。
-
-应用不能代替你在 DeviantArt 完成登录或同意授权——浏览器始终在真实 DA 站点完成登录，脚本只读取登录结果。
-
-没有公网域名、也没有电脑时，可在私聊直接发 `/cookie <整行 Cookie>`：Bot 用 `CookieStore.set()` 热更新，随后强制探测一次并回报 `valid`/`unknown`，同时尽力删除含凭据的原消息。该路径的取舍是把会话凭据经由 Telegram 传输，需要时可用 DA 的「退出所有设备」使其作废。它恢复的是**多图扩展能力**，不是「成熟内容权限」。
-
-反向代理应关闭 `/auth/` 的带 query access log，避免记录一次性 token/code；可用 `access_log off` 作用于该路径。本站认证响应 `no-store`、`no-referrer`，禁止 iframe。
-
-## 认证模型：OAuth 主认证 + 可选的网页扩展
-
-两层能力互相独立，代码里也按这个边界实现（唯一决策点在 `src/deviantart/adapter.js`）：
+两层能力互相独立(唯一决策点在 `src/deviantart/adapter.js`):
 
 | 层 | 职责 |
 | --- | --- |
-| **OAuth（官方 API）** | 内容访问主认证层：metadata、**mature 主图**、官方 download/content、refresh token 续期 |
-| **网页扩展会话** | 可选增强：官方 API 不提供的 `deviation.extended.additionalMedia`（多图第 2…N 页） |
+| **OAuth(官方 API)** | 内容访问主认证层:metadata、**mature 主图**、官方 download/content、refresh token 续期 |
+| **网页扩展会话(Cookie)** | 可选增强:官方 API 不提供的 `deviation.extended.additionalMedia`(多图第 2…N 页) |
 
-要求：**Cookie 失效绝不能让成熟作品整体失败**。因此成熟主图的可用性由 OAuth 决定，网页扩展失败的影响被局部化到附加页。
+要求:**Cookie 失效绝不能让成熟作品整体失败**。成熟主图可用性由 OAuth 决定;网页扩展失败的影响被局部化到附加页。
 
-- 解析流程：网页 `_puppy/dadeviation/init` 提供作品结构（数字 ID 直达，无需 UUID 映射）与 `extended.deviationUuid`；成熟作品的**主图**一律优先用官方 API 的 `content`/`download` 覆盖，因此未打码与 Cookie 无关。
-- 网页 DTO 缺少 uuid 时（被 block 的响应常见），会再走一次 uuid 解析，保证「只有 OAuth、没有 Cookie」也能拿回未打码主图。
-- 官方 API 失败（网络/额度/凭据）不会中断发送：保留网页结果继续发，并打结构化日志 `[da] OAuth 主图替换失败`。
-- 扩展能力**只由本次响应决定**，不看任何缓存状态：可用但状态未知的 Cookie 不会丢页，状态写着 valid 的旧 Cookie 也不会假装能取。响应里逐条检查打码 URL（`blur_`），只跳过打码的那一页。
-- `mature_loggedout`（`isMature=true` + `isBlocked=true` + `blockReasons` 含它）只用于**会话记账**：标记 `expired`、清缓存、通知一次、匿名重试。它从不用于拒绝作品。超时、WAF、5xx 保持 `unknown`。
-- 只有一条路径会产生「打码预览」提示：既没有 OAuth、网页响应也未授权时。此时主图标记为不可用并写明「仅能获取打码预览」，不伪装成完整结果。
+- 解析流程:网页 `_puppy/dadeviation/init` 提供作品结构(数字 ID 直达)与 `extended.deviationUuid`;成熟作品**主图**一律优先用官方 API 的 `content`/`download`,未打码与 Cookie 无关。
+- 网页 DTO 缺 uuid(被 block 的常见响应)会再走 uuid 解析,保证"只有 OAuth、没有 Cookie"也能拿回未打码主图。
+- 官方 API 失败(网络/额度/凭据)不中断发送:保留网页结果继续发,打结构化日志。
+- `mature_loggedout` 只用于会话记账(标 expired、清缓存、通知一次);超时/WAF/5xx 保持 `unknown`。
+- 只有"既无 OAuth、网页也未授权"才产生「打码预览」提示,不伪装完整结果。
 
-## 持久化与迁移
+## 持久化
 
 | 路径 | 内容 |
 | --- | --- |
-| `/data/auth/deviantart.json` | 当前 refresh token、状态和更新时间；原子写入，0600 |
-| `/data/auth/deviantart-cookies.json` | 当前 Cookie；原子写入，0600 |
+| `/data/auth/deviantart.json` | refresh token、状态、更新时间(原子写入,0600) |
+| `/data/auth/deviantart-cookies.json` | Cookie(原子写入,0600) |
 | `/data/cache.json` | file_id、限流、通知冷却、preview metadata、Telegraph URL |
 
-复用已有 Docker `cache:/data` 卷，无需创建新的卷。禁止删除卷进行升级。升级前备份整个卷。
+复用已有 `cache:/data` 卷,不建新卷。**禁止删卷升级**;升级前备份整个卷。
 
-access token 与网页 `_puppy` 会话（CSRF + Cookie 复用）只放内存，旧通用缓存中的 token/session 会在启动时清理。refresh token 刷新串行，避免同时兑换同一个轮换凭据。首次迁移优先旧 `/data/refresh_token`（兼容 `REFRESH_TOKEN_FILE`），再用 `DA_REFRESH_TOKEN`；已有 store 后绝不回退 env。文件损坏视为失效，重新登录；明确 invalid_grant 会清空 token。写盘失败会报错，不假报保存成功。
+access token 与网页 `_puppy` 会话只放内存;refresh token 串行刷新。首次迁移优先旧 `/data/refresh_token`,再用 `DA_REFRESH_TOKEN`;已有 store 后绝不回退 env。
 
-`DA_COOKIES`、`DA_REFRESH_TOKEN` 兼容为首次 seed；后续更新请使用管理入口。`npm run login` 仅作本地开发辅助，写入本地 CredentialStore，不打印 token，也不自动上传 VPS。
+## Preview Fixer(公开预览页)
 
-`/status` 分别显示 `OAuth API:` 与 `Multi-image web expansion: missing|unknown|valid|expired` 两条独立状态，前者只看 OAuth 凭据，后者才去探测网页会话。文件里存在 Cookie 只代表“有待验证的扩展会话”，不直接显示 valid；网络失败不清除 Cookie，也不要求重新登录，更不会影响 OAuth 状态。
+`PUBLIC_BASE_URL` 设置后提供 `/d/:id`(OG metadata)与 `/d/:id/image`(安全媒体代理):
 
-## Preview Fixer
-
-`/d/:id` 提供标题、作者、canonical 原站入口和 OG metadata；正常 Bot 解析顺手记住作品 ID 与来源。Crawler 首次访问补一次匿名 [oEmbed](https://deviantart.readme.io/docs/oembed)，元数据缓存一小时。未知 ID 只做有限的原站 canonical 解析。失败短缓存，避免每次爬取反复请求 DA。
-
-`/d/:id/image` 只代理该 metadata 对应的公开缩略图；不接受任意上游 URL，不要求 Cookie/Referer。CDN 只允许 HTTPS DeviantArt/Wix 域名，每次重定向前校验，阻止重定向 SSRF。网页标题/作者 HTML 转义。
-
-没有公开缩略图时仅提供文字与原站入口，不公开账号才能查看的原图。DA 拒绝匿名 oEmbed 时，本站无法保证图文预览；主 Telegram 媒体发送仍保留。该页面不是作品镜像站。
+- `/d/:id`:标题、作者、canonical 原站入口和 OG metadata,供 Telegram/Discord 读帖子缩略图。
+- `/d/:id/image`:只代理对应 metadata 的**公开缩略图**,不接受任意上游 URL,不要求 Cookie/Referer;CDN 只允许 HTTPS DeviantArt/Wix 域名,防重定向 SSRF。
+- 没有公开缩略图时仅提供文字与原站入口,**不公开账号才能查看的原图**。该页不是作品镜像站。
 
 ## Telegram 排版与 TelePress
 
-媒体由同一个纯 planner 决定发送单元：连续 photo/video 才进入 `sendMediaGroup`，每 2–10 项一组；GIF/animation 不能进入 Telegram media group，始终独立 `sendAnimation`。caption、状态和来源只归属第一个发送单元，后续媒体不带重复 caption。URL 直发、multipart 上传与 file_id 重放共用同一 planner，避免三条路径行为不一致。来源与客户端入口是**首条媒体 caption 末尾的两个超链接**（`🔗 source | 📲 DAViewer app`，HTML `<a>` 锚点）：单图、相册、URL 直发、multipart 上传与 file_id 重放行为一致；不再用 inline 按钮（sendMediaGroup 会静默丢弃）。
+媒体由统一 planner 决定发送单元:连续 photo/video 进 `sendMediaGroup`(每 2–10 项一组);GIF/animation 不能进 media group,始终独立 `sendAnimation`。caption/状态/来源只归属首单元。来源与客户端入口是**首条媒体 caption 末尾两个超链接**(`🔗 source | 📲 DAViewer app`,HTML `<a>` 锚点),单图与相册行为一致。
 
-`TELEPRESS_URL` 未设置时无额外依赖。设置后默认 `TELEPRESS_MODE=fallback`；`large-gallery` 为纯图片 >10 张生成可选图集，`always` 仅明确选择时使用，`off` 完全关闭。视频/GIF 不转 Telegraph。缓存同作品 URL 90 天，重复使用，不反复创建页面。额外 Telegraph 入口才发送按钮消息；配置了公网预览域名时该消息的 link_preview_options 指向本站。
+**TelePress**(可选,超大图集 / Telegram 发送失败兜底):
 
-TelePress 发起失败不会影响原生 Telegram 成功结果；Telegram 失败且 TelePress 成功时提供图集入口。可选发布当前限制 50 张/合计 50 MiB，超出跳过可选发布，继续原链路。
+- `TELEPRESS_URL` 未设置则无额外依赖;设置后默认 `TELEPRESS_MODE=fallback`。
+- `large-gallery` 纯图片 >10 张才生成可选项;`always` 需明确选择;`off` 完全关。
+- 视频/GIF 不转 Telegraph;同作品 URL 缓存 90 天复用。
+- TelePress 失败不影响原生 Telegram 成功;当前限制 50 张 / 50 MiB。
+- 服务只绑回环/内部网络,**不要把未设 key 的发布接口暴露公网**。
 
-TelePress 端点是 `POST /publish/gallery`，默认只接受重复 `files` multipart + title/link，返回 url；两端配置同一个 `TELEPRESS_API_KEY`（Bearer）。服务只绑定回环/内部网络，不能把未设 key 的发布接口直接暴露公网。没有服务 URL、图片托管配置和有效 Telegraph 凭据时，本 Bot 不会代建在线图集。
+**远程 media manifest(默认关)**:TelePress 服务端设 `TELEPRESS_ALLOW_REMOTE_GALLERY_MEDIA=1`,DeviantDrop 设 `TELEPRESS_REMOTE_GALLERY_MEDIA=1` 后,`/publish/gallery` 才接受轻量 `media` JSON,由 TelePress 代拉 https 图片。任一缺失自动回落二进制 multipart。适合有内部/受信客户端的场景,不建议直接暴露公网。详见 [无域名部署](VPS-public-ip.md)。
 
-**可选远程 media manifest（默认关闭）**：TelePress 服务端设
-Web 会话文件在启动后始终优先于 `DA_COOKIES`；环境变量只是首次 seed。登录态 Cookie 的上游轮换会
-在已登录响应上合并写回 `/data/auth/deviantart-cookies.json`（原子写、`0600`），匿名/WAF 或未登录响应不会覆盖有效快照。
-详见 [架构/认证](architecture/authentication.md) 与 [会话恢复](operations/session-recovery.md)。
+## 配置变化与模块结构
 
-`TELEPRESS_ALLOW_REMOTE_GALLERY_MEDIA=1`，DeviantDrop 设
-`TELEPRESS_REMOTE_GALLERY_MEDIA=1` 后，`/publish/gallery` 才接受轻量 `media`
-JSON（`assetId/kind/sourceUrl`），由 TelePress 服务端代拉 https 图片；任一缺失都会
-自动回落二进制 multipart。适合「有内部/受信客户端、不想让 Bot 缓冲整本大图集」的
-场景，不建议直接暴露公网。详见 [docs/VPS-public-ip.md](VPS-public-ip.md)。
-
-## 配置变化与模块
-
-新增/完善：`PUBLIC_BASE_URL`、`HTTP_HOST`、`ADMIN_IDS`、`AUTH_DIR`、`TELEPRESS_URL`、`TELEPRESS_API_KEY`、`TELEPRESS_MODE`、`TELEPRESS_REMOTE_GALLERY_MEDIA`。保留 `MODE=poll|webhook`、代理、Cookie/OAuth seed 和现有缓存目录配置。`SERVER` 必须显式设置，仓库不再带实际部署地址默认值。
+新增/完善的变量:`PUBLIC_BASE_URL`、`HTTP_HOST`、`ADMIN_IDS`、`AUTH_DIR`、`TELEPRESS_URL`、`TELEPRESS_API_KEY`、`TELEPRESS_MODE`、`TELEPRESS_REMOTE_GALLERY_MEDIA`。保留 `MODE`、代理、Cookie/OAuth seed 与缓存目录。完整变量表见 [配置](configuration.md)。
 
 ```text
 src/
   main.js                  # 生命周期与依赖装配
-  index.js                 # 原有 Bot / DA 流程，逐步保留而非重写
+  index.js                 # Bot / DA 流程
   http-server.js           # 流式 HTTP 与请求体上限
-  network.js               # 原生 fetch、代理与连接失败回退
-  auth/
-    atomic-json.js
-    credential-store.js
-    cookie-store.js
-    token.js               # 内存 access token / 串行 refresh
-    oauth-login.js
-    http-auth.js
-    auth-notifier.js
-    errors.js
+  network.js               # fetch、代理与连接失败回退
+  auth/                    # credential/cookie store、token、oauth-login、http-auth、auth-notifier
   preview/server.js        # OG、匿名 metadata 与安全媒体代理
-  publishing/
-    telepress.js
-    gallery.js             # 可选策略与发送流程接线
+  publishing/              # telepress.js、gallery.js
   rendering/caption.js
-  storage/cache.js         # 持久缓存，排除凭据
+  storage/cache.js         # 持久缓存,排除凭据
 ```
 
-本轮改造涉及的原始问题与最终结论已并入本文与 [CHANGELOG](https://github.com/redtidev1918/DeviantDrop/blob/main/CHANGELOG.md)。验证运行 `npm run check`；测试涵盖真实 HTTP multipart、poll + HTTP、凭据轮换/损坏/热更新、OAuth state/过期/失败、caption/相册、preview/SSRF、TelePress 策略与失败隔离。部署成功不等于用户 OAuth 授权完成；两者分别验收。
+验证 `npm run check`。测试覆盖真实 HTTP multipart、poll+HTTP、凭据轮换/损坏/热更、OAuth state/过期/失败、caption/相册、preview/SSRF、TelePress 策略与失败隔离。

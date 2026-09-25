@@ -2,115 +2,177 @@
 
 **语言 / Language:** 中文 · [English](README.en.md)
 
-> **把 DeviantArt 作品转到 Telegram 的 Bot：发一条作品链接，收到图片、视频、GIF 或文字作品。**
+> 把 DeviantArt 作品转到 Telegram 的 Bot:给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接,收到图片 / 视频 / GIF / 文字作品。
 
 [完整文档](https://redtidev1918.github.io/DeviantDrop/) · [更新日志](CHANGELOG.md)
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Docs-文档站点-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
 
-直接给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接，它就会把图片 / 视频 / GIF / 文字作品发回来，caption 末尾带原作品页 source 链接；不需要自己部署。
+---
 
-> **注意**：DeviantArt 会封锁数据中心出口（Cloudflare Workers 与多数云主机被拦）。请把 Bot 跑在 DeviantArt 放行的出口（住宅网络或已通过检测的部分 VPS）上；部署步骤见 [VPS 手册](docs/VPS.md)。
+## 特性
 
-## 文档
+- 识别消息 / caption 里的 DeviantArt 作品页链接(`https` / `www` / 旧式域名 / `fav.me` / `/view/{id}`),每条消息最多 5 个
+- 支持图片、视频、GIF、文字作品;GIF / 动画始终独立发送,照片 / 视频连续片段用相册(`sendMediaGroup`)
+- 成熟(NSFW)作品主图由官方 OAuth API 提供,无需 Cookie;多图附加页用可选网页会话增强
+- 已交付作品按 Telegram `file_id` 缓存 30 天,同 bot 内重复请求直接复用
+- `/start /help /about` 命令;每聊天限流、去重、429/500/503 退避重试
+- 可选 [TelePress](https://github.com/redtidev1918/TelePress) 图集兜底
+
+## 如何工作
+
+```text
+    Telegram                        DeviantDrop                       DeviantArt
+  user / group  ──作品链接──►  Bot (长轮询)  ──解析/下载──►  官方 OAuth API / 网页接口
+  chat  ◄──媒体+来源链接──  Bot 发送          ◄──metadata/媒体──  deviantart.com
+```
+
+**Telegram 更新通过长轮询(long polling)接收。不需要配置 Telegram Webhook。**
+
+- **不需要公网 IP / 域名 / HTTPS** 即可运行:Bot 主动调用 `api.telegram.org` 的 `getUpdates` 拉取消息,不依赖任何入站端口。
+- 家用服务器、VPS、NAS 都能跑——只要这台机器**能主动访问 Telegram 与 DeviantArt 的 API**。
+- 唯一例外:要用 **webhook 模式**(可选)或 **Telegram 内的 Web 登录按钮**时,才需要公网 HTTPS(见下文)。
+
+### Webhook 是可选的第二种传输方式
+
+`MODE=webhook` 让 Telegram **直接推送**更新到你的 HTTP 端点(默认 `POST /webhook`)。它和 Polling 共用同一个更新处理入口,poll / webhook **二选一,不会同时运行**。
+
+- 配置了 `PUBLIC_BASE_URL` 时,启动会自动向 Telegram 注册 setWebhook;注册失败会明确标记为不健康(`/health` 可见),不假装可用。
+- **Webhook 需要的是"Telegram 能访问到的 HTTPS URL",不强制要求域名**——域名只是最常见、最方便的 TLS 方案(有公网 IP + 反代/隧道也可)。
+- **重要:`Telegram Webhook` 与 `DeviantArt 出站访问` 是两个独立问题。** Webhook 只解决 Telegram→Bot;Bot 抓取 DeviantArt 仍用运行主机自己的出口,不会因启用 Webhook 而改变或绕过 DA 的出口要求。部署前照常 `npm run detect`。
+- 手动注册方式(不配 `PUBLIC_BASE_URL`)见 [docs/deployment.md](docs/deployment.md#手动注册-webhook未配置-public-base_url)。
+
+## 要求
+
+| 需求 | 说明 |
+| --- | --- |
+| Node.js | **≥ 22**(`type: module`) |
+| Telegram Bot Token | 来自 [@BotFather](https://t.me/BotFather) |
+| DeviantArt OAuth | 在 [deviantart.com/developers](https://www.deviantart.com/developers/) 注册 **Confidential** 应用,拿 `CLIENT_ID` / `CLIENT_SECRET` |
+| DeviantArt 放行的出口 | **必需**。DeviantArt 封锁数据中心出口(Cloudflare Workers 及多数云主机被拦),需住宅网络或已检测通过的部分 VPS;国内服务器走代理 |
+| Docker | 可选(推荐,见下) |
+
+## 快速开始
+
+最短路径(先测出口,再部署):
+
+```bash
+# 1. 出口检测(确认这台机器能访问 DeviantArt)
+npm install --omit=dev
+npm run detect -- <client_id> <client_secret>
+
+# 2. 配置
+cp .env.example .env        # 填 BOT_TOKEN / CLIENT_ID / CLIENT_SECRET / ADMIN_IDS
+                            # 国内机器:HTTP_PROXY / HTTPS_PROXY 指向本机 clash
+
+# 3. 启动(默认 MODE=poll,长轮询,无需公网)
+node src/main.js
+```
+
+## Docker
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+docker compose logs -f deviantdrop
+```
+
+- **数据持久化**:Compose 挂载 `cache:/data` 卷,保存 `deviantart.json`(OAuth refresh token)、`deviantart-cookies.json`、`telegram-bot-token` 与缓存。**不要运行 `docker compose down -v`**,那会删除数据卷导致重新登录。
+- `restart: unless-stopped`:崩溃自动重启,`/health` 持续可读。
+- 更新:`git pull && docker compose up -d --build` 或 `npm run deploy:vps`(需配 `SERVER`)。
+
+## 配置
+
+完整变量表见 [docs/configuration.md](docs/configuration.md)。以下是最常用的:
+
+| 变量 | 必需 | 默认 | 说明 |
+| --- | --- | --- | --- |
+| `BOT_TOKEN` | ✅ | — | Telegram bot token(BotFather)。运行时事实来源是 secret 文件,env 仅作首次 bootstrap |
+| `BOT_TOKEN_FILE` | | `/data/secrets/telegram-bot-token` | token 运行时 secret 文件,支持热更新 |
+| `WEBHOOK_SECRET` | ✅ | — | webhook 鉴权密钥;长轮询模式不参与但必填 |
+| `CLIENT_ID` / `CLIENT_SECRET` | | — | DeviantArt 官方应用凭据 |
+| `ADMIN_IDS` | | — | 管理员 Telegram 用户 ID(逗号分隔),`/login /status` 用 |
+| `ALLOWED_USER_IDS` | | — | 允许使用 bot 的用户白名单,留空允许所有人 |
+| `MODE` | | `poll` | `poll`=长轮询(默认,无需公网)或 `webhook`(需公网 HTTPS 反代;配置了 `PUBLIC_BASE_URL` 时启动自动注册 setWebhook) |
+| `PORT` / `HTTP_HOST` | | `8080` / `127.0.0.1` | HTTP server 监听地址(poll/webhook 都监听) |
+| `PUBLIC_BASE_URL` | | — | 见下方说明 |
+| `HTTP_PROXY` / `HTTPS_PROXY` | | — | 国内出口代理地址 |
+| `CAPTION_NOTES` | | `auto` | 是否在群聊隐藏技术性 ⚠️ 提示(`auto/always/never`) |
+| `PREFER_ORIGINAL` | | — | 设 `1` 优先抓原图(免费账号原图有日配额) |
+
+### `PUBLIC_BASE_URL` 的真实作用
+
+`PUBLIC_BASE_URL` **不是** Telegram Webhook 配置。
+
+它只用于**三类公网功能**:
+
+1. **Web OAuth 登录回调** —— 让管理员在 Telegram 里发 `/login` 后,在浏览器完成 DeviantArt 授权。
+2. **公开预览页 `/d/:id`** —— 供 Telegram/Discord 读取 OG metadata 的帖子缩略图。
+3. **Webhook 自动注册**(当 `MODE=webhook` 时)—— 用 `${PUBLIC_BASE_URL}/webhook` 作为 Telegram 推送端点并自动 setWebhook。
+
+配置它必须满足:
+
+- 值是 **HTTPS origin**(如 `https://bot.example.com`,main.js 会校验协议必须是 `https:`)。
+- 反代(如 Caddy / Nginx / CF Tunnel)将流量转发到 `HTTP_HOST:PORT`(默认 `127.0.0.1:8080`)。
+- 把 `<域名>/auth/deviantart/callback` 加进 DeviantArt 应用的 redirect 白名单。
+
+**不设置 `PUBLIC_BASE_URL` 完全可用**的两种方式:
+
+- **无域名(推荐)**:用 `npm run login`,在你自己电脑的 Chrome 里完成 OAuth 授权 + 网页会话,经 ssh 推送到服务器,不依赖公网入口。
+- **极简**:私聊给 bot 发 `/cookie <整行 Cookie>`。
+
+> 域名是**推荐**但不是**必需**。设置与否只影响 Telegram 内登录按钮和预览页这两个加分项。
+
+## 登录
+
+DeviantArt 有两层独立认证(见 [docs/authentication.md](docs/authentication.md)):
+
+1. **OAuth(官方 API)** —— 内容访问主认证层,成熟作品主图靠它,refresh token 无人值守续期。
+2. **网页扩展会话(Cookie)** —— 可选增强,补齐官方 API 不提供的多图附加页。**不是**成熟内容权限。
+
+管理命令(`/login` `/status` `/cookie`)只在**私聊**并且是 `ADMIN_IDS` 指定的管理员才可用。
+
+三种登录方式(按推荐排序):
+
+| 方式 | 需要 | 说明 |
+| --- | --- | --- |
+| `npm run login`(电脑一键) | 本机 Chrome/Edge,能访问 deviantart.com | 推荐,无域名也能用;OAuth + 网页会话一起保存 |
+| Telegram 内 `/login` 按钮 | HTTPS 域名(`PUBLIC_BASE_URL`) | 纯 OAuth,方便 |
+| `/cookie` | 已登录 DA 的浏览器 | 极简兜底;凭据经 Telegram 传输,发完可删消息 |
+
+## 常用命令
+
+| 命令 | 作用 |
+| --- | --- |
+| `npm start` | 启动 `node src/main.js`(默认 poll) |
+| `npm run login` | 电脑一键 OAuth + 网页会话登录(`VPS=user@host npm run login`) |
+| `npm run token` | 查看 / 管理运行时 secret token |
+| `npm run detect` | 检测出口对 DeviantArt 的放行 |
+| `npm run check` | 全量测试 + 构建 dry-run 校验 |
+| `npm run deploy:vps` | 测试 → push → SSH 拉取 → compose 重建(需 `SERVER`) |
+| `npm run logs` | SSH 查看线上容器日志(需 `SERVER`) |
+
+## 文档导航
 
 | 我想… | 看这里 |
 | --- | --- |
-| 快速跑起来 | [下载与部署](docs/download.md) · [VPS 手册](docs/VPS.md) · [公网 IP / 无域名](docs/VPS-public-ip.md) |
-| 理解认证与双通道 | [认证架构](docs/architecture/authentication.md) · [认证、预览与多图扩展](docs/AUTH_AND_PREVIEW.md) |
-| 理解媒体怎么取、怎么发 | [媒体管线](docs/architecture/media-pipeline.md) · [Delivery 生命周期](docs/architecture/delivery-lifecycle.md) |
-| 排障 / 会话恢复 | [会话恢复](docs/operations/session-recovery.md) · [媒体交付测试](docs/testing/media-delivery.md) |
-| 接入发布编排 | [ReleaseGraph 接入](docs/RELEASEGRAPH.md) |
+| 部署(VPS / Docker / Node、无域名) | [docs/deployment.md](docs/deployment.md) |
+| 理解每个环境变量 | [docs/configuration.md](docs/configuration.md) |
+| 登录与认证流程 | [docs/authentication.md](docs/authentication.md) |
+| 部署后运维(token 热更、health、排障) | [docs/operations.md](docs/operations.md) |
+| 内部工作原理 | [docs/architecture.md](docs/architecture.md) |
+| 下载与版本 | [docs/download.md](docs/download.md) |
 
-## 快速部署
+## 常见问题
 
-```bash
-cp .env.example .env    # 填 BOT_TOKEN / WEBHOOK_SECRET / 官方 API 凭据；国内机器填代理
-docker compose up -d --build
-```
+- **Bot 不回复** —— 先看 `/health`(`curl -s http://127.0.0.1:8080/health | python3 -m json.tool`)。`telegram_ingress` 状态:残留 webhook 或另一个 poller 会导致 `conflict`(409);`unauthorized` 是 token 失效。
+- **DeviantArt 登录失败** —— 确认出口未被 DA 封锁(`npm run detect`),且用真实浏览器登录(DA 有 AWS WAF 人机校验)。
+- **Docker 重启后要重新登录** —— 数据卷(`cache:/data`)被删了,不要 `down -v`。
+- **群里收不到普通链接** —— Bot 的「群组隐私模式」要关闭(BotFather → Bot Settings → Group Privacy → Turn off),再把 Bot 移出群拉回或设为管理员。
 
-**你需要准备**：一个来自 [@BotFather](https://t.me/BotFather) 的 `BOT_TOKEN`；一个
-DeviantArt 官方应用（在 deviantart.com/developers 申请，填入 `CLIENT_ID` / `CLIENT_SECRET`，
-用于 OAuth 访问）；以及一个 DeviantArt 放行的出口（见上）。不想用 Docker 时，
-`npm install --omit=dev` 后 `node src/main.js` 即可。
+完整排障:[docs/operations.md](docs/operations.md#排障) 与 [docs/troubleshooting.md](docs/troubleshooting.md)。
 
-## 支持范围
+## License
 
-登录与 Owner 命令、群组/频道配置、回复版式、可选的 TelePress 发布链路和排查步骤都在[文档站](https://redtidev1918.github.io/DeviantDrop/)。
-
-- 识别消息与 caption 里的作品页链接（`https` / `www` / 旧式域名 / `fav.me` / `/view/{id}`），最多同时处理 5 个；
-  `fav.me`、`/view/{id}` 会先跟随重定向解析作者，解析不到时提示改用完整作品页网址。
-- **网页 `_puppy` 接口优先**（作品结构 / GIF / literature 文字 / additionalMedia 都从同一适配器取），必要时用 OAuth 官方 API 兜底。文字作品以 `.txt` 文档发送。
-- 视频的 `media.baseUri` 只是封面：可播放地址只取网页 `types[].t == "video"`，或官方 API `videos[].src`；拿不到播放源时回退官方 API，而不是把封面当图片发送。
-- 同一作品成功发送后按 Telegram `file_id` 缓存 30 天；同一 bot 内其他用户再发同一作品时直接复用，不重新下载/上传。
-- 照片/视频连续片段用 `sendMediaGroup` 相册发送（超过 10 张自动分批）；GIF/animation 始终独立 `sendAnimation`，不会拆散或重复 caption；超大图先压缩，失败再以 document 发送；Telegram 拉不动 CDN 时自动下载后 multipart 上传。
-- `/start` `/help` `/about` 命令；每聊天限流、去重、429/500/503 退避重试。
-
-### 群聊与频道
-
-- Bot 默认开启「群组隐私模式」，此时在群里看不到普通消息（只有命令）。要让它响应群里的作品链接：在 **BotFather** 里 `/mybots` → 选 Bot → **Bot Settings → Group Privacy → Turn off**，然后把 Bot 移出群再拉回（或设为管理员）使设置生效。
-- 频道里把 Bot 设为管理员、以「发到频道」的方式发链接即可（`channel_post` 同样处理）。
-- 群聊/频道默认**不显示**技术性状态提示（见「回复排版」），caption 更干净。
-
-### 登录与所有者命令
-
-管理命令（`/login`、`/cookie`、`/status`）只允许 **Bot 所有者**使用：在 `.env` 设置 `ADMIN_IDS=<你的 Telegram 用户 ID>`。未配置时管理命令一律拒绝；普通使用者白名单（`ALLOWED_USER_IDS`）不是管理员。
-
-DeviantArt 有两层**互相独立**的能力，不要把它们混成一件事：
-
-| 层 | 角色 | 负责内容 |
-| --- | --- | --- |
-| **OAuth（官方 API）** | **内容访问主认证层** | 作品 metadata、**mature 主图**、官方 download/content、refresh token 无人值守续期 |
-| **Web 扩展会话**（`auth`/`auth_secure`/`userinfo`） | **可选增强** | 只补齐官方 API 不提供的网页端 `deviation.extended.additionalMedia`（多图第 2…N 页） |
-
-因此：**NSFW ≠ 必须 Cookie**。
-
-- 单图成熟作品只靠 OAuth 就能拿到未打码主图；没有网页会话也照样发送。
-- 网页会话失效只影响**部分多图作品的附加页**，不会让整个成熟作品失败，也不会用打码图顶替已经拿到的 OAuth 原图。
-- 附加页拿不到时只补一句「部分附加图片暂时无法获取，请在原站查看」，不会说成登录失效。
-- 付费/订阅（Premium Folder / tier）作品拿不到原图时识别为 `locked-preview`：回复明确提示「作品需要订阅/购买，当前为打码预览，请在原站查看」，不再把打码图当原图发送。
-
-- **推荐：电脑一键登录（无公网域名也能用）**。在你的电脑上（需装有 Chrome/Edge），于 DeviantDrop 目录运行：
-  ```bash
-  VPS=root@<你的服务器> npm run login
-  ```
-  脚本会自动打开 Chrome 进入 DeviantArt 官方登录页：你登录并点「Authorize/允许」，脚本同时保存 OAuth 与网页扩展会话并热生效。DA 的登录页有 AWS WAF 人机校验，用你自己的真实浏览器登录即可正常通过。完成后 `/status` 显示 `OAuth API: ✅ valid`、`Multi-image web expansion: ✅ valid`。
-- **有公网域名（`PUBLIC_BASE_URL`）**：私聊发 `/login`；首次配置或 refresh token 失效时点 OAuth 授权按钮。公网页面不能跨域写入 DA Cookie，扩展会话入口采用一次性表单粘贴。
-- **只有手机/没有电脑**：在已登录 DA 的浏览器里复制整行 `Cookie:`，在私聊发 `/cookie auth=…; auth_secure=…; userinfo=…`，Bot 存盘后立即探测并回报状态。注意这条会话凭据会经过 Telegram，发完删掉该消息（Bot 会尽力代删）；担心时可在 DA 设置里「退出所有设备」使其作废。
-- **`/status`（所有者私聊）**：分别显示 `OAuth API:` 与 `Multi-image web expansion: missing|unknown|valid|expired` 两条独立状态（不显示任何密钥）。网络超时、WAF、5xx 只会让扩展能力显示 `unknown`，绝不误判为过期，也不会影响 OAuth 状态；只有登录跳转或 `mature_loggedout` 才标记 `expired`。
-- `DA_REFRESH_TOKEN` / `DA_COOKIES` 只作为**首次迁移 seed**：启动后分别写入 OAuth 与网页会话文件，refresh token 轮换即落盘；Cookie 支持热更新，不再回退读 .env 旧值。
-- **`BOT_TOKEN` 也只作为首次 bootstrap**：运行时事实来源是 secret 文件 `/data/secrets/telegram-bot-token`（目录 0700 / 文件 0600，可用 `BOT_TOKEN_FILE` 覆盖），**文件优先于环境变量**。Token 被 BotFather 吊销后不必重启容器，在服务器上跑一条命令即可热恢复：
-  ```bash
-  cd /opt/deviantdrop && ./scripts/set-telegram-token.sh
-  ```
-  服务会在 1~2 秒内发现新值、用 `getMe` 验证、然后**只重建 Telegram 入口**（进程、HTTP 服务、DeviantArt 认证、缓存、预览、OAuth 全都不重启）。写错 token 不会破坏当前有效凭据，网络抖动只会延期验证；`/health` 的 `runtime_secrets` 会说明来源与状态（只有元数据，没有值）。详见 [docs/VPS.md](docs/VPS.md)。
-- OAuth 或网页扩展会话失效时 Bot 所有者分别收到通知，文案各自说明影响范围（6 小时冷却，恢复后另发一次恢复通知）。
-
-### 回复排版
-
-- 统一排版：`🎨 标题 / 👤 作者 / 🖼 N 个媒体`，外加一个可靠的来源入口（见下）。
-- 来源入口**每个作品只有一个、绝不重复**：嵌在**首条媒体 caption 末尾（空行隔开）**的「🔗 source | 📲 DAViewer app」两个超链接（`parse_mode=HTML` 的 `<a>` 锚点，服务端解析、URL 直发/multipart 上传/file_id 重放各路径都可靠），分别指向原作品页与 [DAViewer 客户端下载页](https://redtidev1918.github.io/DAViewer/#/download)。不再用 inline 按钮——sendMediaGroup 会静默丢弃按钮，caption 超链接让单图与相册行为一致。
-- 技术性状态提示（`⚠️ 已压缩 / 原图暂不可用 / 已作为文件发送` 等）默认只在**私聊**显示便于运营排查；群聊/频道里自动隐藏（对看图的人是噪音，想看原图点来源入口即可）。可用环境变量强制：`CAPTION_NOTES=auto`（默认，私聊显示/群聊隐藏）、`always`（总是显示）、`never`（总是隐藏）。
-
-### TelePress（可选）
-
-超大图集（>10 张）或 Telegram 发送失败时，可借助 [TelePress](https://github.com/redtidev1918/TelePress) 生成 Telegraph 页面。未配置 URL 时不启用；配置后默认仅失败兜底（`TELEPRESS_MODE=fallback`），大图集需选择 `large-gallery`，失败绝不影响原生 Telegram 发送。同机部署建议 `TELEPRESS_URL=http://127.0.0.1:<port>` 并在两端配置同一个 `TELEPRESS_API_KEY`。
-
-### 依赖
-
-- **运行时**：Node.js ≥ 22。生产依赖只有两个——`undici`（HTTP 与国内出口代理）和 `sharp`（>10MB 图片压缩，懒加载）。详见 [package.json](package.json)。
-- **开发**：`wrangler` 仅用于本地 `dev`/dry-run 校验，不进入 Docker 镜像。
-- **可选外部服务**：[TelePress](https://github.com/redtidev1918/TelePress)（Telegraph 图集兜底）、[DAViewer](https://github.com/redtidev1918/DAViewer) 客户端（浏览 DeviantArt 的桌面客户端，见下）。
-
-### 相关项目与致谢
-
-- [DAViewer 客户端（兄弟项目）](https://github.com/redtidev1918/DAViewer)：浏览 DeviantArt 的桌面客户端；bot 回复 caption 末尾的「📲 DAViewer app」链接指向其[下载页](https://redtidev1918.github.io/DAViewer/#/download)，`/about` 亦有提及。
-- [TelePress](https://github.com/redtidev1918/TelePress)：可选 Telegraph 图集发布。
-- 实现来源（反代/兼容细节）：[deviantart-downloader](https://github.com/redtidev1918/deviantart-downloader)（CSRF、作品 ID、cookie 复用、媒体 URL）、[DAKit](https://github.com/redtidev1918/DAKit)（`_puppy`/`dadeviation`/`init` 流程与 URL 兼容）、[TelePost](https://github.com/redtidev1918/TelePost)（Telegram 媒体类型映射）。完整清单见 [docs/README.md](docs/README.md#实现来源)。
-
-### 公开预览页
-
-设置 HTTPS `PUBLIC_BASE_URL` 后提供 `/d/:id`，供 Telegram/Discord 读取 OG metadata。只发布匿名 oEmbed 的公开缩略图，不暴露登录后媒体。
-
-完整操作、数据迁移与限制见 [认证与预览指南](docs/AUTH_AND_PREVIEW.md)；发布编排（ReleaseGraph 接入现状与下一代协议切换清单）见 [发布编排说明](docs/RELEASEGRAPH.md)；部署与出口检测结论见 [VPS 部署指南](docs/VPS.md)。
+[MIT](LICENSE) © 2026 redtidev1918
