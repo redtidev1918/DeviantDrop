@@ -10,6 +10,13 @@
 
 ---
 
+## [1.15.0](https://github.com/redtidev1918/DeviantDrop/compare/v1.14.0...v1.15.0) (2026-09-25)
+
+
+### Features
+
+* **telegram:** document optional webhook transport as a supported update mode ([45981be](https://github.com/redtidev1918/DeviantDrop/commit/45981bec7231f29a0816301d38696879eb89dff7))
+
 ## [1.14.0](https://github.com/redtidev1918/DeviantDrop/compare/v1.13.1...v1.14.0) (2026-09-23)
 
 
