@@ -49,11 +49,28 @@ export async function downloadMedia(item, onStatus = null, label = '媒体下载
 export async function compressPhoto(bytes) {
   try {
     const sharp = (await import('sharp')).default;
-    const meta = await sharp(bytes, { failOnError: 'none' }).metadata();
+    // Single shared lazy pipeline: every candidate below is a clone of this
+    // source, so the raw input is parsed once and each branch decodes only as
+    // far as needed to produce its target (shrink-on-load for downscales).
+    const source = sharp(bytes, { failOnError: 'none' });
+    const meta = await source.metadata();
     if (!meta.width || !meta.height) return null;
-    for (const quality of [85, 75, 65, 55, 45]) {
-      const out = await sharp(bytes, { failOnError: 'none' }).rotate().flatten({ background: '#fff' }).jpeg({ quality, progressive: true }).toBuffer();
-      if (out.length <= PHOTO_MAX_BYTES) return out;
+    // Try the full-size re-compression first (best fidelity), then step down
+    // the longest edge so genuinely oversized photos still fit rather than
+    // falling back to a document.
+    for (const scale of [1, 0.8, 0.64, 0.5, 0.4, 0.32]) {
+      const width = Math.max(1, Math.round(meta.width * scale));
+      const height = Math.max(1, Math.round(meta.height * scale));
+      for (const quality of [85, 75, 65, 55, 45, 35]) {
+        const out = await source
+          .clone()
+          .rotate()
+          .resize({ width, height, fit: 'inside', withoutEnlargement: true })
+          .flatten({ background: '#fff' })
+          .jpeg({ quality, progressive: true })
+          .toBuffer();
+        if (out.length <= PHOTO_MAX_BYTES) return out;
+      }
     }
     return null;
   } catch {
