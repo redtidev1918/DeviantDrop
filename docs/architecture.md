@@ -41,7 +41,7 @@ Telegram (getUpdates 长轮询 / webhook)
 ## 媒体送达
 
 - 已交付作品按 Telegram `file_id` 缓存 30 天,同 bot 跨用户复用。
-- 连续 photo/video 用 `sendMediaGroup` 相册(>10 自动分批);GIF/animation 独立 `sendAnimation`;超大图先压缩,失败再以 document 发送。
+- 连续 photo/video 用 `sendMediaGroup` 相册(>10 自动分批);GIF/animation 独立 `sendAnimation`;超大照片由 Sharp 按需缩放并压缩到 10 MiB 以内,失败再以 document 发送。
 - poll 模式(无公网反代)下载媒体后 multipart 上传;webhook 模式经 15 分钟 HMAC 签名代理流式转发(支持 Range)。
 
 ## 故障域

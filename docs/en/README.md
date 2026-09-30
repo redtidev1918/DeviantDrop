@@ -3,7 +3,8 @@
 **Language / 语言:** [中文](/) · English
 
 DeviantDrop is a Telegram bot: send a DeviantArt work link and it replies with the work's
-image, video or GIF unchanged. It is a service, not a downloadable program.
+image, video or GIF; oversized photos are compressed for Telegram delivery when needed. It is
+a service, not a downloadable program.
 
 **Try it**: send a work link to [@DeviantDropBot](https://t.me/DeviantDropBot). Deploy your own instance only if you want one.
 

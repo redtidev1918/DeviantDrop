@@ -23,5 +23,5 @@ Telegram delivery
 - Literature 使用 `/art/` URL 且可能没有 media 描述符：适配器读取内联 `textContent`，规范化为 `.txt` document；不会伪装成图片或直接失败。
 - 付费/订阅（Premium Folder / tier）作品识别为 `locked-preview`：非成熟内容的模糊主图不再当作原图发送，caption 明确提示需要订阅/购买。
 - Planner 只按规范化后的模型分批：连续 photo/video 用 `sendMediaGroup`（≤10 项），animation 单独发送。
-- 超大图先压缩，失败则转 document；不支持的媒体显式失败，不能静默降级成假预览。
+- 超大照片先由 Sharp 复用同一 lazy source，按 `[1, 0.8, 0.64, 0.5, 0.4, 0.32]` 的缩放比例和 `[85, 75, 65, 55, 45, 35]` 的 JPEG 质量依次尝试，目标为 Telegram 的 10 MiB 图片上限；仍失败则转 document。不支持的媒体显式失败，不能静默降级成假预览。
 - 成功交付后按作品/资产保存 Telegram `file_id`（30 天）。同一 bot 内跨用户重复请求直接复用；任一资产缺失则回退完整抓取并重建缓存。

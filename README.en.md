@@ -3,7 +3,8 @@
 **Language / 语言:** [中文](README.md) · English
 
 > **A Telegram bot that forwards DeviantArt works to your chat: send a work link and
-> DeviantDrop replies with the image, video or GIF.**
+> DeviantDrop replies with the image, video or GIF; oversized photos are compressed for
+> Telegram delivery when needed.**
 
 📖 [Full documentation](https://redtidev1918.github.io/DeviantDrop/) · [Changelog](CHANGELOG.md)
 
@@ -60,8 +61,9 @@ TelePress publish path, and troubleshooting — live on the [docs site](https://
   any user of the same bot replay it without downloading or uploading the binary again.
 - Photo/video sequences are sent as `sendMediaGroup` albums (auto-batched above 10 items);
   GIF/animation always uses a standalone `sendAnimation` so captions are never split or
-  duplicated; oversized images are compressed first and sent as documents if that fails; when
-  Telegram cannot reach the CDN, the file is downloaded and uploaded as multipart.
+  duplicated; oversized photos are resized and JPEG-compressed on demand with Sharp before
+  falling back to documents; when Telegram cannot reach the CDN, the file is downloaded and
+  uploaded as multipart.
 - `/start` `/help` `/about` commands; per-chat rate limiting, de-duplication, and
   429/500/503 backoff retries.
 

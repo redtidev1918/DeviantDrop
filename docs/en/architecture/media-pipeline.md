@@ -23,5 +23,5 @@ Telegram delivery
 - Literature uses `/art/` URLs and may have no media descriptor. The adapter reads inline `textContent`, normalizes it to a `.txt` document, and never fakes it as an image or fails outright.
 - Paid / subscription-locked (Premium Folder / tier) works surface as `locked-preview`: a blurred non-mature main is no longer sent as the original, and the caption says the work needs a subscription/purchase.
 - The planner groups contiguous photo/video runs into `sendMediaGroup` batches (≤10 items) and sends animation standalone.
-- Oversized photos are compressed or demoted to document; unsupported media fails visibly rather than becoming a false preview.
+- Oversized photos reuse one lazy Sharp source and try scale factors `[1, 0.8, 0.64, 0.5, 0.4, 0.32]` with JPEG qualities `[85, 75, 65, 55, 45, 35]` against Telegram's 10 MiB photo limit; if all candidates fail, the item is demoted to a document. Unsupported media fails visibly rather than becoming a false preview.
 - Successfully delivered works are cached by Telegram `file_id` per work/asset for 30 days. Requests from any user of the same bot replay from cache; if any asset is missing, the adapter performs a full fetch and rebuilds the cache.
