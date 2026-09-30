@@ -10,6 +10,13 @@
 
 ---
 
+## [1.15.1](https://github.com/redtidev1918/DeviantDrop/compare/v1.15.0...v1.15.1) (2026-09-30)
+
+
+### Performance Improvements
+
+* **media:** stream large photos through sharp ([79d62ba](https://github.com/redtidev1918/DeviantDrop/commit/79d62ba54f817bfb8c6743ea79dee88709d374dc))
+
 ## [1.15.0](https://github.com/redtidev1918/DeviantDrop/compare/v1.14.0...v1.15.0) (2026-09-25)
 
 
