@@ -37,10 +37,10 @@
     "logs": "bash -c 'test -n \"$SERVER\" || { echo \"Set SERVER=user@host\"; exit 1; }; ssh \"$SERVER\" \"docker logs -f deviantdrop-deviantdrop-1\"'"
   },
   "devDependencies": {
-    "wrangler": "^4.129.0"
+    "wrangler": "^4.147.0"
   },
   "dependencies": {
-    "sharp": "^0.35.4",
+    "sharp": "^0.35.5",
     "undici": "^8.11.2"
   }
 }
