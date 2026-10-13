@@ -21,3 +21,9 @@ The web-session file is authoritative after bootstrap. `DA_COOKIES` is a seed on
 Signed-in responses merge upstream Set-Cookie rotation atomically; anonymous and
 logged-out responses never overwrite a live login snapshot. See the Chinese
 canonical page for the complete invariant list.
+
+Signed-in evidence is scoped to `__INITIAL_STATE__['@@publicSession']` and requires
+a username. A login flag without identity stays unknown; an unrelated page marker
+cannot expire the snapshot. Identity does not prove access to every work.
+Captured anonymous samples and provenance live in `test/fixtures/`; signed-in
+policy tests are synthetic and do not claim live authenticated verification.

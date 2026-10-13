@@ -15,6 +15,16 @@
 4. `probeWebSession` validates the cookie on first use and marks it `valid`, `expired`, or `unknown`.
 5. `unknown` preserves the snapshot; only an authoritative expired response expires it.
 
+The home-page probe reads `window.__INITIAL_STATE__['@@publicSession']`.
+`valid` requires a server-rendered username; `isLoggedIn: true` without an identity
+stays `unknown`. Signed-out text elsewhere in the page is not session evidence.
+Only a confirmed signed-in response may persist Cookie rotation. The sanitized
+2026-10-13 anonymous capture and its provenance are in `test/fixtures/`;
+authenticated behavior is covered by synthetic policy tests, not a live login test.
+
+POSIX hosts verify credential files as 0600 and their secret directory as 0700.
+Windows uses ACLs; emulated mode bits do not verify equivalent access protection.
+
 ## Recovery
 
 - Expired: use `/login` or `/cookie` in a private chat with an administrator.

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { CookieStore, mergeCookieHeaders } from '../src/auth/cookie-store.js';
 import { getWebSession } from '../src/deviantart/web-session.js';
 import { normalizeArtwork, mimeForKind } from '../src/deviantart/media-normalizer.js';
@@ -40,7 +40,8 @@ test('signed-in homepage persists Set-Cookie refresh; anonymous response cannot 
   assert.match(store.getCookies(), /userinfo=user/);
 
   store.set('auth=must-survive');
-  globalThis.fetch = async () => new Response('window.__CSRF_TOKEN__ = "csrf"; {"isLoggedIn":false}');
+  const anonymousPage = readFileSync(new URL('./fixtures/deviantart-home-anonymous.html', import.meta.url), 'utf8');
+  globalThis.fetch = async () => new Response(`window.__CSRF_TOKEN__ = "csrf"; ${anonymousPage}`);
   await getWebSession(env, {}, { cacheGet, cacheSet });
   assert.match(store.getCookies(), /auth=must-survive/);
   rmSync(dir, { recursive: true, force: true });
