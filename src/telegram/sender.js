@@ -1,6 +1,6 @@
 import { renderArtworkCaption } from '../rendering/caption.js';
 import { planDelivery } from './delivery-planner.js';
-import { telegram, telegramForm } from './api.js';
+import { telegram, telegramForm, preserveConfirmedDelivery } from './api.js';
 import {
   PHOTO_MAX_BYTES, MEDIA_FIELDS, MIME_BY_EXTENSION,
   compressPhoto, detectFile, downloadMedia, isTooBigError,
@@ -33,8 +33,12 @@ export async function sendArtworkPlan(media, message, env, { upload = false, onS
   for (const unit of units) {
     const primary = unit.primary;
     const unitCaption = primary ? caption : '';
-    if (upload) results.push(...await uploadUnit(unit, message, env, unitCaption, primary, onStatus, cap));
-    else results.push(...await urlUnit(unit, message, env, unitCaption, primary, cap));
+    try {
+      if (upload) results.push(...await uploadUnit(unit, message, env, unitCaption, primary, onStatus, cap));
+      else results.push(...await urlUnit(unit, message, env, unitCaption, primary, cap));
+    } catch (error) {
+      throw preserveConfirmedDelivery(error, results);
+    }
   }
   return results.flat(Infinity);
 }
@@ -140,21 +144,25 @@ async function uploadAlbumBatches(entries, message, env, caption, primary, cap, 
     const batch = batches[batchIndex];
     const batchPrimary = primary && batchIndex === 0;
     const batchCaption = batchPrimary ? caption : '';
-    if (batch.kind === 'album') {
-      onStatus?.('正在发送相册…');
-      const sent = await telegramForm(env, 'sendMediaGroup', () => {
-        const form = baseForm(message);
-        form.set('media', JSON.stringify(batch.entries.map((entry, i) => ({
-          type: entry.item.kind,
-          media: `attach://file${i}`,
-          ...(i === 0 && batchCaption ? { caption: batchCaption, parse_mode: 'HTML' } : {}),
-        }))));
-        batch.entries.forEach((entry, i) => form.set(`file${i}`, new Blob([entry.bytes], { type: MIME_BY_EXTENSION[entry.extension] || 'application/octet-stream' }), `file${i}.${entry.extension}`));
-        return form;
-      });
-      results.push(...(Array.isArray(sent) ? sent : [sent]));
-    } else {
-      results.push(await uploadSingle(batch.entries[0], message, env, batchCaption, batchPrimary, cap, onStatus, batch.kind === 'document' ? 'document' : null));
+    try {
+      if (batch.kind === 'album') {
+        onStatus?.('正在发送相册…');
+        const sent = await telegramForm(env, 'sendMediaGroup', () => {
+          const form = baseForm(message);
+          form.set('media', JSON.stringify(batch.entries.map((entry, i) => ({
+            type: entry.item.kind,
+            media: `attach://file${i}`,
+            ...(i === 0 && batchCaption ? { caption: batchCaption, parse_mode: 'HTML' } : {}),
+          }))));
+          batch.entries.forEach((entry, i) => form.set(`file${i}`, new Blob([entry.bytes], { type: MIME_BY_EXTENSION[entry.extension] || 'application/octet-stream' }), `file${i}.${entry.extension}`));
+          return form;
+        });
+        results.push(...(Array.isArray(sent) ? sent : [sent]));
+      } else {
+        results.push(await uploadSingle(batch.entries[0], message, env, batchCaption, batchPrimary, cap, onStatus, batch.kind === 'document' ? 'document' : null));
+      }
+    } catch (error) {
+      throw preserveConfirmedDelivery(error, results);
     }
   }
   return results;
@@ -198,25 +206,32 @@ function guessExt(extension, kind) {
 export async function sendFileIdPlan(files, message, env, cap) {
   const units = planDelivery(files.map((file) => ({ kind: file.kind, file_id: file.file_id })));
   const caption = renderArtworkCaption(cap, cap.status || {}, { showNotes: notesEnabled(env, message), sourceUrl: cap.sourceUrl }).text;
+  const confirmed = [];
   for (const unit of units) {
+    try {
     const unitCaption = unit.primary ? caption : '';
     if (unit.type === 'album') {
-      await telegram(env, 'sendMediaGroup', {
+      const result = await telegram(env, 'sendMediaGroup', {
         chat_id: message.chat.id,
         media: unit.items.map((item, i) => ({ type: item.kind, media: item.file_id || item.url, ...(i === 0 && unitCaption ? { caption: unitCaption, parse_mode: 'HTML' } : {}) })),
         ...reply(message),
       });
+      confirmed.push(...(Array.isArray(result) ? result : [result]));
     } else {
       const item = unit.type === 'single' ? unit.items[0] : unit.item;
       const kind = item.kind;
       const value = item.file_id || item.url;
       const [method, field] = MEDIA_FIELDS[kind];
-      await telegram(env, method, {
+      const result = await telegram(env, method, {
         chat_id: message.chat.id,
         [field]: value,
         ...(unitCaption ? { caption: unitCaption, parse_mode: 'HTML' } : {}),
         ...reply(message),
       });
+      confirmed.push(result);
+    }
+    } catch (error) {
+      throw preserveConfirmedDelivery(error, confirmed);
     }
   }
 }
