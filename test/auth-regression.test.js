@@ -21,7 +21,9 @@ test('CookieStore reads external atomic updates and secure permissions', () => {
   const file=path(); const a=new CookieStore({path:file,seedEnvCookie:'auth=one'});
   assert.equal(a.getCookies(),'auth=one');
   new CookieStore({path:file}).set('auth=two');
-  assert.equal(a.getCookies(),'auth=two'); assert.equal(statSync(file).mode&0o777,0o600);
+  assert.equal(a.getCookies(),'auth=two');
+  // Windows access is governed by ACLs; Node's emulated mode is not a POSIX permission check.
+  if (process.platform !== 'win32') assert.equal(statSync(file).mode&0o777,0o600);
 });
 test('concurrent refresh exchanges once, rotates to disk; invalid_grant clears seed permanently', async t => {
   const store=new CredentialStore({path:path(),seedEnvToken:'old'}); store.load();

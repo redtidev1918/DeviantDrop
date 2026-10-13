@@ -909,8 +909,12 @@ test('CLI: set telegram writes the secret atomically with 0600 and no echo of th
     const { code, out } = await runCli({ stateFile, probeFile, secretPath, input: TOKEN_D });
     assert.equal(code, 0, out);
     assert.equal(readSecretFile(secretPath), TOKEN_D);
-    assert.equal(statSync(secretPath).mode & 0o777, 0o600, 'secret 文件必须是 0600');
-    assert.equal(statSync(join(dir, 'secrets')).mode & 0o777, 0o700, '目录必须是 0700');
+    // Windows uses ACLs; keep POSIX permission assertions on Linux/macOS, while
+    // write/rotation/no-secret-output checks still run on every platform.
+    if (process.platform !== 'win32') {
+      assert.equal(statSync(secretPath).mode & 0o777, 0o600, 'secret 文件必须是 0600');
+      assert.equal(statSync(join(dir, 'secrets')).mode & 0o777, 0o700, '目录必须是 0700');
+    }
     // 输出的任何一行都不含 token 本身（只有形状提示与是否通过）。
     assert.doesNotMatch(out, ANY_TOKEN);
   } finally { rmSync(dir, { recursive: true, force: true }); }

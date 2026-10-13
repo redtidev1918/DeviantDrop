@@ -30,7 +30,10 @@ test('signed-in homepage persists Set-Cookie refresh; anonymous response cannot 
   const cacheSet = async (ns, key, value) => { cache.set(`${ns}:${key}`, value); };
   const headers = new Headers();
   headers.append('Set-Cookie', 'auth=fresh; Path=/; HttpOnly');
-  globalThis.fetch = async () => new Response('window.__CSRF_TOKEN__ = "csrf"; {"isLoggedIn":true}', { headers });
+  // Fixture shape per the AGENTS.md protocol verification rule: a real signed-in
+  // home page assigns window.__INITIAL_STATE__ (evidence-verified form ported
+  // from DAViewer), not a bare isLoggedIn literal.
+  globalThis.fetch = async () => new Response('window.__CSRF_TOKEN__ = "csrf"; <script>window.__INITIAL_STATE__ = JSON.parse("{\\"@@publicSession\\":{\\"isLoggedIn\\":true,\\"user\\":{\\"username\\":\\"someone\\"}}}");</script>', { headers });
   await getWebSession(env, {}, { cacheGet, cacheSet });
   assert.match(store.getCookies(), /auth=fresh/);
   assert.match(store.getCookies(), /auth_secure=keep/);

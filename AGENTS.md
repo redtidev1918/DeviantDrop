@@ -42,3 +42,10 @@ green suite could not catch the most basic compatibility break.
     Keep completed work in the workspace archive, or move the evidence to
     `docs/archive/` with the docsite lifecycle block and keep it out of the
     user sidebar (`docsite.py lifecyclecheck` validates the conventions).
+
+## Release notes
+
+Keep release notes user-facing: about four bullets, one sentence per change.
+Explain the visible benefit; keep root causes, logs and internal identifiers in
+engineering docs. If both languages are present, align their items. Preserve
+download/checksum sections and disclose material installation limits briefly.
