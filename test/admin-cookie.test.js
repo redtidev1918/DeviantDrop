@@ -10,11 +10,19 @@ function freshStore() {
   return new CookieStore({ path: join(mkdtempSync(join(tmpdir(), 'dd-cookie-')), 'cookies.json') });
 }
 
+// Evidence-verified page shape (AGENTS.md protocol rule): a signed-in home page
+// states the username via __INITIAL_STATE__ @@publicSession. Built with
+// JSON.stringify so the JS-string escaping matches the production page form
+// (window.__INITIAL_STATE__ = JSON.parse("<json>")) without hand-escaping.
+const SIGNED_IN_PAGE = `window.__CSRF_TOKEN__ = "csrf"; <script>window.__INITIAL_STATE__ = JSON.parse(${JSON.stringify(
+  JSON.stringify({ '@@publicSession': { isLoggedIn: true, user: { username: 'admin' } } }),
+)});</script>`;
+
 function stubTelegram(calls) {
   return async (input, init = {}) => {
     const url = String(input);
     if (url === 'https://www.deviantart.com/') {
-      return new Response('{"isLoggedIn":true}', { headers: { 'Content-Type': 'text/html' } });
+      return new Response(SIGNED_IN_PAGE, { headers: { 'Content-Type': 'text/html' } });
     }
     calls.push({ method: url.split('/').pop(), body: JSON.parse(init.body) });
     return Response.json({ ok: true, result: { message_id: 1 } });

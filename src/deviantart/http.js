@@ -57,3 +57,56 @@ export function getCookies(headers) {
 export function homepageLoggedIn(html) {
   return /\\?"isLoggedIn\\?"\s*:\s*true/.test(html);
 }
+
+const INITIAL_STATE_MARKER = 'window.__INITIAL_STATE__ = JSON.parse(';
+
+// Ported from DAViewer's production-verified web session verifier (evidence:
+// the DeviantArt home page assigns window.__INITIAL_STATE__ a JSON.parse(...)
+// string whose redux-style @@publicSession key states isLoggedIn and
+// user.username; a single-@ spelling is tolerated as legacy). Returns the
+// server-rendered username, 'anonymous' for an explicit signed-out
+// statement, or null when the evidence is missing or unparseable —
+// isLoggedIn:true without a username stays null, never a guess.
+export function initialStateSessionUser(html) {
+  const idx = html.indexOf(INITIAL_STATE_MARKER);
+  if (idx === -1) return null;
+  const rest = html.slice(idx + INITIAL_STATE_MARKER.length).trimStart();
+  if (!rest || (rest[0] !== '"' && rest[0] !== "'")) return null;
+  const quote = rest[0];
+  const escapes = { '"': '"', "'": "'", '\\': '\\', '/': '/', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t' };
+  let out = '';
+  let closed = false;
+  for (let i = 1; i < rest.length; i += 1) {
+    const ch = rest[i];
+    if (ch === '\\' && i + 1 < rest.length) {
+      const next = rest[i + 1];
+      if (next === 'u' && i + 6 <= rest.length && /^[0-9a-fA-F]{4}$/.test(rest.slice(i + 2, i + 6))) {
+        out += String.fromCharCode(parseInt(rest.slice(i + 2, i + 6), 16));
+        i += 5;
+        continue;
+      }
+      out += escapes[next] ?? next;
+      i += 1;
+      continue;
+    }
+    if (ch === quote) {
+      closed = true;
+      break;
+    }
+    out += ch;
+  }
+  let state;
+  if (!closed) return null;
+  try {
+    state = JSON.parse(out);
+  } catch {
+    return null;
+  }
+  if (!state || typeof state !== 'object') return null;
+  const session = state['@@publicSession'] ?? state['@publicSession'];
+  if (!session || typeof session !== 'object') return null;
+  const user = session.user;
+  const username = user && typeof user.username === 'string' ? user.username.trim() : null;
+  if (session.isLoggedIn === false) return 'anonymous';
+  return username || null;
+}

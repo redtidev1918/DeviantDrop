@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { handleUpdate } from '../src/index.js';
@@ -57,7 +57,8 @@ test('/status 的 OAuth 状态来自 OAuth 自己，不来自网页探针', asyn
 test('/status 在扩展会话过期时说明影响范围与恢复方式', async (t) => {
   const original = globalThis.fetch;
   t.after(() => { globalThis.fetch = original; });
-  const telegram = stubTelegram(() => new Response('{"isLoggedIn":false}'));
+  const anonymousPage = readFileSync(new URL('./fixtures/deviantart-home-anonymous.html', import.meta.url), 'utf8');
+  const telegram = stubTelegram(() => new Response(anonymousPage));
   const env = {
     BOT_TOKEN: '111:secret',
     WEBHOOK_SECRET: 'secret',

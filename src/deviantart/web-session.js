@@ -1,5 +1,5 @@
 import { WEB_SESSION_STATUS } from '../auth/cookie-store.js';
-import { DEVIANTART_ORIGIN, DA_HEADERS, fetchDeviantArt, getCookies, homepageLoggedIn } from './http.js';
+import { DEVIANTART_ORIGIN, DA_HEADERS, fetchDeviantArt, getCookies, initialStateSessionUser } from './http.js';
 
 const SESSION_TTL_SECONDS = 90;
 const PROBE_TTL_SECONDS = 60;
@@ -47,9 +47,17 @@ export async function probeWebSession(env, { force = false, cacheGet = async () 
       status = WEB_SESSION_STATUS.EXPIRED;
     } else {
       const html = await response.text();
-      if (homepageLoggedIn(html)) status = WEB_SESSION_STATUS.VALID;
-      else if (/\\?"isLoggedIn\\?"\s*:\s*false/.test(html)) status = WEB_SESSION_STATUS.EXPIRED;
-      else status = WEB_SESSION_STATUS.UNKNOWN;
+      // A signed-in verdict requires a server-stated username (invariant 6);
+      // isLoggedIn:true without an identity stays UNKNOWN. An explicit
+      // signed-out statement inside the session object expires.
+      const username = initialStateSessionUser(html);
+      if (username && username !== 'anonymous') {
+        status = WEB_SESSION_STATUS.VALID;
+      } else if (username === 'anonymous') {
+        status = WEB_SESSION_STATUS.EXPIRED;
+      } else {
+        status = WEB_SESSION_STATUS.UNKNOWN;
+      }
     }
   } catch {
     return WEB_SESSION_STATUS.UNKNOWN;
@@ -89,8 +97,12 @@ export async function getWebSession(env, memo = {}, { cacheGet = async () => nul
   }
   const html = await home.text();
   if (cookies) {
-    const loggedIn = homepageLoggedIn(html);
-    const loggedOutMarker = /\\?"isLoggedIn\\?"\s*:\s*false/.test(html);
+    // Invariant 6: only an authoritative signed-in response (server-stated
+    // username) may persist upstream cookie rotation; isLoggedIn:true
+    // without an identity stays unverified and must not mark VALID.
+    const username = initialStateSessionUser(html);
+    const loggedIn = Boolean(username && username !== 'anonymous');
+    const loggedOutMarker = username === 'anonymous';
     if (loggedIn) {
       env.cookieStore?.markStatus?.(WEB_SESSION_STATUS.VALID);
       // Only persist upstream rotation on an authoritative signed-in response;
