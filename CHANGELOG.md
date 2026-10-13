@@ -10,6 +10,13 @@
 
 ---
 
+## [1.15.3](https://github.com/redtidev1918/DeviantDrop/compare/v1.15.2...v1.15.3) (2026-10-13)
+
+
+### Bug Fixes
+
+* **auth:** require scoped identity evidence for web session validity ([#66](https://github.com/redtidev1918/DeviantDrop/issues/66)) ([b23e61f](https://github.com/redtidev1918/DeviantDrop/commit/b23e61f4204744980d882009b97a9e221c748a74))
+
 ## [1.15.2](https://github.com/redtidev1918/DeviantDrop/compare/v1.15.1...v1.15.2) (2026-10-07)
 
 
