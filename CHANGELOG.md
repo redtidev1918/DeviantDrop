@@ -10,6 +10,13 @@
 
 ---
 
+## [1.15.2](https://github.com/redtidev1918/DeviantDrop/compare/v1.15.1...v1.15.2) (2026-10-07)
+
+
+### Bug Fixes
+
+* **network:** adapt Undici 8 dispatchers for native fetch ([6bd09db](https://github.com/redtidev1918/DeviantDrop/commit/6bd09db62d22d32387e87999cbdc9ffc18892025))
+
 ## [1.15.1](https://github.com/redtidev1918/DeviantDrop/compare/v1.15.0...v1.15.1) (2026-09-30)
 
 

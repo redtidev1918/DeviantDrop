@@ -1,3 +1,5 @@
+import { Dispatcher1Wrapper } from "undici";
+
 // Keep native fetch and FormData together: a separate undici version may
 // serialize native FormData as the literal string "[object FormData]".
 //
@@ -27,11 +29,18 @@ function isAborted(error, signal) {
 }
 
 export function createProxyFetch(proxyAgent, directAgent, nativeFetch = globalThis.fetch) {
+  // Node's built-in fetch uses Undici's v1 handler contract. Undici 8 agents
+  // use v2 handlers, so adapt dispatchers while retaining native FormData.
+  const compatible = (agent) => agent && typeof agent.dispatch === "function"
+    ? new Dispatcher1Wrapper(agent)
+    : agent;
+  const proxyDispatcher = compatible(proxyAgent);
+  const directDispatcher = compatible(directAgent);
   return async (input, init) => {
     const url = new URL(input instanceof URL ? input.href : typeof input === "string" ? input : input.url);
     const isMedia = MEDIA_DIRECT_HOST.test(url.hostname);
-    const primary = isMedia ? directAgent : proxyAgent;
-    const secondary = isMedia ? proxyAgent : directAgent;
+    const primary = isMedia ? directDispatcher : proxyDispatcher;
+    const secondary = isMedia ? proxyDispatcher : directDispatcher;
     try {
       return await nativeFetch(input, { ...init, dispatcher: primary });
     } catch (error) {
