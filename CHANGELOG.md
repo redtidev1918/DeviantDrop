@@ -10,6 +10,18 @@
 
 ---
 
+## [1.16.0](https://github.com/redtidev1918/DeviantDrop/compare/v1.15.3...v1.16.0) (2026-10-22)
+
+
+### Bug Fixes
+
+* **telegram:** survive oversized and interrupted uploads without replays ([ee3c1d3](https://github.com/redtidev1918/DeviantDrop/commit/ee3c1d3051b42eb81fd7e7f9b2288fd0346681d5))
+
+
+### Miscellaneous Chores
+
+* set next release to 1.16.0 ([97ea99d](https://github.com/redtidev1918/DeviantDrop/commit/97ea99dbf5bca20ddc63027082afb255433f001e))
+
 ## [1.15.3](https://github.com/redtidev1918/DeviantDrop/compare/v1.15.2...v1.15.3) (2026-10-13)
 
 
