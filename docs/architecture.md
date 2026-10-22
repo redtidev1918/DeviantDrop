@@ -41,8 +41,17 @@ Telegram (getUpdates 长轮询 / webhook)
 ## 媒体送达
 
 - 已交付作品按 Telegram `file_id` 缓存 30 天,同 bot 跨用户复用。
-- 连续 photo/video 用 `sendMediaGroup` 相册(>10 自动分批);GIF/animation 独立 `sendAnimation`;超大照片由 Sharp 按需缩放并压缩到 10 MiB 以内,失败再以 document 发送。
+- 连续 photo/video 用 `sendMediaGroup` 相册（≤10 项，并按完整 multipart 字节数分批）；GIF/animation 独立发送。超过照片限制的图片以原字节 document 发送，不自动压缩或缩放。
+- 单项下载失败或确定的媒体拒绝会记录资产失败，并继续后续项；相册明确超限才递归拆分，已确认成功的项不重发。上传结果未知、限流或源消息删除立即停止。
+- `multipart.js` 用原生编码器生成不可变 Blob，按 `Blob.size` 测量并发送同一份请求体。50 MiB 为可降低的分批目标，不宣称是 Telegram 官方相册总限制。
+- 成功回执带 `assetId`/源索引关联，部分失败不会把后续 `file_id` 错配到缺失项，也不会缓存为完整作品。未发送项附原作链接。
 - poll 模式(无公网反代)下载媒体后 multipart 上传;webhook 模式经 15 分钟 HMAC 签名代理流式转发(支持 Range)。
+
+## 上传回归验证
+
+`test/upload-budget.test.js` 覆盖实际 HTTP 请求体字节数、相册总量超限、单项失败、413 有限拆分、上传中断、严格回复检查、流式下载大小边界及日志脱敏。`test/worker.test.js` 验证原图片字节不变、链接回退和缓存复用；`test/network.test.js` 验证写入断线不换路重发。协议依据和实采样本见 `test/fixtures/upload-evidence.md`。
+
+这些是故障注入及本地 HTTP 验证，不等同于真实 Telegram 媒体发送验收。
 
 ## 故障域
 

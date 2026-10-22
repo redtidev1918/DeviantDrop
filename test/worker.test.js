@@ -6,6 +6,43 @@ import worker, {
   parseDeviantArtTarget,
 } from "../src/index.js";
 import { CLIENT_DOWNLOAD_URL, CLIENT_LINK_TEXT } from "../src/rendering/caption.js";
+import { readFile } from 'node:fs/promises';
+import { requestBody } from './helpers/request-body.js';
+
+test('rejected oversized album returns source link with strict reply and topic', async (t) => {
+  const { handleUpdate } = await import('../src/index.js');
+  // Reuse the existing adapter fixture; this test exercises delivery only.
+  const deviation = JSON.parse((await readFile(new URL('./fixtures/deviantart_deviation.json', import.meta.url), 'utf8')).replaceAll('images.wixmp.test', 'images.wixmp.com'));
+  const original = globalThis.fetch;
+  t.after(installFakeCache());
+  t.after(() => { globalThis.fetch = original; });
+  const sends = [];
+  globalThis.fetch = async (input, init = {}) => {
+    const url = String(input);
+    if (url === 'https://www.deviantart.com/') return new Response("window.__CSRF_TOKEN__ = 'csrf'");
+    if (url.includes('/_puppy/dadeviation/init')) return Response.json({ deviation });
+    if (url.includes('images.wixmp.com')) return new Response('media');
+    if (url.includes('api.telegram.org')) {
+      const decoded = await requestBody(init);
+      const body = decoded instanceof FormData ? Object.fromEntries(decoded) : decoded;
+      sends.push({ method: url.split('/').pop(), body });
+      if (url.endsWith('/sendMediaGroup') || url.endsWith('/sendPhoto')) return new Response('Request Entity Too Large', { status: 413 });
+      return Response.json({ ok: true, result: { message_id: 90 } });
+    }
+    throw new Error('Unexpected request');
+  };
+  const source = 'https://www.deviantart.com/conformance/art/x-913624585';
+  await handleUpdate({ update_id: 8413001, message: {
+    message_id: 20, chat: { id: -8413, type: 'supergroup' }, message_thread_id: 77,
+    text: source, from: { id: 42 },
+  } }, { BOT_TOKEN: '111:secret', WEBHOOK_SECRET: 'secret' });
+  const fallback = sends.filter(x => x.body.text?.includes('媒体超过 Telegram'));
+  assert.equal(fallback.length, 1, JSON.stringify(sends));
+  assert.ok(fallback[0].body.text.includes(source));
+  assert.deepEqual(fallback[0].body.reply_parameters, { message_id: 20, allow_sending_without_reply: false });
+  assert.equal(fallback[0].body.message_thread_id, 77);
+  assert.equal(sends.filter(x => x.method === 'sendMediaGroup').length, 1);
+});
 
 test("parses plain, hidden, schemeless and multiple DeviantArt links", () => {
   const hiddenText = "先看 www.deviantart.com/bob/art/second-2，再点这里。";
@@ -589,13 +626,15 @@ test("falls back to document for oversized photos and reuses its file_id", async
     }
     if (url.includes("api.telegram.org")) {
       const method = url.split("/").pop();
-      const body = JSON.parse(init.body);
+      const decoded = await requestBody(init);
+      const body = decoded instanceof FormData ? Object.fromEntries(decoded) : decoded;
       calls.push({ method, body });
       if (method === "sendPhoto") {
-        return Response.json({ ok: false, description: "Bad Request: file is too big", error_code: 400 });
+        return Response.json({ ok: false, description: "Bad Request: file is too big", error_code: 400 }, { status: 400 });
       }
       return Response.json({ ok: true, result: { message_id: 5, document: { file_id: "DOC_1" } } });
     }
+    if (url.includes('images.wixmp.com')) return new Response(new Uint8Array(11 * 1024 * 1024));
     throw new Error(`unexpected fetch: ${url}`);
   };
   t.after(installFakeCache());
@@ -610,7 +649,7 @@ test("falls back to document for oversized photos and reuses its file_id", async
 
   assert.equal(initCalls, 1); // 第二次走 file_id
   const documents = calls.filter((c) => c.method === "sendDocument");
-  assert.equal(documents.length, 2); // 第一次文档URL + 第二次文档file_id
+  assert.equal(documents.length, 2); // 第一次原始字节上传 + 第二次文档file_id
   assert.equal(documents[1].body.document, "DOC_1");
   assert.equal(calls.filter((c) => c.method === "sendPhoto").length, 1); // 第一次尝试照片被拒
 });
@@ -680,7 +719,8 @@ test("poll uploads a photo/video album, preserves group topic, and replays all f
     } });
     if (url.includes('images.wixmp.com')) { downloads++; return new Response('file-bytes'); }
     if (url.includes('api.telegram.org')) {
-      const body = init.body instanceof FormData ? Object.fromEntries(init.body) : JSON.parse(init.body);
+      const decoded = await requestBody(init);
+      const body = decoded instanceof FormData ? Object.fromEntries(decoded) : decoded;
       sends.push({ method: url.split('/').pop(), body });
       if (url.endsWith('/sendMediaGroup')) {
         const media = typeof body.media === 'string' ? JSON.parse(body.media) : body.media;
@@ -690,7 +730,7 @@ test("poll uploads a photo/video album, preserves group topic, and replays all f
         assert.equal(body.reply_markup, undefined, "相册不应带 reply_markup");
         assert.ok(!media[0].caption_entities, "相册首图 caption 不应带自定义 entity");
         assert.equal(media[0].parse_mode, 'HTML', "相册首图 caption 用 parse_mode=HTML");
-        if (init.body instanceof FormData) {
+        if (init.body instanceof Blob) {
           assert.equal(media[0].media, 'attach://file0');
           assert.equal(await body.file0.text(), 'file-bytes');
           assert.equal(await body.file1.text(), 'file-bytes');
@@ -736,7 +776,7 @@ test('poll single photo falls back on Telegram size error and channel posts are 
     methods.push(method);
     if (method === 'sendPhoto') return Response.json({ ok: false, description: 'Bad Request: file of size 15535898 bytes is too big for a photo; the maximum size is 10485760 bytes' }, { status: 400 });
     if (method === 'sendDocument') {
-      assert.equal(await init.body.get('document').text(), 'photo-bytes');
+      assert.equal(await (await requestBody(init)).get('document').text(), 'photo-bytes');
       return Response.json({ ok: true, result: { document: { file_id: 'DOC' } } });
     }
     return Response.json({ ok: true, result: { message_id: 91 } });
@@ -749,7 +789,7 @@ test('poll single photo falls back on Telegram size error and channel posts are 
   assert.equal(methods.filter(x => x === 'sendDocument').length, 1);
 });
 
-test('poll compresses a real oversized image before upload', async (t) => {
+test('poll preserves a real oversized image byte-for-byte as a document', async (t) => {
   const sharp = (await import('sharp')).default;
   const { handleUpdate } = await import('../src/index.js');
   const originalFetch = globalThis.fetch;
@@ -765,10 +805,10 @@ test('poll compresses a real oversized image before upload', async (t) => {
       title: 'large', media: { baseUri: 'https://images.wixmp.com/large.png', token: 't' },
     } });
     if (url.includes('images.wixmp.com')) return new Response(bytes);
-    if (url.endsWith('/sendPhoto')) {
-      const photo = init.body.get('photo');
-      assert.ok(photo.size < 10 * 1024 * 1024);
-      assert.equal((await sharp(Buffer.from(await photo.arrayBuffer())).metadata()).format, 'jpeg');
+    if (url.endsWith('/sendPhoto')) throw new Error('must not send a compressed photo');
+    if (url.endsWith('/sendDocument')) {
+      const photo = (await requestBody(init)).get('document');
+      assert.deepEqual(Buffer.from(await photo.arrayBuffer()), bytes);
       uploaded = true;
     }
     return Response.json({ ok: true, result: { message_id: 92 } });
@@ -888,7 +928,7 @@ test('TelePress large-gallery hook publishes once, and failure leaves Telegram d
   if(url.includes('images.wixmp.com'))return new Response('image',{headers:{'Content-Type':'image/jpeg'}});
   if(url.includes('telepress.example')){publications++;return fail?new Response('error',{status:503}):Response.json({url:'https://telegra.ph/gallery'});}
   const method=url.split('/').pop();
-  const body=init.body instanceof FormData?Object.fromEntries(init.body):JSON.parse(init.body);
+  const decoded=await requestBody(init);const body=decoded instanceof FormData?Object.fromEntries(decoded):decoded;
   replies.push({method, body});
   if(method==='sendMediaGroup'){albums++;return Response.json({ok:true,result:Array.from({length:10},()=>({photo:[{file_id:'id'}]}))});}
   return Response.json({ok:true,result:{message_id:1,photo:[{file_id:'id'}]}});

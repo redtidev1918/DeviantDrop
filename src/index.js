@@ -8,7 +8,7 @@ import { normalizeArtwork, titleWithAuthor } from "./deviantart/media-normalizer
 import { probeWebSession } from "./deviantart/web-session.js";
 import { WEB_SESSION_STATUS } from "./auth/cookie-store.js";
 import { sendArtworkPlan, sendFileIdPlan, filesFromResults } from "./telegram/sender.js";
-import { telegram } from "./telegram/api.js";
+import { telegram, TelegramDeliveryUncertainError, TelegramPartialDeliveryError, TelegramRateLimitError, preserveConfirmedDelivery } from "./telegram/api.js";
 import { healthPayload, event, bump, setComponent } from "./runtime/status.js";
 import { DA_HEADERS } from "./deviantart/http.js";
 const MAX_LINKS = 5;
@@ -159,15 +159,17 @@ export async function handleUpdate(update, env, origin = null) {
   try {
     outcome = (await handleMessage(message, env, origin)) || "accepted";
   } catch (error) {
-    outcome = "failed";
-    bump("updates_failed");
-    event("update_failed", {
+    const stoppedDelivery = error instanceof TelegramDeliveryUncertainError || error instanceof TelegramPartialDeliveryError || error instanceof TelegramRateLimitError;
+    outcome = error instanceof TelegramDeliveryUncertainError ? "uncertain" : stoppedDelivery ? "partial" : "failed";
+    bump(`updates_${outcome}`);
+    event(`update_${outcome}`, {
       update_id: update.update_id ?? null,
       error: error?.name || "Error",
       stage: error?.stage || "handler",
       message: error instanceof Error ? error.message : String(error),
     });
     console.error("update failed", error?.name || "Error", error?.stage || "handler");
+    if (!stoppedDelivery) {
     try {
       await telegram(env, "sendMessage", {
         chat_id: message.chat.id,
@@ -183,8 +185,9 @@ export async function handleUpdate(update, env, origin = null) {
         error: notificationError instanceof Error ? notificationError.message : String(notificationError),
       });
     }
+    }
   }
-  if (outcome === "failed") {
+  if (["failed", "uncertain", "partial"].includes(outcome)) {
     // 已在上面的 catch 里记过 update_failed 并计数，避免同一故障记成两种事件。
   } else if (UPDATE_REJECTION_REASONS.has(outcome)) {
     bump("updates_rejected");
@@ -309,6 +312,7 @@ async function handleMessage(message, env, origin) {
       statusId = null;
     }
   }
+  let keepStatus = false;
   try {
     const sessionMemo = {};
     for (let index = 0; index < pending.length; index += 1) {
@@ -317,6 +321,11 @@ async function handleMessage(message, env, origin) {
       try {
         await sendDeviantArt(new URL(pending[index]), message, env, origin, sessionMemo, onStatus);
       } catch (error) {
+        if (error instanceof TelegramDeliveryUncertainError || error instanceof TelegramPartialDeliveryError || error instanceof TelegramRateLimitError) {
+          keepStatus = true;
+          if (!(error instanceof TelegramRateLimitError)) await statusShow(failureText(error));
+          throw error;
+        }
         await telegram(env, "sendMessage", {
           chat_id: message.chat.id,
           text: `${pending.length > 1 ? `第 ${index + 1} 个链接：` : ""}${failureText(error)}`,
@@ -342,7 +351,7 @@ async function handleMessage(message, env, origin) {
       });
     }
   } finally {
-    await statusDelete(); // 全部完成：删除状态提示
+    if (!keepStatus) await statusDelete(); // 不确定/部分投递保留检查提示，不创建另一条通知
   }
   return "accepted";
 }
@@ -628,6 +637,7 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
     // webhook mode, where media items are otherwise sent by proxied URL.
     if (typeof item.content === 'string' && item.content.length) {
       return {
+        assetId: item.assetId,
         kind: item.kind,
         content: item.content,
         extension: item.extension || 'txt',
@@ -637,7 +647,9 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
       };
     }
     return {
+      assetId: item.assetId,
       kind: item.kind,
+      downloadUrl: item.url,
       url: await createProxyUrl(origin, item.url, env.WEBHOOK_SECRET),
       fallbackUrl: item.fallbackUrl ? await createProxyUrl(origin, item.fallbackUrl, env.WEBHOOK_SECRET) : null,
     };
@@ -650,7 +662,30 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
     // appear after the user has withdrawn their request.
     const hasInlineContent = items.some((item) => typeof item.content === 'string' && item.content.length);
     results = await sendArtworkPlan(items, message, env, { upload: !origin || hasInlineContent, onStatus, cap });
+    if (results.failures?.length) {
+      const failed = results.failures;
+      const pages = failed.map(x => x.sourceIndex + 1).join('、');
+      const reason = failed.some(x => x.reason === 'too_large') ? '部分媒体超过 Telegram 发送大小限制' : '部分媒体未能发送';
+      try {
+        await telegram(env, 'sendMessage', {
+          chat_id: message.chat.id,
+          text: `${reason}（第 ${pages} 项）；其余可发送媒体已按顺序处理。未压缩或降低质量，请打开原作查看或下载：\n${url.href}`,
+          reply_parameters: { message_id: message.message_id, allow_sending_without_reply: false },
+          ...(message.message_thread_id ? { message_thread_id: message.message_thread_id } : {}),
+        });
+      } catch (error) { throw preserveConfirmedDelivery(error, results); }
+    }
   } catch (error) {
+    if (error instanceof TelegramDeliveryUncertainError || error instanceof TelegramPartialDeliveryError || error instanceof TelegramRateLimitError) {
+      event("delivery_stopped", {
+        work_id: target.id,
+        reason: error instanceof TelegramDeliveryUncertainError ? "uncertain" : error instanceof TelegramRateLimitError ? "rate_limited" : "partial",
+        confirmed_messages: error.confirmedMessages.length,
+        retry_after: error instanceof TelegramRateLimitError ? error.retryAfter : undefined,
+        fallback: "none",
+      });
+      throw error;
+    }
     if (isSourceRemovedError(error)) {
       event("delivery_cancelled", { work_id: target.id, stage: "source_checkpoint", chat_id: message.chat.id });
       return;
@@ -666,14 +701,14 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
   const files = filesFromResults(results);
   if (files.length) {
     const assets = artwork.media.map((m) => ({ assetId: m.assetId, kind: m.kind }));
-    for (let i = 0; i < Math.min(files.length, artwork.media.length); i += 1) {
-      const media = artwork.media[i];
-      const file = files[i];
-      if (!file?.file_id || !media?.assetId) continue;
-      await cacheSet("fid", `a:${botId}:${media.assetId}`, { kind: file.kind, file_id: file.file_id }, 30 * 24 * 3600);
+    for (const delivered of results.deliveries || []) {
+      const file = filesFromResults([delivered.result])[0];
+      if (!file?.file_id || !delivered.assetId) continue;
+      await cacheSet("fid", `a:${botId}:${delivered.assetId}`, { kind: file.kind, file_id: file.file_id }, 30 * 24 * 3600);
     }
-    await cacheSet("fid", workCacheKey, { title: artwork.titleLabel, cap, assets }, 30 * 24 * 3600);
+    if (!results.failures?.length && files.length === artwork.media.length) await cacheSet("fid", workCacheKey, { title: artwork.titleLabel, cap, assets }, 30 * 24 * 3600);
   }
+  if (results.failures?.length) return;
   if (!artwork.media.some((item) => item.content)) {
     const published = await publishArtwork(env, target.id, toPublisherMedia(artwork), url.href);
     if (published) await sendPublishedLink(message, env, target.id, url.href, published).catch(() => {});

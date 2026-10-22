@@ -13,6 +13,16 @@ docker compose logs deviantdrop | grep '\[evt\]' | tail -40
 
 ## 常见问题
 
+### Request Entity Too Large / 媒体超过发送大小限制
+
+先看 `tg_request` / `tg_response` 的方法、实际请求字节数、各文件字节数、脱敏 API 地址、状态码和响应头。413 可能拒绝整个请求，不能仅凭描述断定单文件大小。DeviantArt 页面或媒体的 403 属于访问失败，与 Telegram 上传超限分开处理。
+
+相册按实际 multipart 大小分批，明确被拒绝后才拆小，有限次数内定位失败项并继续其余项。超过照片限制的图片改发原字节 document，不压缩。单文件超过云端上传能力时返回原作链接；换代理或改成 document 不能提高 50 MB 文件上限。上传结果不明时停止，不换路重发。
+
+限制依据：[Telegram Sending files](https://core.telegram.org/bots/api#sending-files)（2026-10-22 核对；照片上传 10 MB，其他文件 50 MB）。相册请求整体被拒绝也可能产生 HTTP 413，因此仅凭该错误不能确定某个文件的大小。
+
+Local Bot API 的 2000 MB 能力需要额外服务与资源评估，当前不自动启用；也不自动转码 GIF。未来支持跟踪于 [Issue #68](https://github.com/redtidev1918/DeviantDrop/issues/68)。
+
 ### Bot 没有响应
 
 - `/health` 里 `telegram_ingress: conflict` → 残留 webhook 或另开了 poller。`MODE=poll` 启动会自动 `deleteWebhook`;重启用或停掉多余实例。

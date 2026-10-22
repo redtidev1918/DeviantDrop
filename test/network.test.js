@@ -40,6 +40,16 @@ const connectError = (code) => {
 };
 const json = (obj) => new Response(JSON.stringify(obj), { headers: { 'content-type': 'application/json' } });
 
+test('Telegram writes never switch routes after ambiguous socket failures', async () => {
+  const { proxyAgent, directAgent } = mockAgents();
+  for (const code of ['ECONNRESET', 'EPIPE', 'UND_ERR_SOCKET', 'ECONNREFUSED']) {
+    let calls = 0;
+    const fetch = createProxyFetch(proxyAgent, directAgent, async () => { calls++; throw connectError(code); });
+    await assert.rejects(fetch('https://api.telegram.org/bot123/sendMediaGroup', { method: 'POST', body: new FormData() }));
+    assert.equal(calls, 1);
+  }
+});
+
 test('media CDN (wixmp) prefers direct and falls back to proxy on connect failure', async () => {
   const { proxyAgent, directAgent } = mockAgents();
   const seen = [];

@@ -1,6 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { registerCommands } from '../src/telegram/api.js';
+import { registerCommands, telegram, telegramForm, TelegramMediaTooLargeError } from '../src/telegram/api.js';
+
+// HTTP 413 semantics: RFC 9110 section 15.5.14, checked 2026-10-22.
+// Deliberately use a non-JSON response: proxies need not speak Bot API JSON.
+test('HTTP 413 is a size rejection for JSON and multipart requests', async () => {
+  const original = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return new Response('Request Entity Too Large', { status: 413 });
+  };
+  try {
+    await assert.rejects(telegram({ BOT_TOKEN: 'test' }, 'sendVideo', {}), TelegramMediaTooLargeError);
+    await assert.rejects(telegramForm({ BOT_TOKEN: 'test' }, 'sendVideo', new FormData()), TelegramMediaTooLargeError);
+    assert.equal(calls, 2);
+  } finally { globalThis.fetch = original; }
+});
 
 test('registerCommands sets global and admin private command scopes', async () => {
   const calls = [];

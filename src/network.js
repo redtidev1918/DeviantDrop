@@ -1,4 +1,5 @@
 import { Dispatcher1Wrapper } from "undici";
+import { event } from './runtime/status.js';
 
 // Keep native fetch and FormData together: a separate undici version may
 // serialize native FormData as the literal string "[object FormData]".
@@ -8,7 +9,7 @@ import { Dispatcher1Wrapper } from "undici";
 //   - 其余（Telegram 长轮询 / DA 官方 API / DA 网页 / archive）：优先走 clash 代理，
 //     代理一旦挂了（clash 重启、订阅失效 → ECONNREFUSED）自动回退直连——国内 VPS 实测
 //     直连可达 Telegram/DA，保证 clash 中断时 bot 仍能收发。
-// 只在「网络层连不上」（连接被拒 / DNS 失败 / 连接超时 / 连接重置）时换一条路重试一次：
+// 读取请求在网络连接失败时可换路一次；Telegram 写入请求不换路，防止丢回执后重发。
 // HTTP 4xx/5xx 是服务端的正常响应，不换路；调用方主动 abort / 超时也不换路（signal 已失效）。
 const MEDIA_DIRECT_HOST = /\.(wixmp\.com|deviantart\.net|wixstatic\.com)$/i;
 const CONNECT_FAILURE = /^(ECONNREFUSED|ENOTFOUND|EAI_AGAIN|EAI_NODATA|EHOSTUNREACH|ENETUNREACH|EHOSTDOWN|ETIMEDOUT|ECONNRESET|EPIPE|UND_ERR_CONNECT_TIMEOUT|UND_ERR_SOCKET)$/;
@@ -41,11 +42,15 @@ export function createProxyFetch(proxyAgent, directAgent, nativeFetch = globalTh
     const isMedia = MEDIA_DIRECT_HOST.test(url.hostname);
     const primary = isMedia ? directDispatcher : proxyDispatcher;
     const secondary = isMedia ? proxyDispatcher : directDispatcher;
+    // A reset/EPIPE can happen after the server received the upload. Switching
+    // routes would create a second message before the API layer can stop it.
+    const telegramWrite = url.hostname === 'api.telegram.org' && !/\/(?:getMe|getChat|getChatMember|getChatAdministrators|getChatMemberCount|getFile|getUpdates)$/.test(url.pathname);
+    if (url.hostname === 'api.telegram.org') event('tg_route', { host: url.host, route: isMedia ? 'direct' : 'proxy', retry_on_connect_error: !telegramWrite });
     try {
       return await nativeFetch(input, { ...init, dispatcher: primary });
     } catch (error) {
       const code = connectErrorCode(error);
-      if (secondary && code && !isAborted(error, init?.signal)) {
+      if (!telegramWrite && secondary && code && !isAborted(error, init?.signal)) {
         const from = isMedia ? "直连" : "代理";
         const to = isMedia ? "代理" : "直连";
         console.error(`[net] ${from}连接失败(${code})，切${to}重试: ${url.hostname}`);

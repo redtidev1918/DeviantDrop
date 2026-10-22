@@ -63,6 +63,18 @@ cd /opt/deviantdrop && ./scripts/set-telegram-token.sh
 
 ## 排障
 
+### 上传大小与失败来源
+
+- `tg_request`：`transport`（json/multipart）、`api_base`（Bot API 基址；只记主机，绝不构造含 `/bot` 凭据段的 URL）、`request_bytes`（实际编码体大小）、`files[].bytes`、尝试序号。
+- `tg_response`：上述请求信息以及 HTTP `status`、`response_format`、Content-Type、Server、Via。响应头是诊断线索，不单独证明某一中间层是错误来源；不记录原始响应体、Cookie 或媒体签名 URL。
+- `tg_route`：配置代理时记录实际首选路由；Telegram 写请求的连接失败不再切换出口重发。读请求仍可回退直连。
+- `media_download_response` / `media_download`：CDN 响应状态及声明大小；`media_delivery_failed`：失败资产索引、阶段及大小边界。DA 403 不会标记为 Telegram 超限。
+- `tg_batch_split`：按预算或明确拒绝拆分的原因、原请求字节数与项数。
+
+`TELEGRAM_ALBUM_MAX_BYTES` 默认 52428800，可降低到已验证的出口请求体预算；单个合规文件不会因低于其大小的相册预算被放弃。该配置既不提高云端单文件限制，也不代表官方相册总大小限制。每次拆分严格减少项数，最多 10 项的单次分组遇到持续拒绝时不超过 19 个分组/单项请求（照片格式回退另有最多一次 document 尝试）；429 单独使用已有有限退避。
+
+当前内存中准备下载和 multipart Blob，并非磁盘流式大文件管线。不建议直接把限制提高到 2000 MB；Local Bot API 需要统一发送/轮询地址、迁移流程、磁盘暂存清理和资源预算，另见 [Feature Request #68](https://github.com/redtidev1918/DeviantDrop/issues/68)。
+
 先看一条命令:
 
 ```bash

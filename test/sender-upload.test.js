@@ -1,8 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { sendArtworkPlan } from '../src/telegram/sender.js';
+import { requestBody } from './helpers/request-body.js';
 
-test('multipart album does not silently drop a photo that cannot be compressed', async () => {
+// Boundary from https://core.telegram.org/bots/api#sending-files, 2026-10-22.
+test('oversized video does not prevent sending the other album items', async () => {
+  const original = globalThis.fetch;
+  let posts = 0;
+  globalThis.fetch = async (url) => {
+    if (String(url).startsWith('https://cdn.test/')) {
+      return new Response(new Uint8Array(String(url).endsWith('large.mp4') ? 50 * 1024 * 1024 + 1 : 1));
+    }
+    posts++;
+    return Response.json({ ok: true, result: { photo: [{ file_id: 'small' }] } });
+  };
+  try {
+    const results = await sendArtworkPlan([
+      { kind: 'photo', url: 'https://cdn.test/small.jpg' },
+      { kind: 'video', url: 'https://cdn.test/large.mp4' },
+    ], { message_id: 1, chat: { id: 9 } }, { BOT_TOKEN: 'test' }, { upload: true });
+    assert.equal(posts, 1);
+    assert.equal(results.length, 1);
+    assert.deepEqual(results.failures.map(x => x.sourceIndex), [1]);
+  } finally { globalThis.fetch = original; }
+});
+
+test('multipart album sends oversized photos as original documents', async () => {
   const originalFetch = globalThis.fetch;
   const posts = [];
   globalThis.fetch = async (input, init = {}) => {
@@ -10,7 +33,7 @@ test('multipart album does not silently drop a photo that cannot be compressed',
     if (url.startsWith('https://cdn.test/')) {
       return new Response(new Uint8Array(11 * 1024 * 1024), { headers: { 'Content-Type': 'image/jpeg' } });
     }
-    const form = init.body;
+    const form = await requestBody(init);
     posts.push({
       method: url.split('/').pop(),
       fields: form instanceof FormData ? [...form.keys()] : [],
@@ -35,7 +58,7 @@ test('inline literature content uploads as a text document without a CDN fetch',
   const originalFetch = globalThis.fetch;
   const posts = [];
   globalThis.fetch = async (input, init = {}) => {
-    const form = init.body;
+    const form = await requestBody(init);
     posts.push({
       method: String(input).split('/').pop(),
       fields: form instanceof FormData ? [...form.keys()] : [],

@@ -171,6 +171,7 @@ const env = {
   DA_COOKIES: process.env.DA_COOKIES,           // 仅首次迁移；运行时以 CookieStore 为准
   DA_REFRESH_TOKEN: process.env.DA_REFRESH_TOKEN, // 仅首次迁移 seed
   PREFER_ORIGINAL: process.env.PREFER_ORIGINAL,
+  TELEGRAM_ALBUM_MAX_BYTES: process.env.TELEGRAM_ALBUM_MAX_BYTES,
   PUBLIC_BASE_URL: publicBaseUrl || null,
   credentialStore,
   cookieStore,

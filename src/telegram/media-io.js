@@ -1,6 +1,9 @@
 import { DA_HEADERS, DEVIANTART_ORIGIN } from '../deviantart/http.js';
+import { TelegramMediaTooLargeError } from './api.js';
+import { event } from '../runtime/status.js';
 
 export const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
+export const FILE_MAX_BYTES = 50 * 1024 * 1024;
 
 export const MEDIA_FIELDS = {
   photo: ['sendPhoto', 'photo'],
@@ -14,15 +17,16 @@ export const MIME_BY_EXTENSION = {
   gif: 'image/gif', mp4: 'video/mp4', m4v: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', mkv: 'video/x-matroska',
 };
 
-export async function downloadMedia(item, onStatus = null, label = '媒体下载') {
+export async function downloadMedia(item, onStatus = null, label = '媒体下载', { maxBytes = Infinity, allowFallback = true } = {}) {
   let response = await guardedFetch(item.url, {
     headers: { ...DA_HEADERS, Referer: DEVIANTART_ORIGIN },
     signal: AbortSignal.timeout(180_000),
   }, label);
+  event('media_download_response', { asset_id: item.assetId, host: new URL(item.url).host, status: response.status });
   let usedFallback = false;
   if (!response.ok) {
     response.body?.cancel();
-    if ((response.status === 403 || response.status === 429) && item.fallbackUrl && item.fallbackUrl !== item.url) {
+    if (allowFallback && (response.status === 403 || response.status === 429) && item.fallbackUrl && item.fallbackUrl !== item.url) {
       response = await guardedFetch(item.fallbackUrl, {
         headers: { ...DA_HEADERS, Referer: DEVIANTART_ORIGIN },
         signal: AbortSignal.timeout(120_000),
@@ -36,12 +40,31 @@ export async function downloadMedia(item, onStatus = null, label = '媒体下载
       throw quotaOrMediaError(response.status);
     }
   }
+  const advertised = response.headers.has('content-length') ? Number(response.headers.get('content-length')) : null;
+  event('media_download', { asset_id: item.assetId, host: new URL(item.url).host, status: response.status, advertised_bytes: Number.isFinite(advertised) ? advertised : null });
+  if (!response.headers.get('content-encoding') && advertised > maxBytes) {
+    await response.body?.cancel();
+    throw new TelegramMediaTooLargeError({ stage: 'download', file_bytes: advertised });
+  }
   const chunks = [];
   const reader = response.body.getReader();
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
+  let size = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > maxBytes) {
+        await reader.cancel();
+        throw new TelegramMediaTooLargeError({ stage: 'download', file_bytes_at_least: size });
+      }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  // Same completeness check used by deviantart-downloader's HttpDownloader;
+  // Content-Length describes encoded bytes, so don't compare after decoding.
+  if (!response.headers.get('content-encoding') && advertised !== null && Number.isFinite(advertised) && advertised !== size) {
+    throw new Error('媒体下载不完整，请稍后重试');
   }
   return { bytes: concatBytes(chunks), extension: guessExtension(usedFallback ? item.fallbackUrl : item.url, item.kind), usedFallback };
 }
@@ -94,7 +117,8 @@ export function isTooBigError(error) {
 }
 
 export function quotaOrMediaError(status) {
-  if (status === 403 || status === 429) return new Error('原图下载被 DeviantArt 限制：免费账号每日原图下载有限额，今天可能已用尽');
+  if (status === 403) return new Error('DeviantArt 媒体访问被拒绝（HTTP 403），可能是权限或出口限制');
+  if (status === 429) return new Error('DeviantArt 媒体请求过于频繁（HTTP 429），请稍后再试');
   return new Error(`媒体下载失败（HTTP ${status}）`);
 }
 
