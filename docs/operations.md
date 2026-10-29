@@ -4,6 +4,8 @@
 
 部署以后怎么维护:看日志、健康检查、更新、token 热更新、排障。
 
+媒体下载 403 时，先对照同一资产的 `media_download_response` 和发送日志，区分 CDN 拒绝与 Telegram 拒收。新取的 Wix 签名可能仅授权尺寸受限的 fullview，而不授权裸 `baseUri`；不要据此重置登录、向 CDN 转发站点 Cookie 或提高 Telegram 上传限制。fullview 是 DA 展示版本，消息会明确标注非上传原文件；机器人不重编码，也不会在失败后静默替换为小预览。
+
 ## 常用操作
 
 ```bash

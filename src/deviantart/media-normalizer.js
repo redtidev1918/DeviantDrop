@@ -15,6 +15,7 @@ function extensionKind(value = "") {
 }
 
 export function appendToken(url, rawToken) {
+  if (new URL(url).searchParams.has('token')) return url;
   const token = Array.isArray(rawToken) ? rawToken[0] : rawToken;
   return token ? `${url}${url.includes("?") ? "&" : "?"}token=${token}` : url;
 }
@@ -31,6 +32,21 @@ function videoRank(value) {
   return { "1080p": 4, "720p": 3, "480p": 2, "360p": 1 }[value] || 0;
 }
 
+// Captured Wix image-operation tokens can authorize a bounded transform while
+// rejecting the bare baseUri (see fixtures/deviantart-bounded-media.json).
+// This is a URL-selection hint, never authentication or entitlement evidence.
+function hasBoundedImageToken(descriptor) {
+  try {
+    const token = Array.isArray(descriptor.token) ? descriptor.token[0] : descriptor.token;
+    const payload = token.split('.')[1].replaceAll('-', '+').replaceAll('_', '/');
+    const claims = JSON.parse(atob(payload));
+    const path = new URL(descriptor.baseUri).pathname;
+    return Array.isArray(claims.obj) && claims.obj.some((group) =>
+      Array.isArray(group) && group.some((rule) => rule?.path === path &&
+        [rule.width, rule.height].some((bound) => typeof bound === 'string' && /^<=\d+$/.test(bound))));
+  } catch { return false; }
+}
+
 // DeviantArt 的视频 `media.baseUri` 是封面图，不是可播放媒体；
 // 调用方必须把 DTO 顶层的视频标志传入，否则封面会被误判成图片。
 export function pickDescriptorMedia(descriptor = {}, { isVideo = false } = {}) {
@@ -40,6 +56,16 @@ export function pickDescriptorMedia(descriptor = {}, { isVideo = false } = {}) {
     .sort((a, b) => videoRank(b.q) - videoRank(a.q));
   if (isVideo && !videos.length) return null;
   let url = videos[0]?.b;
+  const full = types.find((item) => item?.t === 'fullview');
+  // Keep unrestricted original files and animated GIFs. Only the evidenced
+  // bounded static-image case needs the server's fullview representation.
+  if (!url && extensionKind(descriptor.baseUri) === 'photo' &&
+      hasBoundedImageToken(descriptor) && (full?.r == null || full.r === 0)) {
+    const fullUrl = full?.b ? appendToken(full.b, descriptor.token)
+      : full?.c ? buildMediaUrl(descriptor, full.c) : null;
+    if (fullUrl) return { kind: 'photo', url: fullUrl,
+      ...(!isBlurredUrl(fullUrl) ? { representation: 'fullview' } : {}) };
+  }
   if (!url && extensionKind(descriptor.baseUri || "")) url = appendToken(descriptor.baseUri, descriptor.token);
   if (!url) {
     const full = types.find((item) => item?.t === "fullview");
@@ -173,7 +199,8 @@ export function normalizeArtwork(deviation, { sourceUrl, expansionAuthorized = t
     url: main.url ?? null,
     fallbackUrl: main.text ? null : displayMediaUrl(primaryDescriptor),
     mimeType: main.text ? "text/plain" : mimeForKind(main.kind),
-    originalAvailable: main.text ? true : !isBlurredUrl(main.url),
+    originalAvailable: main.text ? true : !main.representation && !isBlurredUrl(main.url),
+    ...(main.representation ? { representation: main.representation } : {}),
     ...(main.text ? {
       content: main.text,
       extension: main.extension,
@@ -204,7 +231,8 @@ export function normalizeArtwork(deviation, { sourceUrl, expansionAuthorized = t
           url: picked.url,
           fallbackUrl: displayMediaUrl(descriptor),
           mimeType: mimeForKind(picked.kind),
-          originalAvailable: !isBlurredUrl(picked.url),
+          originalAvailable: !picked.representation && !isBlurredUrl(picked.url),
+          ...(picked.representation ? { representation: picked.representation } : {}),
         });
         index += 1;
       }

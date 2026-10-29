@@ -14,4 +14,6 @@
 
 其他套件覆盖成熟内容降级、相册规划、multipart 上传、OAuth 轮换和 Cookie 热更新。
 
+`test/bounded-media.test.js` 使用 2026-10-29 真实 init 响应的脱敏 fixture，覆盖尺寸受限签名的 fullview 选择、原文件标识、可见提示及 GIF/视频保护。采样来源和 CDN 403/200 对照见 `test/fixtures/deviantart-bounded-media-evidence.md`；不得根据实现反推协议样本。
+
 发布前执行 `npm run check`（全量测试 + 构建检查）。
