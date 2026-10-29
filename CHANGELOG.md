@@ -10,6 +10,13 @@
 
 ---
 
+## [1.16.1](https://github.com/redtidev1918/DeviantDrop/compare/v1.16.0...v1.16.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* deliver bounded DeviantArt media with clear quality labels ([#70](https://github.com/redtidev1918/DeviantDrop/issues/70)) ([2174221](https://github.com/redtidev1918/DeviantDrop/commit/21742210075fa9d33c8e6d9285233f1297d88298))
+
 ## [1.16.0](https://github.com/redtidev1918/DeviantDrop/compare/v1.15.3...v1.16.0) (2026-10-22)
 
 
