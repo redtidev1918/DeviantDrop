@@ -120,6 +120,8 @@ export class DeviantArtAdapter {
       // 网页 DTO 若已有可播放视频，不要被 OAuth 封面替换。
       if (artwork.media[0]?.kind === 'video' && kind !== 'video') return false;
       artwork.media[0] = {
+        assetId: artwork.media[0]?.assetId,
+        index: artwork.media[0]?.index,
         kind,
         url: original,
         fallbackUrl: artwork.media[0]?.fallbackUrl || null,
@@ -162,7 +164,7 @@ export class DeviantArtAdapter {
   }
 
   accessStatus(artwork) {
-    if (artwork.media[0]?.originalAvailable === false) {
+    if (artwork.media[0]?.originalAvailable === false && artwork.media[0]?.representation !== 'fullview') {
       return artwork.mature ? 'mature-preview' : 'locked-preview';
     }
     return artwork.mature ? 'mature' : 'public';

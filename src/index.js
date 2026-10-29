@@ -626,7 +626,10 @@ async function sendDeviantArt(url, message, env, origin, sessionMemo = {}, onSta
   };
   // 三种缺页原因分开表达：附加页拿不到 ≠ 成熟内容没权限 ≠ 付费/订阅锁定。
   if (artwork.skippedMedia > 0) cap.status.skippedPages = true;
-  if (artwork.media.some((item) => !item.originalAvailable)) {
+  cap.status.fullviewPages = artwork.media
+    .filter((item) => item.representation === 'fullview')
+    .map((item) => item.index + 1);
+  if (artwork.media.some((item) => !item.originalAvailable && item.representation !== 'fullview')) {
     if (artwork.mature) cap.status.blurredPreview = true;
     else cap.status.lockedPreview = true;
   }

@@ -37,6 +37,10 @@ export function renderArtworkCaption(meta = {}, status = {}, { showNotes = true,
   if (Number.isInteger(meta.mediaCount) && meta.mediaCount > 1) {
     lines.push(`🖼 ${meta.mediaCount} 个媒体`);
   }
+  // Representation disclosure is user-facing, even when technical notes are off.
+  if (status.fullviewPages?.length) {
+    lines.push(`ℹ️ 第 ${status.fullviewPages.join('、')} 项为 DA 全尺寸展示图，非上传原文件`);
+  }
   if (showNotes) {
     const notes = [];
     if (status.compressed) notes.push("部分图片超过 10MB，已压缩发送");

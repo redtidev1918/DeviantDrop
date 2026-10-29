@@ -20,8 +20,9 @@ Telegram delivery
 - If the web response has no playable video source, the adapter falls back to the official API. It must not relabel the poster as a sendable image.
 - Variants are ranked from the response (1080p → 360p). Recognized extensions include `mp4`, `m4v`, `webm`, `mov`, and `mkv`.
 - GIF remains `animation`, never an image album item.
+- A static image's Wix token can constrain dimensions for its exact path while rejecting the bare `baseUri`. For the verified token-index-0 case, use the supplied `fullview`, mark `representation: fullview` and `originalAvailable: false`, and always disclose that it is a DA display version, not the uploaded original. This is separate from blurred/paid restrictions. Unknown tokens, GIFs and videos retain their existing selection; small previews are not substituted automatically.
 - Literature uses `/art/` URLs and may have no media descriptor. The adapter reads inline `textContent`, normalizes it to a `.txt` document, and never fakes it as an image or fails outright.
 - Paid / subscription-locked (Premium Folder / tier) works surface as `locked-preview`: a blurred non-mature main is no longer sent as the original, and the caption says the work needs a subscription/purchase.
 - The planner groups contiguous photo/video runs into `sendMediaGroup` batches (≤10 items) and sends animation standalone.
-- Oversized photos reuse one lazy Sharp source and try scale factors `[1, 0.8, 0.64, 0.5, 0.4, 0.32]` with JPEG qualities `[85, 75, 65, 55, 45, 35]` against Telegram's 10 MiB photo limit; if all candidates fail, the item is demoted to a document. Unsupported media fails visibly rather than becoming a false preview.
+- Photos exceeding 10 MiB are sent as documents using unchanged bytes, without re-encoding. Download failures do not silently substitute display images. Normal photos use Telegram's photo delivery, which may process them and is not byte-for-byte archival.
 - Successfully delivered works are cached by Telegram `file_id` per work/asset for 30 days. Requests from any user of the same bot replay from cache; if any asset is missing, the adapter performs a full fetch and rebuilds the cache.

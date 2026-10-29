@@ -116,6 +116,8 @@ test('扩展会话有效时不请求官方 API：附加页与主图都来自网�
 
   assert.equal(artwork.mainSource, 'oauth');
   assert.equal(artwork.expansionAuthorized, true);
+  assert.equal(artwork.media[0].assetId, 'deviantart:uuid-1:p0');
+  assert.equal(artwork.media[0].index, 0);
   assert.equal(artwork.media.length, 2);
   assert.equal(artwork.skippedMedia, 0);
   assert.equal(stub.officialCalls.length, 1);
