@@ -10,6 +10,13 @@
 
 ---
 
+## [1.16.2](https://github.com/redtidev1918/DeviantDrop/compare/v1.16.1...v1.16.2) (2026-10-29)
+
+
+### Bug Fixes
+
+* keep artwork captions focused on the artwork ([d90eac8](https://github.com/redtidev1918/DeviantDrop/commit/d90eac85fb127dd0d267e0021064468016c5a8f4))
+
 ## [1.16.1](https://github.com/redtidev1918/DeviantDrop/compare/v1.16.0...v1.16.1) (2026-10-29)
 
 
