@@ -19,7 +19,8 @@
 - 已交付作品按 Telegram `file_id` 缓存 30 天,同 bot 内重复请求直接复用
 - `/start /help /about` 命令;每聊天限流、去重、429/500/503 退避重试
 - 可选 [TelePress](https://github.com/redtidev1918/TelePress) 图集兜底
-- 超过 Telegram 图片限制的照片先用 Sharp 按需缩放和 JPEG 压缩；仍无法满足限制时再作为文件发送
+- 超过 Telegram 图片限制的照片以原字节作为文件发送，不在本地压缩；超过文件上传限制时提供原作链接
+- 支持 DA 提供的全尺寸展示图，作品消息保持简洁；媒体版本信息保留在内部数据中，不自动改用小预览
 
 ## 如何工作
 

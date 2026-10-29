@@ -61,9 +61,11 @@ TelePress publish path, and troubleshooting — live on the [docs site](https://
   any user of the same bot replay it without downloading or uploading the binary again.
 - Photo/video sequences are sent as `sendMediaGroup` albums (auto-batched above 10 items);
   GIF/animation always uses a standalone `sendAnimation` so captions are never split or
-  duplicated; oversized photos are resized and JPEG-compressed on demand with Sharp before
-  falling back to documents; when Telegram cannot reach the CDN, the file is downloaded and
+  duplicated; oversized photos are sent as documents with unchanged bytes, and files beyond
+  the upload limit receive a source link; when Telegram cannot reach the CDN, the file is downloaded and
   uploaded as multipart.
+- DA fullview display versions are supported with clean artwork captions; representation
+  metadata is retained internally, and small previews are not substituted automatically.
 - `/start` `/help` `/about` commands; per-chat rate limiting, de-duplication, and
   429/500/503 backoff retries.
 

@@ -14,6 +14,6 @@ Reliability cases live in `test/delivery-reliability.test.js` and `test/video-re
 
 Existing suites cover mature-page degradation, album planning, multipart upload, OAuth rotation, and hot cookie updates.
 
-`test/bounded-media.test.js` uses sanitized init responses captured on 2026-10-29 to cover bounded-token fullview selection, original-file labeling, visible disclosure, and GIF/video protection. Capture provenance and the CDN 403/200 comparison are recorded in `test/fixtures/deviantart-bounded-media-evidence.md`; protocol fixtures must not be inferred from implementation code.
+`test/bounded-media.test.js` uses sanitized init responses captured on 2026-10-29 to cover bounded-token fullview selection, original-file labeling, clean captions, and GIF/video protection. Capture provenance and the CDN 403/200 comparison are recorded in `test/fixtures/deviantart-bounded-media-evidence.md`; protocol fixtures must not be inferred from implementation code.
 
 Run `npm run check` before release (full tests + build check).

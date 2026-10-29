@@ -20,7 +20,7 @@ Telegram delivery
 - 网页响应缺少可播放视频源时，适配器回退官方 API；不会把封面图误标成可发送图片。
 - 按响应里的质量排序（1080p → 360p）；扩展名识别覆盖 `mp4`、`m4v`、`webm`、`mov`、`mkv`。
 - GIF 保持 `animation`，不进入 photo/video 相册。
-- 静态图片的 Wix 签名若对该路径明确限制尺寸，裸 `baseUri` 不代表可下载原文件：使用响应给出的 `fullview`（当前验证 token index 0），标记 `representation: fullview`、`originalAvailable: false`，caption 始终说明“非上传原文件”。不把它误判为打码或付费限制；未知签名、GIF、视频保留原选择方式，不自动改用小预览。
+- 静态图片的 Wix 签名若对该路径明确限制尺寸，裸 `baseUri` 不代表可下载原文件：使用响应给出的 `fullview`（当前验证 token index 0），在内部保留 `representation: fullview`、`originalAvailable: false`。作品消息不展示文件版本术语，也不把它误判为打码或付费限制；未知签名、GIF、视频保留原选择方式，不自动改用小预览。
 - Literature 使用 `/art/` URL 且可能没有 media 描述符：适配器读取内联 `textContent`，规范化为 `.txt` document；不会伪装成图片或直接失败。
 - 付费/订阅（Premium Folder / tier）作品识别为 `locked-preview`：非成熟内容的模糊主图不再当作原图发送，caption 明确提示需要订阅/购买。
 - Planner 只按规范化后的模型分批：连续 photo/video 用 `sendMediaGroup`（≤10 项），animation 单独发送。

@@ -67,8 +67,8 @@ test('no fullview means no automatic small-preview substitution', () => {
   assert.equal(media.url, captured.baseUri + '?token=' + captured.token[0]);
 });
 
-test('fullview disclosure survives hidden technical notes and is not a paid/blurred warning', () => {
+test('fullview metadata does not add technical quality labels to artwork captions', () => {
   const caption = renderArtworkCaption({ title: 'Work' }, { fullviewPages: [2] }, { showNotes: false }).text;
-  assert.match(caption, /第 2 项为 DA 全尺寸展示图，非上传原文件/);
+  assert.doesNotMatch(caption, /非上传原文件|展示图|fullview/);
   assert.doesNotMatch(caption, /订阅|打码/);
 });
