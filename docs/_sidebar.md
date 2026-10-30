@@ -19,5 +19,3 @@
   - [发布编排（ReleaseGraph）](/RELEASEGRAPH.md)
 - [下载与版本](/download.md)
 - [更新日志（GitHub）](https://github.com/redtidev1918/DeviantDrop/blob/main/CHANGELOG.md)
-- English
-  - [English index](/en/)

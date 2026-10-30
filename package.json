@@ -34,10 +34,14 @@
     "login": "node scripts/dd-login.mjs",
     "token": "node scripts/dd-token.mjs",
     "deploy:vps": "bash -c 'test -n \"$SERVER\" || { echo \"Set SERVER=user@host\"; exit 1; }; npm run check && git push origin main && ssh \"$SERVER\" \"cd /opt/deviantdrop && git pull --ff-only && docker compose up -d --build\"'",
-    "logs": "bash -c 'test -n \"$SERVER\" || { echo \"Set SERVER=user@host\"; exit 1; }; ssh \"$SERVER\" \"docker logs -f deviantdrop-deviantdrop-1\"'"
+    "logs": "bash -c 'test -n \"$SERVER\" || { echo \"Set SERVER=user@host\"; exit 1; }; ssh \"$SERVER\" \"docker logs -f deviantdrop-deviantdrop-1\"'",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
-    "wrangler": "^4.147.0"
+    "wrangler": "^4.147.0",
+    "vitepress": "1.6.4"
   },
   "dependencies": {
     "sharp": "^0.35.5",

@@ -1,0 +1,11 @@
+{
+  "repo": "redtidev1918/DeviantDrop",
+  "name": "DeviantDrop",
+  "emoji": "🎨",
+  "description": "DeviantArt 媒体下载与 Telegram 交付机器人",
+  "branch": "main",
+  "engine": "vitepress",
+  "engineVersion": "1.6.4",
+  "version": 2,
+  "packageMode": "merge"
+}

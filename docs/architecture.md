@@ -1,6 +1,6 @@
 # 内部架构
 
-**语言 / Language:** 中文 · [English](/en/architecture/)
+**语言 / Language:** 中文 · [English](/en/architecture/authentication.md)
 
 DeviantDrop 是**单一进程 / Worker**,接收 Telegram 更新,解析 DeviantArt 作品链接,下载媒体并发送回聊天。本页是内部工作原理的总览;各主题的英文细节见子页。
 
