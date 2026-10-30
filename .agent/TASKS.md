@@ -7,6 +7,8 @@
 | T-001 | 建立 `.agent/` 六件套 | DONE | 2026-10-29 建立，参照 DAViewer / PixivFlow 同名体系；同日经用户确认以 `docs:` 提交入库。 |
 | T-002 | 真实 Telegram 端到端投递证据 | BLOCKED | 用户 2026-10-29 明确取消真实验收；解锁条件：用户指定测试聊天或要求补验。在此之前不得宣称端到端已验证。 |
 
+| T-003 | 文档站迁移 VitePress 1.6.4 | IN_PROGRESS | 保留 Markdown 与业务 package 字段；docs build、无 .git 的 docsite check/navcheck 已通过，PR 待审，不合并/上线。 |
+
 ## 更新规则
 
 - 新任务先入表再动手；`BLOCKED` 必须写原因与解锁条件。
