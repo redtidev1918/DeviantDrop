@@ -1,6 +1,6 @@
 # 媒体管线架构
 
-**Language / Language:** [中文](media-pipeline.md) · [English](../en/architecture/media-pipeline.md)
+**语言 / Language:** [中文](media-pipeline.md) · [English](../en/architecture/media-pipeline.md)
 
 ```text
 DeviantArt adapter

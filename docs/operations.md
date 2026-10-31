@@ -4,7 +4,7 @@
 
 部署以后怎么维护:看日志、健康检查、更新、token 热更新、排障。
 
-媒体下载 403 时，先对照同一资产的 `media_download_response` 和发送日志，区分 CDN 拒绝与 Telegram 拒收。新取的 Wix 签名可能仅授权尺寸受限的 fullview，而不授权裸 `baseUri`；不要据此重置登录、向 CDN 转发站点 Cookie 或提高 Telegram 上传限制。fullview 是 DA 展示版本，版本标识保留在内部数据，作品消息不展示技术性质量说明；机器人不重编码，也不会在失败后静默替换为小预览。
+媒体下载 403 时,先对照同一资产的 `media_download_response` 和发送日志,区分 CDN 拒绝与 Telegram 拒收。新取的 Wix 签名可能仅授权尺寸受限的 fullview,而不授权裸 `baseUri`;不要据此重置登录、向 CDN 转发站点 Cookie 或提高 Telegram 上传限制。fullview 是 DA 展示版本,版本标识保留在内部数据,作品消息不展示技术性质量说明;机器人不重编码,也不会在失败后静默替换为小预览。
 
 ## 常用操作
 
@@ -24,11 +24,11 @@ curl -s http://127.0.0.1:8080/health | python3 -m json.tool
 `/health` 返回真实能力快照,按故障域区分:
 
 ```text
-http_server        /health 是否在监听 —— 关键域
-telegram_ingress   取更新(poll/webhook)—— 关键域
-telegram_auth      Bot 凭据是否被接受 —— 关键域
-telegram_bot       启动时 getMe 读回的 bot 身份 —— 信息
-deviantart_auth    DA 抓取/登录 —— 非关键域,失败绝不影响命令回复
+http_server        /health 是否在监听:关键域
+telegram_ingress   取更新(poll/webhook):关键域
+telegram_auth      Bot 凭据是否被接受:关键域
+telegram_bot       启动时 getMe 读回的 bot 身份:信息
+deviantart_auth    DA 抓取/登录:非关键域,失败不影响命令回复
 ```
 
 `status: ok | degraded`,`degraded` 列出故障域;另有 `counters` 与最近结构化事件。
@@ -45,7 +45,7 @@ deviantart_auth    DA 抓取/登录 —— 非关键域,失败绝不影响命令
 Token 被 BotFather 吊销(`getMe` 401)时服务进入降级并持续重试,不退出。恢复:
 
 1. 在 Telegram 里 @BotFather → `/mybots` → 该 bot → API Token → 重新生成。
-2. 在服务器上**一条命令**热更新:
+2. 在服务器上一条命令热更新:
 
 ```bash
 cd /opt/deviantdrop && ./scripts/set-telegram-token.sh
@@ -57,25 +57,25 @@ cd /opt/deviantdrop && ./scripts/set-telegram-token.sh
 安全语义:
 
 - 写错 token 不破坏现有凭据(getMe 验证不过则保留当前值)。
-- 网络抖动(429 / 5xx / 超时 / DNS)算"延期",不算"无效",退避重试同一个值。
-- 删掉 secret 文件不撤销凭据(继续用最后已验证值,source 标 `stale`)。
-- token 写入走原子 rename,运行中绝不因热更新退出。
+- 网络抖动(429 / 5xx / 超时 / DNS)算「延期」,不算「无效」,退避重试同一个值。
+- 删掉 secret 文件不撤销凭据,继续用最后已验证值,source 标 `stale`。
+- token 写入走原子 rename,热更新不会导致进程退出。
 
-用 `npm run token` / `scripts/set-telegram-token.sh` 管理,或手动写文件(内容=裸 token)+ 等待自动检测。
+用 `npm run token` / `scripts/set-telegram-token.sh` 管理,或手动写文件(内容 = 裸 token)+ 等待自动检测。
 
 ## 排障
 
 ### 上传大小与失败来源
 
-- `tg_request`：`transport`（json/multipart）、`api_base`（Bot API 基址；只记主机，绝不构造含 `/bot` 凭据段的 URL）、`request_bytes`（实际编码体大小）、`files[].bytes`、尝试序号。
-- `tg_response`：上述请求信息以及 HTTP `status`、`response_format`、Content-Type、Server、Via。响应头是诊断线索，不单独证明某一中间层是错误来源；不记录原始响应体、Cookie 或媒体签名 URL。
-- `tg_route`：配置代理时记录实际首选路由；Telegram 写请求的连接失败不再切换出口重发。读请求仍可回退直连。
-- `media_download_response` / `media_download`：CDN 响应状态及声明大小；`media_delivery_failed`：失败资产索引、阶段及大小边界。DA 403 不会标记为 Telegram 超限。
-- `tg_batch_split`：按预算或明确拒绝拆分的原因、原请求字节数与项数。
+- `tg_request`:`transport`(json/multipart)、`api_base`(Bot API 基址;只记主机,不构造含 `/bot` 凭据段的 URL)、`request_bytes`(实际编码体大小)、`files[].bytes`、尝试序号。
+- `tg_response`:上述请求信息以及 HTTP `status`、`response_format`、Content-Type、Server、Via。响应头是诊断线索,不单独证明某一中间层是错误来源;不记录原始响应体、Cookie 或媒体签名 URL。
+- `tg_route`:配置代理时记录实际首选路由;Telegram 写请求的连接失败不再切换出口重发。读请求仍可回退直连。
+- `media_download_response` / `media_download`:CDN 响应状态及声明大小;`media_delivery_failed`:失败资产索引、阶段及大小边界。DA 403 不会标记为 Telegram 超限。
+- `tg_batch_split`:按预算或明确拒绝拆分的原因、原请求字节数与项数。
 
-`TELEGRAM_ALBUM_MAX_BYTES` 默认 52428800，可降低到已验证的出口请求体预算；单个合规文件不会因低于其大小的相册预算被放弃。该配置既不提高云端单文件限制，也不代表官方相册总大小限制。每次拆分严格减少项数，最多 10 项的单次分组遇到持续拒绝时不超过 19 个分组/单项请求（照片格式回退另有最多一次 document 尝试）；429 单独使用已有有限退避。
+`TELEGRAM_ALBUM_MAX_BYTES` 默认 52428800,可降低到已验证的出口请求体预算;单个合规文件不会因低于其大小的相册预算被放弃。该配置既不提高云端单文件限制,也不代表官方相册总大小限制。每次拆分严格减少项数,最多 10 项的单次分组遇到持续拒绝时不超过 19 个分组/单项请求(照片格式回退另有最多一次 document 尝试);429 单独使用已有有限退避。
 
-当前内存中准备下载和 multipart Blob，并非磁盘流式大文件管线。不建议直接把限制提高到 2000 MB；Local Bot API 需要统一发送/轮询地址、迁移流程、磁盘暂存清理和资源预算，另见 [Feature Request #68](https://github.com/redtidev1918/DeviantDrop/issues/68)。
+当前内存中准备下载和 multipart Blob,并非磁盘流式大文件管线。不建议直接把限制提高到 2000 MB;Local Bot API 需要统一发送/轮询地址、迁移流程、磁盘暂存清理和资源预算,另见 [Feature Request #68](https://github.com/redtidev1918/DeviantDrop/issues/68)。
 
 先看一条命令:
 

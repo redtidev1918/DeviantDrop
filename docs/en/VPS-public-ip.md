@@ -4,22 +4,22 @@
 
 If your VPS has a public IP but you do not want to register a domain yet, this document
 describes deployment without a domain or TLS, and explains how the previously-rolled-back
-"remote media manifest" can be re-enabled as an **optional switch** (off by default).
+"remote media manifest" can be re-enabled as an optional switch (off by default).
 
-> Core principle: **with no domain, do not expose an external HTTP reverse proxy.** Telegram
+> Core principle: with no domain, do not expose an external HTTP reverse proxy. Telegram
 > media is handed to Telegram as tokenized CDN URLs (`MODE=poll`), so the bot itself needs no
 > public inbound port; TelePress binds only to `127.0.0.1` for local / same-network clients.
 
 ## 1. TL;DR
 
-- DeviantDrop stays on **`MODE=poll`** and works without a domain: it actively calls
+- DeviantDrop stays on `MODE=poll` and works without a domain: it actively calls
   `getUpdates`, so no HTTPS, certificate, webhook, or public port is required.
-- TelePress listens only on **`127.0.0.1:8000`**, runs on the same host as DeviantDrop and
+- TelePress listens only on `127.0.0.1:8000`, runs on the same host as DeviantDrop and
   talks over internal HTTP; it is not exposed publicly.
-- Remote media manifest (letting TelePress fetch images server-side) is **off by default**;
+- Remote media manifest (letting TelePress fetch images server-side) is off by default;
   only turn it on when you genuinely want external clients to use it and accept that this
   turns TelePress into a "restricted server-side fetch proxy".
-- Turning it on requires **both ends**:
+- Turning it on requires both ends:
   - TelePress server: `TELEPRESS_ALLOW_REMOTE_GALLERY_MEDIA=1`
   - DeviantDrop client: `TELEPRESS_REMOTE_GALLERY_MEDIA=1`
   If either is missing, the client automatically falls back to binary multipart (images go
@@ -75,7 +75,7 @@ TELEPRESS_MODE=large-gallery      # or fallback; off disables it entirely
 
 ## 4. Optional: expose TelePress to trusted external clients via a public IP
 
-> This is **not recommended**; use it only when trusted external clients really need to reach
+> This is not recommended; use it only when trusted external clients really need to reach
 > TelePress over your public IP directly.
 
 ```bash
@@ -96,7 +96,7 @@ Remote manifest limits:
 
 - `sourceUrl` accepts only `https://`; per-file limit is 50 MiB, and exceeding it fails
   immediately.
-- This makes TelePress a **restricted server-side fetch proxy**; before exposing it publicly,
+- This makes TelePress a restricted server-side fetch proxy; before exposing it publicly,
   make sure you trust every client that can call it. It is off by default so a domain-less
   setup cannot accidentally become an open proxy.
 
@@ -108,19 +108,19 @@ Leaving everything unset keeps the existing behavior:
    `/publish/gallery` uses only the `files` multipart path;
 2. or DeviantDrop sends the images directly as Telegram media (native path, no Telegraph);
 3. TelePress `/publish/rich-novel` image-host / manifest behavior is unaffected; its manifest
-   proxy is now a **generic CDN proxy** (`TELEPRESS_MEDIA_PROXY_BASE` +
+   proxy is now a generic CDN proxy (`TELEPRESS_MEDIA_PROXY_BASE` +
    `TELEPRESS_MEDIA_PROXY_HOSTS`), and the legacy `TELEPRESS_PIXIV_PROXY_BASE` remains only as
    a backwards-compatible alias.
 
 ## 6. FAQ
 
-- **Remote manifest not taking effect?** Confirm `TELEPRESS_ALLOW_REMOTE_GALLERY_MEDIA=1`
+- Remote manifest not taking effect? Confirm `TELEPRESS_ALLOW_REMOTE_GALLERY_MEDIA=1`
   is in the telepress-server process environment and `TELEPRESS_REMOTE_GALLERY_MEDIA=1` is in
   the DeviantDrop process environment, with the same API key on both ends. If either is
   missing, DeviantDrop silently falls back to the binary path and never errors.
-- **Is public-IP HTTP safe?** It is not (plaintext), so either keep loopback-only, or add a
+- Is public-IP HTTP safe? It is not (plaintext), so either keep loopback-only, or add a
   firewall allowlist plus a strong `TELEPRESS_API_KEY`. The best approach is still to add a
   domain later and put Caddy or a Cloudflare Tunnel in front for HTTPS.
-- **Will the bot break if remote manifest fails?** No. DeviantDrop's TelePress integration is
+- Will the bot break if remote manifest fails? No. DeviantDrop's TelePress integration is
   an optional helper; manifest failures silently fall back to multipart, and TelePress
   failures never affect native Telegram sends.

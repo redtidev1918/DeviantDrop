@@ -3,7 +3,7 @@
 **Language / 语言:** [中文](/VPS.md) · English
 
 DeviantArt blocks Cloudflare Workers egress entirely, so the bot runs on an ordinary server.
-This handbook targets a **mainland-China server** (Alibaba Cloud cannot reach deviantart.com
+This handbook targets a mainland-China server (Alibaba Cloud cannot reach deviantart.com
 directly, as measured); the main points are: egress must go through a proxy (clash/mihomo), and
 the proxy's egress must be one DeviantArt allows.
 
@@ -16,7 +16,7 @@ the proxy's egress must be one DeviantArt allows.
 ## 0. Check your egress in 30 seconds
 
 ```bash
-cd deviantart-telegram-worker && npm install --omit=dev
+npm install --omit=dev
 node scripts/detect-da.mjs <client_id> <client_secret>
 ```
 
@@ -29,7 +29,7 @@ Day-to-day operations when the server already runs a system-level clash
 (`/usr/local/bin/clash -d /etc/mihomo`, managed by systemd, `mixed-port 7890` bound to
 `127.0.0.1`):
 
-- **Hot subscription refresh** (no restart, no dropped connections):
+- Hot subscription refresh (no restart, no dropped connections):
 
   ```bash
   SUB_URL="https://your-airport/subscription" ./scripts/refresh-clash.sh
@@ -39,7 +39,7 @@ Day-to-day operations when the server already runs a system-level clash
   on a machine that can and copy it over:
   `scp sub.yaml root@server:/tmp/`, then over ssh `cp` it onto `/etc/mihomo/config.yaml` and
   `systemctl restart clash`.
-- **WebUI (open in your local browser, no public port)**: tunnel 9090 over SSH to your machine:
+- WebUI (open in your local browser, no public port): tunnel 9090 over SSH to your machine:
 
   ```bash
   ssh -L 9090:127.0.0.1:9090 root@server
@@ -70,12 +70,12 @@ node src/main.js            # MODE=poll is the default: getUpdates long polling,
 
 ## 3. Ingress: polling or webhook
 
-- **`MODE=poll` (default, recommended for mainland servers)**: polls Telegram for messages; no
+- `MODE=poll` (default, recommended for mainland servers): polls Telegram for messages; no
   public HTTPS, domain or certificate required, and no inbound port on the host. Media is handed
   to Telegram as a token-bearing CDN URL for Telegram to download. Upgrading with no config change
-  keeps polling: **`TELEGRAM_UPDATE_MODE`-style variables do not exist; `MODE` defaults to `poll`.**
-- **`MODE=webhook`** (optional): Telegram pushes updates to your HTTP endpoint. Auto-registers
-  automatically when `PUBLIC_BASE_URL` is set:
+  keeps polling; `TELEGRAM_UPDATE_MODE`-style variables do not exist, and `MODE` defaults to `poll`.
+- `MODE=webhook` (optional): Telegram pushes updates to your HTTP endpoint. When
+  `PUBLIC_BASE_URL` is set, the bot registers the webhook itself:
 
   - Set `MODE=webhook` + `PUBLIC_BASE_URL=https://your-host`, and on startup the bot calls
     `setWebhook` (`${PUBLIC_BASE_URL}/webhook`, secret token + allowed_updates) itself, after the
@@ -95,7 +95,7 @@ node src/main.js            # MODE=poll is the default: getUpdates long polling,
 > Pick one, never both. `MODE=poll` clears a stale webhook at startup, and webhook mode never
 > starts a poll loop. See docs/deployment.md for the full picture.
 
-> **The Telegram webhook and DeviantArt egress are two independent problems.** Webhook only solves
+> The Telegram webhook and DeviantArt egress are two independent problems. Webhook only solves
 > Telegram → bot; the bot still fetches DeviantArt using the egress of the host it runs on. Enabling
 > webhook does not change or bypass the DeviantArt egress requirement — verify yours with
 > `npm run detect` first.
@@ -117,7 +117,7 @@ OAuth alone; an expired web extension session only affects the extra pages of so
 works and never fails the mature work as a whole. Both take effect immediately on the server —
 no manual cookie copying, no restart.
 
-On **your own computer** (Chrome/Edge installed, able to reach deviantart.com), inside the
+On your own computer (Chrome/Edge installed, able to reach deviantart.com), inside the
 DeviantDrop directory:
 
 ```bash
@@ -134,7 +134,7 @@ them inside the container and hot-writes `/data/auth/`. Afterwards a Telegram pr
 > login page binds its token to the browser's own environment (`detectIp`/`validateHostname`), so
 > a real browser signing in on the real DA domain passes naturally, while a server-side reverse
 > proxy of the login page or a server-side headless browser is blocked — and a low-memory VPS is
-> a poor host for Chromium anyway. The script adds **zero** npm dependencies (Node ≥22 ships
+> a poor host for Chromium anyway. The script adds zero npm dependencies (Node ≥22 ships
 > WebSocket/fetch). The chain: local `dd-login.mjs` → ssh → VPS host `scripts/dd-receive.sh` →
 > container `dd-exchange.mjs` (writing `/data/auth` as the `node` user).
 
@@ -144,8 +144,8 @@ Configure `PUBLIC_BASE_URL` (an HTTPS domain reverse-proxied to `127.0.0.1:8080`
 `<domain>/auth/deviantart/callback` to the DA application whitelist, then send `/login` in a
 private chat with the bot and tap the button — effective within seconds, no restart.
 
-Note: the in-Telegram button performs pure OAuth and **only establishes account authorisation,
-without web cookies** — to get unmasked extra pages on mature works, use the one-click desktop
+Note: the in-Telegram button performs pure OAuth and only establishes account authorisation,
+without web cookies. To get unmasked extra pages on mature works, use the one-click desktop
 login in 4.5 (it signs in to the website as well). Details:
 [docs/AUTH_AND_PREVIEW.md](/AUTH_AND_PREVIEW.md)（中文）.
 
@@ -206,7 +206,7 @@ Common problems:
 - Group topic replies preserve `message_thread_id`, and a channel's `channel_post` is handled the
   same way. With `ALLOWED_USER_IDS` set, authorisation is still by sender user ID; anonymous
   admin/channel identities cannot impersonate an allowed user.
-- **Ordinary links are not received in a group**: first confirm the bot's group privacy mode is
+- Ordinary links are not received in a group: first confirm the bot's group privacy mode is
   off in BotFather (`/mybots` → Bot Settings → Group Privacy → Turn off), then remove the bot from
   the group and re-add it, or make it an administrator. With privacy mode on, Telegram does not
   deliver non-command group messages to the bot and `getMe`'s

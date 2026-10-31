@@ -2,11 +2,11 @@
 
 **语言 / Language:** 中文 · [English](/en/VPS.md)
 
-DeviantDrop 跑在**普通服务器 / 家用机**上(不是 Cloudflare Workers——其出口被 DeviantArt 封锁)。本页解决"我怎样把 DeviantDrop 跑起来"。
+DeviantDrop 跑在普通服务器或家用机上,不能跑在 Cloudflare Workers(其出口被 DeviantArt 封锁)。
 
 ## 出口要求(先读)
 
-DeviantArt 会封锁数据中心的出口 IP。Cloudflare Workers 与多数云主机都被拦,所以在部署前**先检测**这台机器的出口是否被 DA 放行。
+DeviantArt 会封锁数据中心的出口 IP。Cloudflare Workers 与多数云主机都被拦,所以部署前先检测这台机器的出口是否被 DA 放行:
 
 ```bash
 npm install --omit=dev
@@ -44,22 +44,22 @@ export MODE=poll HTTP_PROXY=http://127.0.0.1:7890 HTTPS_PROXY=http://127.0.0.1:7
 node src/main.js
 ```
 
-`MODE=poll`(默认):长轮询,无需公网入口。
+`MODE=poll`(默认)是长轮询,无需公网入口。
 
 ## 接入模式:轮询 or Webhook
 
 | 模式 | 公网需求 | 说明 |
 | --- | --- | --- |
-| `MODE=poll`(默认) | **无** | 主动向 Telegram `getUpdates` 拉取,不需 HTTPS / 域名 / 证书,本机无入站端口。**国内服务器推荐**。 |
-| `MODE=webhook` | HTTPS 反代 + 公网 URL | Telegram 直接推送 HTTP 到你的 endpoint。**配置了 `PUBLIC_BASE_URL` 时启动自动注册 setWebhook**;未配置则手动注册(见下)。 |
+| `MODE=poll`(默认) | 无 | 主动向 Telegram `getUpdates` 拉取,不需 HTTPS / 域名 / 证书,本机无入站端口。国内服务器推荐。 |
+| `MODE=webhook` | HTTPS 反代 + 公网 URL | Telegram 直接推送 HTTP 到你的 endpoint。配置了 `PUBLIC_BASE_URL` 时启动自动注册 setWebhook;未配置则手动注册(见下)。 |
 
 ### Telegram Webhook 与 DeviantArt 出站访问是两个独立问题
 
-**`MODE=webhook` 只解决 `Telegram → DeviantDrop` 这一半。** 它**不改变、也不缓解** `DeviantDrop → DeviantArt` 的出站要求:
+`MODE=webhook` 只解决 Telegram → DeviantDrop 这一半,对 DeviantDrop → DeviantArt 的出站要求没有影响:
 
-- Webhook 能访问不等于 Bot 能访问 DeviantArt。Telegram 推送的是 HTTPS 请求到你的 HTTP server;而 Bot 抓取 DeviantArt 用的是**它自己所在主机的出口**。
-- DeviantDrop 的 DeviantArt 抓取**始终从当前运行环境出站**(同一 VPS 或家用机),代理 / Cookie / 认证 / UA / 重试逻辑都与传入方式无关。
-- 项目实际部署中发现,不同数据中心出口对 DeviantArt 的访问兼容性存在差异(Cloudflare 等被按数据中心 IP 拦截)。请优先使用**已经验证可正常访问 DeviantArt** 的出口,启用 Webhook 不会绕过这一前提。
+- Webhook 能访问不等于 Bot 能访问 DeviantArt。Telegram 推送的是到你 HTTP server 的 HTTPS 请求;Bot 抓取 DeviantArt 用的是所在主机自己的出口。
+- DeviantDrop 抓取 DeviantArt 始终从当前运行环境出站(同一 VPS 或家用机),代理 / Cookie / 认证 / UA / 重试逻辑都与传入方式无关。
+- 项目实际部署中发现,不同数据中心出口对 DeviantArt 的访问兼容性存在差异(Cloudflare 等被按数据中心 IP 拦截)。请优先使用已验证能正常访问 DeviantArt 的出口;启用 Webhook 不会绕过这一前提。
 - 部署前先跑 `npm run detect`(见「出口要求」)确认当前主机能正常访问 DeviantArt。
 
 > 高级部署(可选,默认不支持):`Telegram → 公网 HTTPS 反代 → 私网(如 Tailscale/WireGuard)中的 DA-compatible runtime → DeviantArt`。可行性依赖反代能代理到私网 runtime;DeviantArt 请求仍由该 runtime 的出口发出。除非你确实需要这种拓扑,否则把 Bot 直接跑在能访问 DA 的主机上即可。
@@ -77,9 +77,9 @@ curl -fsS "https://api.telegram.org/bot${BOT_TOKEN}/setWebhook" \
 
 ## 无域名部署
 
-**没有公网 IP、也没有域名,完全可用。** 保持 `MODE=poll`,Telegram 更新主动拉取,不需要任何公网入站。
+没有公网 IP、也没有域名也完全可用:保持 `MODE=poll`,Telegram 更新主动拉取,不需要任何公网入站。
 
-唯一"想要但没有域名会损失"的是 **Telegram 内 `/login` 按钮**和**预览页 `/d/:id`**——但登录有替代路径(见 [认证与登录](authentication.md)):用 `npm run login`(电脑一键)或 `/cookie`。
+没有域名唯一损失的是 Telegram 内 `/login` 按钮和预览页 `/d/:id` 两个可选项;登录有替代路径(见 [认证与登录](authentication.md)):用 `npm run login`(电脑一键)或 `/cookie`。
 
 ## 命令菜单(一次性)
 

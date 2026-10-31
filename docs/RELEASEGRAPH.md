@@ -22,7 +22,7 @@ Release 资产里出现的 `RELEASE-METADATA.json` 由引擎自己写入，不�
 
 | 引擎版本 | 消费方影响 | 处理 |
 | --- | --- | --- |
-| `v1.4.0`（2026-09-10，Version Provider Reconciliation Layer） | 复用工作流有两个 job 新增 `issues: write`（provider 复核）。调用方未授予该权限时，**整个 Release 运行直接 `startup_failure`，连 job 都不会创建** | 已在 `.github/workflows/release.yml` 的 `permissions` 补上 `issues: write` |
+| `v1.4.0`（2026-09-10，Version Provider Reconciliation Layer） | 复用工作流有两个 job 新增 `issues: write`（provider 复核）。调用方未授予该权限时，整个 Release 运行直接 `startup_failure`，连 job 都不会创建 | 已在 `.github/workflows/release.yml` 的 `permissions` 补上 `issues: write` |
 
 排查方法：Release 出现 `startup_failure` 时先对比 `permissions` 与复用工作流各 job 的权限集合：
 
@@ -51,7 +51,7 @@ checksums: false
 metadata: true
 ```
 
-但**目前引擎还不接受它**：`schemas/release-policy.schema.json` 在 `v1` 与 `main` 上完全相同 —— 仍然是 `versioning.mode`、`additionalProperties: false`，且属性表里根本没有 `apiVersion` 与 `metadata`。现在照抄 README 示例会让 `.release-policy.yml` 校验失败。所以本仓库保持 v1 格式，等引擎发布新 schema 后再切。
+但目前引擎还不接受它：`schemas/release-policy.schema.json` 在 `v1` 与 `main` 上完全相同，仍然是 `versioning.mode`、`additionalProperties: false`，且属性表里根本没有 `apiVersion` 与 `metadata`。现在照抄 README 示例会让 `.release-policy.yml` 校验失败。所以本仓库保持 v1 格式，等引擎发布新 schema 后再切。
 
 ## 就绪检查（切换前跑一次）
 

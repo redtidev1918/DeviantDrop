@@ -1,6 +1,6 @@
 # Media Delivery Tests
 
-**Language / Language:** [English](media-delivery.md) · [中文](../../testing/media-delivery.md)
+**语言 / Language:** [English](media-delivery.md) · [中文](../../testing/media-delivery.md)
 
 Primary suite: `npm test`.
 

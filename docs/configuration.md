@@ -12,26 +12,26 @@ cp .env.example .env
 
 | 变量 | 说明 |
 | --- | --- |
-| `BOT_TOKEN` | Telegram bot token([@BotFather](https://t.me/BotFather) 创建)。**只作首次 bootstrap**:运行时事实来源是 `BOT_TOKEN_FILE` 指定的 secret 文件,文件优先于 env。 |
-| `WEBHOOK_SECRET` | webhook 鉴权密钥。长轮询(`MODE=poll`)模式不参与鉴权,但**必填**(缺失会记 `config_missing` 事件)。可用 `openssl rand -hex 32` 生成。 |
+| `BOT_TOKEN` | Telegram bot token([@BotFather](https://t.me/BotFather) 创建)。只作首次 bootstrap:运行时事实来源是 `BOT_TOKEN_FILE` 指定的 secret 文件,文件优先于 env。 |
+| `WEBHOOK_SECRET` | webhook 鉴权密钥。长轮询(`MODE=poll`)模式不参与鉴权,但必填(缺失会记 `config_missing` 事件)。可用 `openssl rand -hex 32` 生成。 |
 
 ## 接入模式与 HTTP
 
 | 变量 | 必需 | 默认 | 说明 |
 | --- | --- | --- | --- |
-| `MODE` | | `poll` | `poll`=长轮询(默认,无需公网);`webhook`=需 HTTPS 反代并手动注册 setWebhook |
+| `MODE` | | `poll` | `poll` = 长轮询(默认,无需公网);`webhook` = 需 HTTPS 反代并手动注册 setWebhook |
 | `PORT` | | `8080` | HTTP server 监听端口(poll 与 webhook 都启动,提供 `/health` 与登录回调) |
 | `HTTP_HOST` | | `127.0.0.1` | HTTP 监听地址,默认只绑回环;反代转发到此 |
-| `PUBLIC_BASE_URL` | | 空 | 公网 HTTPS origin(如 `https://bot.example.com`)。**只用于 Web OAuth 回调与预览页 `/d/:id`,不是 webhook 配置**。协议必须是 HTTPS,否则启动报错。需把 `<域名>/auth/deviantart/callback` 加进 DA 应用 redirect 白名单。 |
+| `PUBLIC_BASE_URL` | | 空 | 公网 HTTPS origin(如 `https://bot.example.com`)。只用于 Web OAuth 回调与预览页 `/d/:id`,不是 webhook 配置。协议必须是 HTTPS,否则启动报错。需把 `<域名>/auth/deviantart/callback` 加进 DA 应用 redirect 白名单。 |
 
 ## DeviantArt 凭据
 
 | 变量 | 必需 | 说明 |
 | --- | --- | --- |
-| `CLIENT_ID` | ① | DeviantArt 官方应用 ID(deviantart.com/developers 注册 **Confidential** 应用) |
+| `CLIENT_ID` | ① | DeviantArt 官方应用 ID(deviantart.com/developers 注册 Confidential 应用) |
 | `CLIENT_SECRET` | ① | 对应应用密钥 |
-| `DA_REFRESH_TOKEN` | | 仅作**首次迁移 seed**:写入 `/data/auth/deviantart.json` 后以文件为准,不再读回 env |
-| `DA_COOKIES` | | 仅作**首次迁移 seed**:写入 `/data/auth/deviantart-cookies.json` 后以文件为准 |
+| `DA_REFRESH_TOKEN` | | 仅作首次迁移 seed:写入 `/data/auth/deviantart.json` 后以文件为准,不再读回 env |
+| `DA_COOKIES` | | 仅作首次迁移 seed:写入 `/data/auth/deviantart-cookies.json` 后以文件为准 |
 
 ① 强烈推荐填官方 API 凭据:匿名网页路径仅在 DA 未封禁的出口可用;成熟作品主图靠 OAuth。不填则尝试匿名网页路径。
 
@@ -68,9 +68,9 @@ cp .env.example .env
 
 | 变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `TELEPRESS_URL` | 空 | TelePress 地址;同机建议 `http://127.0.0.1:<port>`。空=不启用 |
+| `TELEPRESS_URL` | 空 | TelePress 地址;同机建议 `http://127.0.0.1:<port>`。空 = 不启用 |
 | `TELEPRESS_API_KEY` | 空 | TelePress 侧配置的 Bearer key,两端同一个 |
-| `TELEPRESS_MODE` | `fallback` | `off`(永不调用)/ `fallback`(仅 Telegram 失败兜底)/ `large-gallery`(图片>10 主动建页)/ `always`(不推荐) |
+| `TELEPRESS_MODE` | `fallback` | `off`(永不调用)/ `fallback`(仅 Telegram 失败兜底)/ `large-gallery`(图片 >10 主动建页)/ `always`(不推荐) |
 | `TELEPRESS_REMOTE_GALLERY_MEDIA` | 关 | 设 `1` 开启远程 media manifest(需 TelePress 服务端同时开 `TELEPRESS_ALLOW_REMOTE_GALLERY_MEDIA=1`) |
 
 ## 完整示例

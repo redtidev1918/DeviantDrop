@@ -1,9 +1,8 @@
 # Authentication
 
-**Language / Language:** [English](authentication.md) · [中文](../../architecture/authentication.md)
+**语言 / Language:** [English](authentication.md) · [中文](../../architecture/authentication.md)
 
-See the Chinese canonical document: [../../architecture/authentication.md](../../architecture/authentication.md).
-
+This page summarizes the [Chinese canonical document](../../architecture/authentication.md).
 
 DeviantDrop has two credential planes:
 

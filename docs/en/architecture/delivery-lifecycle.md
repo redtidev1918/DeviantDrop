@@ -1,9 +1,8 @@
 # Delivery Lifecycle
 
-**Language / Language:** [English](delivery-lifecycle.md) · [中文](../../architecture/delivery-lifecycle.md)
+**语言 / Language:** [English](delivery-lifecycle.md) · [中文](../../architecture/delivery-lifecycle.md)
 
-See the Chinese canonical document: [../../architecture/delivery-lifecycle.md](../../architecture/delivery-lifecycle.md).
-
+This page summarizes the [Chinese canonical document](../../architecture/delivery-lifecycle.md).
 
 ```text
 received → processing → ready → source checkpoint → sending → sent

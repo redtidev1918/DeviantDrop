@@ -1,6 +1,6 @@
 # 媒体交付测试
 
-**Language / Language:** [中文](media-delivery.md) · [English](../en/testing/media-delivery.md)
+**语言 / Language:** [中文](media-delivery.md) · [English](../en/testing/media-delivery.md)
 
 主套件：`npm test`。
 

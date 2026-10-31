@@ -2,11 +2,11 @@
 
 **Language / 语言:** [中文](README.md) · English
 
-> **A Telegram bot that forwards DeviantArt works to your chat: send a work link and
-> DeviantDrop replies with the image, video or GIF; oversized photos are compressed for
-> Telegram delivery when needed.**
+> A Telegram bot that forwards DeviantArt works to your chat: send a work link and
+> DeviantDrop replies with the image, video, GIF or text work; oversized photos go
+> out as documents with their original bytes.
 
-📖 [Full documentation](https://redtidev1918.github.io/DeviantDrop/) · [Changelog](CHANGELOG.md)
+[Full documentation](https://redtidev1918.github.io/DeviantDrop/) · [Changelog](CHANGELOG.md)
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Docs-documentation-6366f1?style=flat-square)](https://redtidev1918.github.io/DeviantDrop/)
@@ -15,7 +15,7 @@ Send a work link to [@DeviantDropBot](https://t.me/DeviantDropBot); it replies
 with that work's image / video / GIF / text and a `source` link in the caption.
 Self-hosting is only needed if you want your own instance.
 
-> **Note**: DeviantArt blocks datacenter egress (Cloudflare Workers and most cloud hosts are
+> Note: DeviantArt blocks datacenter egress (Cloudflare Workers and most cloud hosts are
 > blocked). Run the bot on an egress DeviantArt allows (a residential network, or one of the
 > VPS providers that has passed the check); see the [VPS handbook](docs/VPS.md).
 
@@ -36,7 +36,7 @@ cp .env.example .env    # fill in BOT_TOKEN / WEBHOOK_SECRET / official API cred
 docker compose up -d --build
 ```
 
-**What you need**: a `BOT_TOKEN` from [@BotFather](https://t.me/BotFather); a DeviantArt
+What you need: a `BOT_TOKEN` from [@BotFather](https://t.me/BotFather); a DeviantArt
 official app (register at deviantart.com/developers and put its `CLIENT_ID` / `CLIENT_SECRET`
 into `.env` for OAuth access); and an egress DeviantArt allows (see above). No Docker?
 `npm install --omit=dev` then `node src/main.js`.
@@ -49,8 +49,11 @@ TelePress publish path, and troubleshooting — live on the [docs site](https://
 - Recognises work-page links inside messages and captions (`https` / `www` / legacy domains /
   `fav.me` / `/view/{id}`), processing up to 5 at once; short links resolve the author by following
   the redirect, and the bot asks for the full work-page URL when that does not resolve.
-- **The website `_puppy` endpoints come first** (work structure / GIF / literature text /
-  `additionalMedia` all come from the same adapter); OAuth is used as the fallback when needed. Literature works are delivered as `.txt` documents.
+- Work structure, multi-image extra pages, GIF and literature text come from the website
+  `_puppy` endpoints through one adapter. OAuth is the primary content credential: mature (NSFW)
+  originals always prefer the official API's `content`/`download` and need no cookie. If the
+  official API fails (network/quota/credentials), the web result is still delivered. Literature
+  works are delivered as `.txt` documents.
 - For videos, `media.baseUri` is only a poster. Playable URLs must come from web
   `types[].t == "video"` or OAuth `videos[].src`; if neither is available, DeviantDrop falls
   back to the official API instead of sending the poster as an image.
@@ -59,11 +62,11 @@ TelePress publish path, and troubleshooting — live on the [docs site](https://
   as if it were the original.
 - A successfully delivered work is cached by Telegram `file_id` for 30 days. Later requests from
   any user of the same bot replay it without downloading or uploading the binary again.
-- Photo/video sequences are sent as `sendMediaGroup` albums (auto-batched above 10 items);
-  GIF/animation always uses a standalone `sendAnimation` so captions are never split or
-  duplicated; oversized photos are sent as documents with unchanged bytes, and files beyond
-  the upload limit receive a source link; when Telegram cannot reach the CDN, the file is downloaded and
-  uploaded as multipart.
+- Photo/video sequences are sent as `sendMediaGroup` albums (≤10 items per group, also batched
+  by multipart size); GIF/animation always uses a standalone `sendAnimation` so captions are
+  never split or duplicated; oversized photos are sent as documents with unchanged bytes, and
+  files beyond the upload limit receive a source link; when Telegram cannot reach the CDN, the
+  file is downloaded and uploaded as multipart.
 - DA fullview display versions are supported with clean artwork captions; representation
   metadata is retained internally, and small previews are not substituted automatically.
 - `/start` `/help` `/about` commands; per-chat rate limiting, de-duplication, and
@@ -71,12 +74,11 @@ TelePress publish path, and troubleshooting — live on the [docs site](https://
 
 ### Dependencies
 
-- **Runtime**: Node.js ≥ 22. Only two
-  production dependencies: `undici` (HTTP and China-egress proxy) and `sharp` (>10MB image
-  compression, lazy-loaded). See [package.json](package.json).
-- **Development**: `wrangler` is only used for local `dev`/dry-run validation and is never
+- Runtime: Node.js ≥ 22. Two production dependencies: `undici` (HTTP and China-egress proxy)
+  and `sharp` (image processing, lazy-loaded). See [package.json](package.json).
+- Development: `wrangler` is only used for local `dev`/dry-run validation and is never
   installed into the Docker image.
-- **Optional external services**: [TelePress](https://github.com/redtidev1918/TelePress)
+- Optional external services: [TelePress](https://github.com/redtidev1918/TelePress)
   (Telegraph gallery fallback) and the [DAViewer](https://github.com/redtidev1918/DAViewer)
   client (desktop DeviantArt browser, see below).
 
@@ -91,22 +93,22 @@ TelePress publish path, and troubleshooting — live on the [docs site](https://
   (CSRF, deviation IDs, cookie reuse, media URLs), [DAKit](https://github.com/redtidev1918/DAKit)
   (`_puppy`/`dadeviation`/`init` flows and URL compatibility), and
   [TelePost](https://github.com/redtidev1918/TelePost) (Telegram media type mapping). Full list
-  in [docs/README.md](docs/README.md#implementation-sources).
+  in [docs/README.md](docs/README.md).
 
 ### Update transport: polling (default) or webhook (optional)
 
-Updates are received via **long polling** by default — no public IP, domain, HTTPS or inbound
-port needed; the bot pulls `getUpdates` from Telegram. `MODE` (default `poll`) selects the mode,
-and existing deployments need no new configuration.
+Updates are received via long polling by default, so no public IP, domain, HTTPS or inbound
+port is needed; the bot pulls `getUpdates` from Telegram. `MODE` (default `poll`) selects the
+mode, and existing deployments need no new configuration.
 
-- **`MODE=poll`** (default): manual-free, runs anywhere that can reach Telegram and DeviantArt.
-- **`MODE=webhook`** (optional): Telegram pushes to your HTTP endpoint. When `PUBLIC_BASE_URL`
+- `MODE=poll` (default): runs anywhere that can reach Telegram and DeviantArt.
+- `MODE=webhook` (optional): Telegram pushes to your HTTP endpoint. When `PUBLIC_BASE_URL`
   is set, the bot registers `setWebhook` automatically at startup (after the HTTP server is
   ready); a failed registration surfaces as unhealthy in `/health` instead of pretending to work.
   Without `PUBLIC_BASE_URL` the webhook can be registered manually. Poll and webhook are mutually
   exclusive — never both.
 
-> **The Telegram webhook and DeviantArt egress are two independent problems.** Webhook only
+> The Telegram webhook and DeviantArt egress are two independent problems. Webhook only
 > solves Telegram → bot; fetching DeviantArt still uses the egress of the machine the bot runs on.
 > Enabling webhook neither changes nor bypasses the DeviantArt egress requirement.
 

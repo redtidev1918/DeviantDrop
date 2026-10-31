@@ -1,6 +1,6 @@
 # Delivery lifecycle
 
-**Language / Language:** [中文](delivery-lifecycle.md) · [English](../en/architecture/delivery-lifecycle.md)
+**语言 / Language:** [中文](delivery-lifecycle.md) · [English](../en/architecture/delivery-lifecycle.md)
 
 ```text
 received

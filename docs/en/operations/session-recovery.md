@@ -1,6 +1,6 @@
 # Web session recovery
 
-**Language / Language:** [English](session-recovery.md) · [中文](../../operations/session-recovery.md)
+**语言 / Language:** [English](session-recovery.md) · [中文](../../operations/session-recovery.md)
 
 ## Files
 

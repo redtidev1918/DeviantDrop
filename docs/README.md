@@ -2,16 +2,16 @@
 
 **语言 / Language:** 中文 · [English](/en/README.md)
 
-DeviantDrop 是一个 **Telegram Bot**:在聊天里发一个 [DeviantArt](https://www.deviantart.com/) 作品链接,它就把图片 / 视频 / GIF / 文字作品发回给你。
+DeviantDrop 是一个 Telegram Bot:在聊天里发一个 [DeviantArt](https://www.deviantart.com/) 作品链接,它就把图片 / 视频 / GIF / 文字作品发回给你。
 
-**在线试用**:给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接即可体验;要自己跑一份,看下面的部署文档。
+在线试用:给 [@DeviantDropBot](https://t.me/DeviantDropBot) 发一条作品链接即可;要自己跑一份,看下面的部署文档。
 
 ---
 
 ## 快速了解
 
-- **Telegram 更新通过长轮询接收,不需要公网 IP、域名或 HTTPS**(可直接部署在家用服务器 / VPS / NAS)。
-- **必须**跑在 DeviantArt 放行的出口上(数据中心出口会被封锁,见 [部署](deployment.md#出口要求))。
+- Telegram 更新通过长轮询接收,不需要公网 IP、域名或 HTTPS,可直接部署在家用服务器 / VPS / NAS。
+- 必须跑在 DeviantArt 放行的出口上(数据中心出口会被封锁,见 [部署](deployment.md#出口要求))。
 - 配置入口是 `.env`(从 [`.env.example`](https://github.com/redtidev1918/DeviantDrop/blob/main/.env.example) 复制)。
 
 ## 部署 / 配置 / 运维

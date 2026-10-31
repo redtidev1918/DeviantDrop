@@ -14,7 +14,7 @@
 3. Add the full `https://bot.example.com/auth/deviantart/callback` to the DeviantArt
    application's redirect whitelist.
 4. The initial environment change requires rebuilding the container; afterwards an administrator
-   sends `/login` in a **private chat with the bot**, opens the 5-minute one-shot link and
+   sends `/login` in a private chat with the bot, opens the 5-minute one-shot link and
    authorises on DeviantArt's official site.
 5. The callback validates state, the browser session and PKCE; on success it takes effect
    immediately and sends one recovery notification. A failed write to disk never reports success.
@@ -36,11 +36,11 @@ official login page, and once you sign in and click "Authorize" it captures, at 
 layer, both ① the OAuth callback `code` and ② the web login cookies
 (`auth/auth_secure/userinfo`). It pushes them over ssh to the server, where
 `scripts/dd-exchange.mjs` exchanges the code for a refresh token using `CLIENT_SECRET` and
-atomically writes OAuth plus cookies to disk — **effective immediately, hot**.
+atomically writes OAuth plus cookies to disk, effective immediately.
 
 Why the browser runs on your computer rather than the server: DA's login page has an AWS WAF
 human check (`detectIp`/`validateHostname`) whose token is bound to the browser's own
-environment; a real browser signing in on the **real DA domain** passes naturally, whereas a
+environment; a real browser signing in on the real DA domain passes naturally, whereas a
 server-side reverse proxy of the login page or a server-side headless browser is blocked by the
 WAF — and a low-memory VPS is a poor host for Chromium anyway. The script adds zero dependencies
 (Node ≥22 ships WebSocket/fetch), and the browser profile persists in
@@ -67,7 +67,7 @@ Without a public domain and without a computer, you can send `/cookie <whole coo
 private chat: the bot hot-updates through `CookieStore.set()`, then forces one probe and reports
 `valid`/`unknown`, and makes a best effort to delete the credential-bearing message. The
 trade-off is that the session credential travels through Telegram; if needed, use DA's "log out
-of all devices" to invalidate it. What it restores is **multi-image extension capability**, not
+of all devices" to invalidate it. What it restores is the multi-image extension capability, not
 "mature content permission".
 
 The reverse proxy should disable query-bearing access logs for `/auth/` so one-shot tokens/codes
@@ -81,15 +81,15 @@ decision point is `src/deviantart/adapter.js`):
 
 | Layer | Responsibility |
 | --- | --- |
-| **OAuth (official API)** | Primary content-access auth: metadata, the **mature main image**, official download/content, refresh-token renewal |
+| **OAuth (official API)** | Primary content-access auth: metadata, the mature main image, official download/content, refresh-token renewal |
 | **Web extension session** | Optional enhancement: `deviation.extended.additionalMedia` (pages 2…N of multi-image works), which the official API does not provide |
 
-Requirement: **an expired cookie must never fail a mature work as a whole.** Availability of the
+Requirement: an expired cookie must never fail a mature work as a whole. Availability of the
 mature main image is therefore decided by OAuth, and web-extension failures are localised to the
 extra pages.
 
 - Resolution flow: the website's `_puppy/dadeviation/init` provides the work structure (direct
-  numeric ID, no UUID mapping needed) and `extended.deviationUuid`; the **main image** of a mature
+  numeric ID, no UUID mapping needed) and `extended.deviationUuid`; the main image of a mature
   work is always preferentially overridden with the official API's `content`/`download`, so the
   absence of censoring is independent of cookies.
 - When the web DTO lacks a uuid (common in blocked responses), a second uuid resolution runs, so
@@ -97,12 +97,12 @@ extra pages.
 - An official API failure (network/quota/credentials) does not interrupt sending: the web result
   is kept and sending continues, with a structured log line `[da] OAuth main-image replacement
   failed`.
-- Extension capability is **decided by the current response only**, never by cached state: a
+- Extension capability is decided by the current response only, never by cached state: a
   usable cookie with unknown status does not lose pages, and an old cookie recorded as valid does
   not pretend it can fetch. Censored URLs (`blur_`) are checked per entry in the response and only
   that page is skipped.
 - `mature_loggedout` (`isMature=true` + `isBlocked=true` + `blockReasons` containing it) is used
-  only for **session accounting**: mark `expired`, clear the cache, notify once, retry
+  only for session accounting: mark `expired`, clear the cache, notify once, retry
   anonymously. It is never used to reject a work. Timeouts, WAF and 5xx keep the status
   `unknown`.
 - Exactly one path produces the "censored preview" notice: when there is no OAuth and the web
@@ -162,8 +162,8 @@ A single pure planner decides the send units: consecutive photos/videos enter `s
 groups of 2–10; GIF/animation can never enter a Telegram media group and always uses a standalone
 `sendAnimation`. The caption, status and source attach only to the first send unit, and later
 media carry no duplicate caption. Direct URL sending, multipart upload and file_id replay share
-the same planner, so the three paths never diverge. The source and client entries are **two
-hyperlinks at the end of the first media caption** (`🔗 source | 📲 DAViewer app`, HTML
+the same planner, so the three paths never diverge. The source and client entries are two
+hyperlinks at the end of the first media caption (`🔗 source | 📲 DAViewer app`, HTML
 `<a>` anchors): single media, albums, direct URL sending, multipart upload and file_id replay
 all behave the same. Inline buttons are no longer used (sendMediaGroup silently drops them).
 
@@ -186,7 +186,7 @@ only to loopback/internal networks; never expose a key-less publish endpoint to 
 internet. Without a service URL, image-host configuration and valid Telegraph credentials, no
 online gallery is created.
 
-**Optional remote media manifest (off by default):** When the TelePress server sets
+Optional remote media manifest (off by default): when the TelePress server sets
 `TELEPRESS_ALLOW_REMOTE_GALLERY_MEDIA=1` and DeviantDrop sets
 `TELEPRESS_REMOTE_GALLERY_MEDIA=1`, `/publish/gallery` accepts a lightweight `media` JSON
 (`assetId/kind/sourceUrl`) and the TelePress server fetches the https images itself; if either

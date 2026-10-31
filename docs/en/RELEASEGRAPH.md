@@ -25,7 +25,7 @@ the `assets.required` contract (this repository's `assets.required` is empty, `k
 
 | Engine version | Consumer impact | Action |
 | --- | --- | --- |
-| `v1.4.0` (2026-09-10, Version Provider Reconciliation Layer) | Two jobs in the reusable workflow gained `issues: write` (provider re-check). If the caller does not grant that permission, **the whole release run fails as `startup_failure` — no job is even created** | `issues: write` added to `permissions` in `.github/workflows/release.yml` |
+| `v1.4.0` (2026-09-10, Version Provider Reconciliation Layer) | Two jobs in the reusable workflow gained `issues: write` (provider re-check). If the caller does not grant that permission, the whole release run fails as `startup_failure` — no job is even created | `issues: write` added to `permissions` in `.github/workflows/release.yml` |
 
 Troubleshooting: when a release shows `startup_failure`, first compare `permissions` with the
 permission set of each job in the reusable workflow:
@@ -62,7 +62,7 @@ checksums: false
 metadata: true
 ```
 
-But **the engine does not accept it yet**: `schemas/release-policy.schema.json` is identical on
+But the engine does not accept it yet: `schemas/release-policy.schema.json` is identical on
 `v1` and `main` — still `versioning.mode`, still `additionalProperties: false`, and the property
 table has no `apiVersion` or `metadata` at all. Copying the README example today would make
 `.release-policy.yml` fail validation. This repository therefore stays on the v1 format until the

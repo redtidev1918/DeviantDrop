@@ -1,6 +1,6 @@
 # Media Pipeline
 
-**Language / Language:** [English](media-pipeline.md) · [中文](../../architecture/media-pipeline.md)
+**语言 / Language:** [English](media-pipeline.md) · [中文](../../architecture/media-pipeline.md)
 
 ```text
 DeviantArt adapter
