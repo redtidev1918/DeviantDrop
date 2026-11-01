@@ -24,3 +24,7 @@
 - 文档站接入共享 VitePress 1.6.4 模板，packageMode merge 保留业务依赖与 scripts；旧 Pages 工作流保留为 `.docsite.bak`，完整外部备份不入库。
 - 本地 docs build、无 Git fixture 的 docsite check/navcheck 通过；CI 使用固定生成器提交 db706b1c5d8de4caa02add9c5e2451e463dc85db。
 - 仅提交 PR 待审；不合并、不发布应用、不触发分支部署。回滚可 revert 本文档提交恢复旧站。
+
+## 2026-11-01 codex/sync-docsite-template
+
+上游 docsite #16 已合并；更新固定 SHA 并运行 docsite update。旧 pin 附带的下载页生成器 showAssetTable 选项默认保持原输出。npm ci、docs:build、无 .git 的 check/navcheck 通过；应用测试未在本地重跑，远程 CI 和 Dependabot 最新 SHA 待验收。
