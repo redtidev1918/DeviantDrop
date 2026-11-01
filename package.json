@@ -40,11 +40,11 @@
     "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
-    "wrangler": "^4.147.0",
+    "wrangler": "^4.154.0",
     "vitepress": "1.6.4"
   },
   "dependencies": {
     "sharp": "^0.35.5",
-    "undici": "^8.11.2"
+    "undici": "^8.12.3"
   }
 }
