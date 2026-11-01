@@ -24,3 +24,7 @@
 releasegraph 发布的说明会把原始英文 commit 标题混进中文标题（v1.16.2 曾出现「修复：artwork captions focused on the artwork」）；且 retention 只保留最新正式 Release 对象，旧 Release 页面会被清理（标签留存），引用旧版本用 tag 链接。
 **防复发**：每次发布后按 AGENTS.md 双语规范 `gh release edit` 修整（[DECISIONS.md](DECISIONS.md) D-0006）。
 **来源**：v1.16.2 说明修整记录、`.release-policy.yml` retention 段。
+
+## 托管文档工作流与 Dependabot
+
+Dependabot 单改托管 docs.yml 的 setup-node 主版本会触发 DRIFT（2026-11-01 审计）。先修 docsite 模板并合并，再固定新 SHA 和运行生成器；不关闭一致性检查。
