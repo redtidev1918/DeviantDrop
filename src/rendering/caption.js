@@ -17,7 +17,7 @@ const CAPTION_LIMIT = 1024;
 // caption 末尾超链接的标签与地址。
 export const SOURCE_LINK_TEXT = "source";
 export const CLIENT_LINK_TEXT = "DAViewer app";
-export const CLIENT_DOWNLOAD_URL = "https://redtidev1918.github.io/DAViewer/#/download";
+export const CLIENT_DOWNLOAD_URL = "https://redtidev1918.github.io/DAViewer/download";
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (c) => (
