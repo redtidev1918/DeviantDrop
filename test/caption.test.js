@@ -48,7 +48,7 @@ test("sourceUrl 存在时 caption 末尾追加「source | DAViewer app」超链�
   assert.match(text, /Heavy &quot;Mama&quot; &amp; Hunt/);
   assert.match(text, /A&amp;B&lt;C&gt;/);
   // 末尾空行 + 「🔗 | 📲」两个超链接，URL 转义
-  assert.match(text, /\n\n🔗 <a href="https:\/\/www\.deviantart\.com\/x\?a=1&amp;b=2">source<\/a> \| 📲 <a href="https:\/\/redtidev1918\.github\.io\/DAViewer\/#\/download">DAViewer app<\/a>$/);
+  assert.match(text, /\n\n🔗 <a href="https:\/\/www\.deviantart\.com\/x\?a=1&amp;b=2">source<\/a> \| 📲 <a href="https:\/\/redtidev1918\.github\.io\/DAViewer\/download">DAViewer app<\/a>$/);
   assert.ok(text.length <= 1024);
 });
 
@@ -96,5 +96,5 @@ test("技术性 ⚠️ 提示：showNotes=true 显示，false 省略", () => {
 test("链接标签与地址保持稳定，供锚点/文档引用", () => {
   assert.equal(SOURCE_LINK_TEXT, "source");
   assert.equal(CLIENT_LINK_TEXT, "DAViewer app");
-  assert.equal(CLIENT_DOWNLOAD_URL, "https://redtidev1918.github.io/DAViewer/#/download");
+  assert.equal(CLIENT_DOWNLOAD_URL, "https://redtidev1918.github.io/DAViewer/download");
 });
