@@ -76,6 +76,34 @@ test("parses plain, hidden, schemeless and multiple DeviantArt links", () => {
   assert.deepEqual(extractDeviantArtUrls("https://127.0.0.1/a.jpg https://pixiv.net/artworks/1"), []);
 });
 
+test("ignores non-artwork links before fetching or replying in groups", async (t) => {
+  // Gallery URL captured from the user's incident on 2026-11-04.
+  // Artwork URL independently captured in fixtures/upload-evidence.md on 2026-10-22.
+  const gallery = "https://www.deviantart.com/cyberxiandou-vore/gallery";
+  const artwork = "https://www.deviantart.com/kirkyguy/art/Hopelessly-Pregnant-1399696524";
+  assert.deepEqual(extractDeviantArtUrls(`${gallery} ${artwork}`), [artwork]);
+  assert.deepEqual(extractDeviantArtUrls("https://www.deviantart.com/cyberxiandou-vore"), []);
+  assert.deepEqual(extractDeviantArtUrls(`${gallery}/123456/folder`), []);
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+  const requests = [];
+  globalThis.fetch = async (input) => {
+    requests.push(String(input));
+    throw new Error("Unexpected request");
+  };
+  const { handleUpdate } = await import('../src/index.js');
+  for (const content of [
+    { text: `${gallery} 我注册了一个deviantart账号，对蒙太奇剪辑有兴趣的朋友可以多交流` },
+    { text: "画廊", entities: [{ type: "text_link", offset: 0, length: 2, url: gallery }] },
+    { caption: gallery, caption_entities: [{ type: "url", offset: 0, length: gallery.length }] },
+  ]) {
+    await handleUpdate({ message: {
+      message_id: 1, from: { id: 42 }, chat: { id: -42, type: "supergroup" }, ...content,
+    } }, { BOT_TOKEN: "111:secret" });
+  }
+  assert.deepEqual(requests, [], "non-artwork links must not trigger fetches or Telegram replies");
+});
+
 test("selects the highest-quality DeviantArt video", () => {
   assert.deepEqual(
     extractDeviantArtMedia({

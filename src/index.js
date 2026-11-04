@@ -771,6 +771,10 @@ function normalizeDeviantArtUrl(value) {
   try {
     const url = new URL(/^https?:\/\//i.test(cleaned) ? cleaned : `https://${cleaned}`);
     if (!isHost(url.hostname, "deviantart.com") && url.hostname !== "fav.me") return null;
+    if (url.hostname !== "fav.me" &&
+        !/^\/(?:[^/]+\/)?art\/[^/]+-\d+\/?$/.test(url.pathname) &&
+        !/^\/view\/\d+\/?$/.test(url.pathname) &&
+        !(url.pathname === "/view.php" && /^\d+$/.test(url.searchParams.get("id") ?? ""))) return null;
     url.protocol = "https:";
     url.hash = "";
     return isSafePublicUrl(url) ? url.href : null;
