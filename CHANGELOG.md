@@ -10,6 +10,13 @@
 
 ---
 
+## [1.16.4](https://github.com/redtidev1918/DeviantDrop/compare/v1.16.3...v1.16.4) (2026-11-04)
+
+
+### Bug Fixes
+
+* ignore DeviantArt profile and gallery links ([#79](https://github.com/redtidev1918/DeviantDrop/issues/79)) ([cefce50](https://github.com/redtidev1918/DeviantDrop/commit/cefce50b37ca5fa109a0d20da8e3569ea5e0c151))
+
 ## [1.16.3](https://github.com/redtidev1918/DeviantDrop/compare/v1.16.2...v1.16.3) (2026-11-03)
 
 
