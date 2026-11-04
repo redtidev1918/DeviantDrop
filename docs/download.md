@@ -1,16 +1,16 @@
 <!-- docsite-release-repo: redtidev1918/DeviantDrop -->
-<!-- docsite-release-tag: v1.16.3 -->
+<!-- docsite-release-tag: v1.16.4 -->
 # 下载 DeviantDrop
 
 **语言 / Language:** 中文 · [English](/en/download.md)
 
-<!-- docsite: generated from redtidev1918/DeviantDrop release v1.16.3; do not edit by hand -->
+<!-- docsite: generated from redtidev1918/DeviantDrop release v1.16.4; do not edit by hand -->
 
 本页由 GitHub Actions 根据发布资产生成。若页面尚未更新，请到 Releases 查看最新版本。 [Releases](https://github.com/redtidev1918/DeviantDrop/releases)
 
-## 最新版本：`v1.16.3`（2026-11-03）
+## 最新版本：`v1.16.4`（2026-11-04）
 
-[查看 Release 说明与校验和](https://github.com/redtidev1918/DeviantDrop/releases/tag/v1.16.3)
+[查看 Release 说明与校验和](https://github.com/redtidev1918/DeviantDrop/releases/tag/v1.16.4)
 
 ## 获取与部署
 
@@ -29,4 +29,4 @@ DeviantDrop 是 Telegram Bot 服务,**不发安装包**,无需克隆仓库即可
 
 | 平台 | 文件 | 大小 | 下载 |
 |---|---|---|---|
-| 通用 | `RELEASE-METADATA.json` | 1 KB | [下载](https://github.com/redtidev1918/DeviantDrop/releases/download/v1.16.3/RELEASE-METADATA.json) |
+| 通用 | `RELEASE-METADATA.json` | 1 KB | [下载](https://github.com/redtidev1918/DeviantDrop/releases/download/v1.16.4/RELEASE-METADATA.json) |
